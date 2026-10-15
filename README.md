@@ -75,22 +75,50 @@ You only need to upload the following files to your web hosting root (e.g. `publ
 
 ---
 
+## 📈 Specialist Throughput Trend Graphs (Line Graphs)
+
+Track individual velocity and output over time with interactive, multi-line trend visualizations:
+
+### 1. QA Specialist Validation Trends (Line Graph)
+- **Location**: `QA Performance Report` tab (`#qa-report`).
+- **Individual Specialist Lines**: Color-coded lines for each QA officer (*Julius Rod Dayag*, *Yesha Nicholai Lao*, *Arabella Morales*, *Janryl Jay Canaway*, and *John Michael Francisco*).
+- **Metric Selector**:
+  - `Total Handled`: Combined Initial and Final validations.
+  - `Initial QA`: First-pass quality evaluations.
+  - `Final QA`: Secondary verification signoffs.
+- **Granularity Grouping**: Switch seamlessly between `Per Day`, `Per Week`, and `Per Month`.
+- **Customizable Time Range**: Filter between `Whole / All Time`, `This Day (Today)`, `Yesterday`, `Same Day Last Week`, `This Week`, `Last Week`, and `This Month`.
+- **Interactive Legend**: Click any QA specialist's name in the chart legend to isolate or toggle their line on/off.
+
+### 2. Dispatch Specialist Override Trends (Line Graph)
+- **Location**: `Dispatch Team Report` tab (`#dispatch-report`).
+- **Individual Specialist Lines**: Color-coded lines for each Dispatch officer (*Danica Faye Quintos*, *Daniel Madarable*, and *Kim Novero*).
+- **Metric Selector**:
+  - `Override Done`: Successfully corrected and resolved invalid waybills.
+  - `All Actions`: Total actions logged by the specialist.
+- **Granularity Grouping**: Toggle between `Per Day`, `Per Week`, and `Per Month`.
+- **Customizable Time Range**: Filter between `Whole / All Time`, `This Day (Today)`, `Yesterday`, `Same Day Last Week`, `This Week`, `Last Week`, and `This Month`.
+- **Interactive Legend**: Click any Dispatch specialist in the legend to focus on their individual volume.
+
+---
+
 ## 📥 Progress Reports & Customizable Excel Builder (.xlsx)
 
 The dashboard provides three ways to generate Excel reports:
 
-1. **🎨 Customizable Excel Report Builder (New!)**:
+1. **🎨 Customizable Excel Report Builder**:
    - Access via the **"Custom Report"** button in the header or the **"Custom Report Builder"** tab.
+   - **Multi-Date Selection (New!)**: Select 1 or more specific validation work dates using an interactive checklist. Includes quick action shortcuts (`All`, `Today`, `Yesterday`, `Clear`) and live date badge counts.
    - **One-Click Operational Presets**:
      - 🚨 **Invalid & Not Overridden Yet**: Selects `Initial QA = Invalid` and `Dispatch Status = Not Overridden Yet`, exporting Waybill No., Rider Name, Initial Validator, Remarks, Date, and Dispatch Status.
      - ⏳ **Pending Initial QA**: Filters to waybills awaiting first quality checks.
      - 🔄 **Overridden Awaiting Final QA**: Filters to dispatch overrides pending final QA signoff.
      - ❌ **Final QA Rejected**: Filters to waybills rejected in final quality check.
      - 👤 **Minimal ID + Rider + Validator**: Quickly outputs only the 3 essential identifiers.
-   - **Custom Filter Matrix**: Filter by any combination of Validation Work Date, Initial QA Status, Dispatch Override Status, Final QA Status, QA Specialist, Dispatch Specialist, or free-text search (Rider, Waybill ID, Remarks).
+   - **Custom Filter Matrix**: Filter by any combination of Validation Work Dates, Initial QA Status, Dispatch Override Status, Final QA Status, QA Specialist, Dispatch Specialist, or free-text search (Rider, Waybill ID, Remarks).
    - **Pick Any Columns**: Interactive checkboxes let you choose exactly which columns to include in the exported file.
    - **Live Data Preview**: Displays matching count badge and the first 10 matching rows with active columns before downloading.
-   - **Direct Downloads**: Generates formatted `.xlsx` (with optional Executive KPI tab and auto-fitted columns) or clean `.csv` entirely in the browser.
+   - **Direct Downloads**: Generates formatted `.xlsx` (with optional Executive KPI tab documenting all selected dates and filters) or clean `.csv` entirely in the browser.
 
 2. **Pre-Generated Formatted Workbook**:
    - File: `Waybill_QA_Dispatch_Progress_Report.xlsx`

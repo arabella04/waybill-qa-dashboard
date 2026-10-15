@@ -460,6 +460,59 @@
                 </button>
             </div>
 
+            <!-- QA Throughput Trend Multi-Line Chart -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                            <h3 class="text-sm font-bold text-slate-800">QA Specialist Throughput Trends (Line Graph)</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">Velocity Tracking</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Track and compare validation velocity over time for each individual QA specialist</p>
+                    </div>
+
+                    <!-- Interactive Controls: Metric, Granularity, Time Range -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <!-- Metric Filter -->
+                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button type="button" onclick="setQATrendMetric('total')" id="btn-qa-metric-total" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition">Total Handled</button>
+                            <button type="button" onclick="setQATrendMetric('initial')" id="btn-qa-metric-initial" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Initial QA</button>
+                            <button type="button" onclick="setQATrendMetric('final')" id="btn-qa-metric-final" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Final QA</button>
+                        </div>
+
+                        <!-- Granularity: Day / Week / Month -->
+                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button type="button" onclick="setQATrendGrouping('day')" id="btn-qa-group-day" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition">Per Day</button>
+                            <button type="button" onclick="setQATrendGrouping('week')" id="btn-qa-group-week" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Week</button>
+                            <button type="button" onclick="setQATrendGrouping('month')" id="btn-qa-group-month" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Month</button>
+                        </div>
+
+                        <!-- Timeframe Range Selection -->
+                        <select id="qa-trend-range-select" onchange="setQATrendRange(this.value)" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs">
+                            <option value="all">Whole / All Time</option>
+                            <option value="today">This Day (Today)</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="day_last_week">Same Day Last Week</option>
+                            <option value="this_week">This Week</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="this_month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Line Chart Canvas -->
+                <div class="h-72">
+                    <canvas id="chart-qa-trend-line"></canvas>
+                </div>
+
+                <!-- Helper footnote & legend notice -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 pt-2 gap-1">
+                    <span>💡 Tip: Click any QA specialist's name in the legend above to isolate or hide their line.</span>
+                    <span id="qa-trend-summary-note" class="text-blue-700 font-medium">Tracking all QA specialists</span>
+                </div>
+            </div>
+
             <!-- QA Comparison Chart -->
             <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
                 <h3 class="text-sm font-bold text-slate-800 mb-1">QA Specialists: Initial vs Final Validations Volume</h3>
@@ -516,6 +569,58 @@
                 <button onclick="exportProgressReportExcel()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 shadow-xs transition self-start sm:self-auto">
                     Export Dispatch Report (.xlsx)
                 </button>
+            </div>
+
+            <!-- Dispatch Override Trend Multi-Line Chart -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
+                            <h3 class="text-sm font-bold text-slate-800">Dispatch Specialist Override Trends (Line Graph)</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-sky-50 text-sky-700 border border-sky-200">Resolution Velocity</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Track and compare override throughput velocity over time for each Dispatch specialist</p>
+                    </div>
+
+                    <!-- Interactive Controls: Metric, Granularity, Time Range -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <!-- Metric Filter -->
+                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button type="button" onclick="setDispTrendMetric('override')" id="btn-disp-metric-override" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-sky-700 shadow-xs transition">Override Done</button>
+                            <button type="button" onclick="setDispTrendMetric('all')" id="btn-disp-metric-all" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">All Actions</button>
+                        </div>
+
+                        <!-- Granularity: Day / Week / Month -->
+                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button type="button" onclick="setDispTrendGrouping('day')" id="btn-disp-group-day" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-sky-700 shadow-xs transition">Per Day</button>
+                            <button type="button" onclick="setDispTrendGrouping('week')" id="btn-disp-group-week" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Week</button>
+                            <button type="button" onclick="setDispTrendGrouping('month')" id="btn-disp-group-month" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Month</button>
+                        </div>
+
+                        <!-- Timeframe Range Selection -->
+                        <select id="disp-trend-range-select" onchange="setDispTrendRange(this.value)" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-2xs">
+                            <option value="all">Whole / All Time</option>
+                            <option value="today">This Day (Today)</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="day_last_week">Same Day Last Week</option>
+                            <option value="this_week">This Week</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="this_month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Line Chart Canvas -->
+                <div class="h-72">
+                    <canvas id="chart-dispatch-trend-line"></canvas>
+                </div>
+
+                <!-- Helper footnote & legend notice -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 pt-2 gap-1">
+                    <span>💡 Tip: Click any Dispatch specialist's name in the legend above to isolate or hide their line.</span>
+                    <span id="disp-trend-summary-note" class="text-sky-700 font-medium">Tracking all Dispatch specialists</span>
+                </div>
             </div>
 
             <!-- Dispatch Comparison Chart -->
@@ -825,13 +930,31 @@
                     </div>
 
                     <div class="space-y-3 text-xs">
-                        <!-- Date Filter -->
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Validation Work Date / Day</label>
-                            <select id="cr-filter-date" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                                <option value="ALL">All Dates (Full Dataset)</option>
-                                <!-- Populated dynamically -->
-                            </select>
+                        <!-- Multi-Date Filter Component -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block font-semibold text-slate-700">Validation Dates (Select 1 or More)</label>
+                                <div class="flex items-center gap-1.5 text-[11px]">
+                                    <button type="button" onclick="setCustomReportDates('all')" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline">All</button>
+                                    <span class="text-slate-300">|</span>
+                                    <button type="button" onclick="setCustomReportDates('today')" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline">Today</button>
+                                    <span class="text-slate-300">|</span>
+                                    <button type="button" onclick="setCustomReportDates('yesterday')" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline">Yesterday</button>
+                                    <span class="text-slate-300">|</span>
+                                    <button type="button" onclick="setCustomReportDates('clear')" class="text-slate-500 hover:text-slate-700 hover:underline">Clear</button>
+                                </div>
+                            </div>
+
+                            <!-- Scrollable Checkbox Checklist -->
+                            <div id="cr-date-checklist" class="max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+
+                            <!-- Active Selection Summary & Badge -->
+                            <div class="flex items-center justify-between text-[11px] pt-0.5">
+                                <span id="cr-selected-dates-summary" class="text-slate-500 truncate" title="All Dates Selected">All Dates Selected</span>
+                                <span id="cr-selected-dates-badge" class="px-2 py-0.2 rounded-full font-bold bg-blue-100 text-blue-700 text-[10px]">All</span>
+                            </div>
                         </div>
 
                         <!-- Initial QA Status -->

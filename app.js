@@ -35,6 +35,42 @@ let pagination = {
 // Chart instances for cleanup & redrawing
 let charts = {};
 
+// Multi-Date Selection State for Custom Report Builder
+let crSelectedDates = new Set(['ALL']);
+
+// Line Trend Chart States
+const qaTrendState = {
+    metric: 'total', // 'total' | 'initial' | 'final'
+    grouping: 'day', // 'day' | 'week' | 'month'
+    range: 'all'     // 'all' | 'today' | 'yesterday' | 'day_last_week' | 'this_week' | 'last_week' | 'this_month'
+};
+
+const dispTrendState = {
+    metric: 'override', // 'override' | 'all'
+    grouping: 'day',    // 'day' | 'week' | 'month'
+    range: 'all'        // 'all' | 'today' | 'yesterday' | 'day_last_week' | 'this_week' | 'last_week' | 'this_month'
+};
+
+// Corporate Brand Palettes for Specialist Multi-Line Graphs
+const QA_COLORS = {
+    'Julius Rod Dayag': '#2563eb',       // Royal Blue
+    'Yesha Nicholai Lao': '#0284c7',     // Sky Blue
+    'Arabella Morales': '#059669',       // Emerald
+    'Janryl Jay Canaway': '#7c3aed',     // Purple / Violet
+    'John Michael Francisco': '#d97706'  // Amber
+};
+
+const DISPATCH_COLORS = {
+    'Danica Faye Quintos': '#2563eb',    // Royal Blue
+    'Daniel Madarable': '#6366f1',       // Indigo
+    'Kim Novero': '#0d9488'              // Teal
+};
+
+const FALLBACK_PALETTE = [
+    '#e11d48', '#0891b2', '#4f46e5', '#ca8a04', '#16a34a',
+    '#9333ea', '#db2777', '#ea580c', '#0284c7', '#475569'
+];
+
 document.addEventListener('DOMContentLoaded', () => {
     initData();
 });
@@ -325,8 +361,10 @@ function switchTab(tabId) {
         renderOverviewCharts();
     } else if (tabId === 'qa-report') {
         renderQACharts();
+        renderQATrendLineChart();
     } else if (tabId === 'dispatch-report') {
         renderDispatchCharts();
+        renderDispatchTrendLineChart();
     } else if (tabId === 'custom-report') {
         onCustomReportConfigChange();
     }
@@ -897,6 +935,305 @@ function renderQACharts() {
             }
         }
     });
+
+    renderQATrendLineChart();
+}
+
+// ==========================================
+// QA SPECIALIST MULTI-LINE TREND ENGINE
+// ==========================================
+
+function setQATrendMetric(metric) {
+    qaTrendState.metric = metric;
+    
+    // Update button states
+    ['total', 'initial', 'final'].forEach(m => {
+        const btn = document.getElementById(`btn-qa-metric-${m}`);
+        if (!btn) return;
+        if (m === metric) {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition';
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+        }
+    });
+
+    renderQATrendLineChart();
+}
+
+function setQATrendGrouping(grouping) {
+    qaTrendState.grouping = grouping;
+
+    // Update button states
+    ['day', 'week', 'month'].forEach(g => {
+        const btn = document.getElementById(`btn-qa-group-${g}`);
+        if (!btn) return;
+        if (g === grouping) {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition';
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+        }
+    });
+
+    renderQATrendLineChart();
+}
+
+function setQATrendRange(rangeVal) {
+    qaTrendState.range = rangeVal;
+    renderQATrendLineChart();
+}
+
+function parseDateStrToObj(str) {
+    if (!str) return null;
+    const parts = str.split('/');
+    if (parts.length === 3) {
+        return new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+    }
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function sortDateStrings(arr) {
+    return arr.sort((a, b) => {
+        const da = parseDateStrToObj(a);
+        const db = parseDateStrToObj(b);
+        if (!da || !db) return 0;
+        return da.getTime() - db.getTime();
+    });
+}
+
+function getIsoWeek(d) {
+    const target = new Date(d.valueOf());
+    const dayNr = (d.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    const weekNo = 1 + Math.ceil((firstThursday - target) / 604800000);
+    return { year: target.getFullYear(), week: weekNo };
+}
+
+function formatDateWithDay(d) {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return `${d.getMonth() + 1}/${d.getDate()} (${days[d.getDay()]})`;
+}
+
+function renderQATrendLineChart() {
+    const ctx = document.getElementById('chart-qa-trend-line')?.getContext('2d');
+    if (!ctx) return;
+    if (charts.qaTrendLine) charts.qaTrendLine.destroy();
+
+    // 1. Gather all QA names
+    const qaNames = [...new Set([
+        ...allData.map(r => r.initial_validated_by),
+        ...allData.map(r => r.final_validated_by)
+    ].filter(Boolean))].sort();
+
+    if (qaNames.length === 0) return;
+
+    // 2. Determine all distinct sorted validation dates in the dataset
+    const allValDates = sortDateStrings([...new Set(allData.map(r => r.initial_val_date).filter(Boolean))]);
+    if (allValDates.length === 0) return;
+
+    const maxDateStr = allValDates[allValDates.length - 1];
+    const maxDateObj = parseDateStrToObj(maxDateStr) || new Date();
+    const secondLatestDateStr = allValDates.length > 1 ? allValDates[allValDates.length - 2] : maxDateStr;
+
+    // Date 7 days prior to latest
+    const sevenDaysAgo = new Date(maxDateObj.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const targetDayLastWeekStr = `${sevenDaysAgo.getMonth() + 1}/${sevenDaysAgo.getDate()}/${sevenDaysAgo.getFullYear()}`;
+
+    // 3. Filter records according to qaTrendState.range
+    let trendPool = allData.filter(r => r.initial_val_date);
+    const currentWeekInfo = getIsoWeek(maxDateObj);
+
+    if (qaTrendState.range === 'today') {
+        trendPool = trendPool.filter(r => r.initial_val_date === maxDateStr);
+    } else if (qaTrendState.range === 'yesterday') {
+        trendPool = trendPool.filter(r => r.initial_val_date === secondLatestDateStr);
+    } else if (qaTrendState.range === 'day_last_week') {
+        const found = trendPool.filter(r => r.initial_val_date === targetDayLastWeekStr);
+        trendPool = found.length > 0 ? found : trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            return d && d <= sevenDaysAgo;
+        });
+    } else if (qaTrendState.range === 'this_week') {
+        trendPool = trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return false;
+            const w = getIsoWeek(d);
+            return w.year === currentWeekInfo.year && w.week === currentWeekInfo.week;
+        });
+    } else if (qaTrendState.range === 'last_week') {
+        trendPool = trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return false;
+            const w = getIsoWeek(d);
+            return w.year === currentWeekInfo.year && w.week === currentWeekInfo.week - 1;
+        });
+    } else if (qaTrendState.range === 'this_month') {
+        trendPool = trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return false;
+            return d.getFullYear() === maxDateObj.getFullYear() && d.getMonth() === maxDateObj.getMonth();
+        });
+    }
+
+    // 4. Build time buckets according to qaTrendState.grouping
+    const bucketMap = new Map(); // key -> { label, records: [] }
+
+    if (qaTrendState.grouping === 'day') {
+        const poolDates = sortDateStrings([...new Set(trendPool.map(r => r.initial_val_date))]);
+        poolDates.forEach(dStr => {
+            const dObj = parseDateStrToObj(dStr);
+            const label = dObj ? formatDateWithDay(dObj) : dStr;
+            bucketMap.set(dStr, { label, records: [] });
+        });
+        trendPool.forEach(r => {
+            if (bucketMap.has(r.initial_val_date)) {
+                bucketMap.get(r.initial_val_date).records.push(r);
+            }
+        });
+    } else if (qaTrendState.grouping === 'week') {
+        // Collect and sort all weeks
+        const weekEntries = [];
+        trendPool.forEach(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return;
+            const w = getIsoWeek(d);
+            const key = `${w.year}-W${String(w.week).padStart(2, '0')}`;
+            if (!bucketMap.has(key)) {
+                bucketMap.set(key, { label: `Week ${w.week} (${w.year})`, records: [], sortVal: w.year * 100 + w.week });
+            }
+            bucketMap.get(key).records.push(r);
+        });
+    } else if (qaTrendState.grouping === 'month') {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        trendPool.forEach(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return;
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!bucketMap.has(key)) {
+                bucketMap.set(key, { label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`, records: [], sortVal: key });
+            }
+            bucketMap.get(key).records.push(r);
+        });
+    }
+
+    // Sort buckets chronologically
+    let bucketKeys = Array.from(bucketMap.keys());
+    if (qaTrendState.grouping === 'day') {
+        bucketKeys = sortDateStrings(bucketKeys);
+    } else {
+        bucketKeys.sort();
+    }
+    const xLabels = bucketKeys.map(k => bucketMap.get(k).label);
+
+    // 5. Build line dataset for each QA specialist
+    const datasets = qaNames.map((qa, idx) => {
+        const counts = bucketKeys.map(k => {
+            const rows = bucketMap.get(k).records;
+            if (qaTrendState.metric === 'initial') {
+                return rows.filter(r => r.initial_validated_by === qa).length;
+            } else if (qaTrendState.metric === 'final') {
+                return rows.filter(r => r.final_validated_by === qa).length;
+            } else {
+                // total handled (initial or final)
+                return rows.filter(r => r.initial_validated_by === qa || r.final_validated_by === qa).length;
+            }
+        });
+
+        const color = QA_COLORS[qa] || FALLBACK_PALETTE[idx % FALLBACK_PALETTE.length];
+
+        return {
+            label: qa,
+            data: counts,
+            borderColor: color,
+            backgroundColor: color + '18',
+            pointBackgroundColor: color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
+            pointRadius: 4.5,
+            pointHoverRadius: 7,
+            borderWidth: 2.5,
+            tension: 0.35,
+            fill: false
+        };
+    });
+
+    // 6. Update Summary Note
+    const summaryNote = document.getElementById('qa-trend-summary-note');
+    if (summaryNote) {
+        const metricName = qaTrendState.metric === 'initial' ? 'Initial QA' : (qaTrendState.metric === 'final' ? 'Final QA' : 'Total Handled');
+        const rangeNames = {
+            all: 'All Time',
+            today: `Today (${maxDateStr})`,
+            yesterday: `Yesterday (${secondLatestDateStr})`,
+            day_last_week: 'Same Day Last Week',
+            this_week: 'This Week',
+            last_week: 'Last Week',
+            this_month: 'This Month'
+        };
+        const rangeText = rangeNames[qaTrendState.range] || 'Filtered';
+        summaryNote.textContent = `${metricName} • ${rangeText} • ${trendPool.length.toLocaleString()} total actions mapped`;
+    }
+
+    // 7. Render Chart.js Multi-Line Instance
+    charts.qaTrendLine = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: xLabels.length > 0 ? xLabels : ['No Data'],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        padding: 15,
+                        font: { size: 11, weight: '600' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 11 },
+                    padding: 10,
+                    boxPadding: 4,
+                    callbacks: {
+                        footer: (items) => {
+                            const sum = items.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
+                            return `Total Period Validations: ${sum.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                    ticks: {
+                        precision: 0,
+                        font: { size: 11 }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function filterByQA(qaName) {
@@ -1028,6 +1365,260 @@ function renderDispatchCharts() {
             scales: {
                 x: { grid: { display: false } },
                 y: { beginAtZero: true, grid: { color: 'rgba(226, 232, 240, 0.6)' } }
+            }
+        }
+    });
+
+    renderDispatchTrendLineChart();
+}
+
+// ==========================================
+// DISPATCH SPECIALIST MULTI-LINE TREND ENGINE
+// ==========================================
+
+function setDispTrendMetric(metric) {
+    dispTrendState.metric = metric;
+    
+    // Update button states
+    ['override', 'all'].forEach(m => {
+        const btn = document.getElementById(`btn-disp-metric-${m}`);
+        if (!btn) return;
+        if (m === metric) {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-sky-700 shadow-xs transition';
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+        }
+    });
+
+    renderDispatchTrendLineChart();
+}
+
+function setDispTrendGrouping(grouping) {
+    dispTrendState.grouping = grouping;
+
+    // Update button states
+    ['day', 'week', 'month'].forEach(g => {
+        const btn = document.getElementById(`btn-disp-group-${g}`);
+        if (!btn) return;
+        if (g === grouping) {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-sky-700 shadow-xs transition';
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+        }
+    });
+
+    renderDispatchTrendLineChart();
+}
+
+function setDispTrendRange(rangeVal) {
+    dispTrendState.range = rangeVal;
+    renderDispatchTrendLineChart();
+}
+
+function renderDispatchTrendLineChart() {
+    const ctx = document.getElementById('chart-dispatch-trend-line')?.getContext('2d');
+    if (!ctx) return;
+    if (charts.dispTrendLine) charts.dispTrendLine.destroy();
+
+    // 1. Gather all Dispatch names
+    const dispNames = [...new Set(allData.map(r => r.overridden_by).filter(Boolean))].sort();
+    if (dispNames.length === 0) return;
+
+    // 2. Determine all distinct sorted validation dates
+    const allValDates = sortDateStrings([...new Set(allData.map(r => r.initial_val_date).filter(Boolean))]);
+    if (allValDates.length === 0) return;
+
+    const maxDateStr = allValDates[allValDates.length - 1];
+    const maxDateObj = parseDateStrToObj(maxDateStr) || new Date();
+    const secondLatestDateStr = allValDates.length > 1 ? allValDates[allValDates.length - 2] : maxDateStr;
+
+    // Date 7 days prior to latest
+    const sevenDaysAgo = new Date(maxDateObj.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const targetDayLastWeekStr = `${sevenDaysAgo.getMonth() + 1}/${sevenDaysAgo.getDate()}/${sevenDaysAgo.getFullYear()}`;
+
+    // 3. Filter records according to dispTrendState.range
+    let trendPool = allData.filter(r => r.initial_val_date);
+    const currentWeekInfo = getIsoWeek(maxDateObj);
+
+    if (dispTrendState.range === 'today') {
+        trendPool = trendPool.filter(r => r.initial_val_date === maxDateStr);
+    } else if (dispTrendState.range === 'yesterday') {
+        trendPool = trendPool.filter(r => r.initial_val_date === secondLatestDateStr);
+    } else if (dispTrendState.range === 'day_last_week') {
+        const found = trendPool.filter(r => r.initial_val_date === targetDayLastWeekStr);
+        trendPool = found.length > 0 ? found : trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            return d && d <= sevenDaysAgo;
+        });
+    } else if (dispTrendState.range === 'this_week') {
+        trendPool = trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return false;
+            const w = getIsoWeek(d);
+            return w.year === currentWeekInfo.year && w.week === currentWeekInfo.week;
+        });
+    } else if (dispTrendState.range === 'last_week') {
+        trendPool = trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return false;
+            const w = getIsoWeek(d);
+            return w.year === currentWeekInfo.year && w.week === currentWeekInfo.week - 1;
+        });
+    } else if (dispTrendState.range === 'this_month') {
+        trendPool = trendPool.filter(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return false;
+            return d.getFullYear() === maxDateObj.getFullYear() && d.getMonth() === maxDateObj.getMonth();
+        });
+    }
+
+    // 4. Build time buckets according to dispTrendState.grouping
+    const bucketMap = new Map();
+
+    if (dispTrendState.grouping === 'day') {
+        const poolDates = sortDateStrings([...new Set(trendPool.map(r => r.initial_val_date))]);
+        poolDates.forEach(dStr => {
+            const dObj = parseDateStrToObj(dStr);
+            const label = dObj ? formatDateWithDay(dObj) : dStr;
+            bucketMap.set(dStr, { label, records: [] });
+        });
+        trendPool.forEach(r => {
+            if (bucketMap.has(r.initial_val_date)) {
+                bucketMap.get(r.initial_val_date).records.push(r);
+            }
+        });
+    } else if (dispTrendState.grouping === 'week') {
+        trendPool.forEach(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return;
+            const w = getIsoWeek(d);
+            const key = `${w.year}-W${String(w.week).padStart(2, '0')}`;
+            if (!bucketMap.has(key)) {
+                bucketMap.set(key, { label: `Week ${w.week} (${w.year})`, records: [] });
+            }
+            bucketMap.get(key).records.push(r);
+        });
+    } else if (dispTrendState.grouping === 'month') {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        trendPool.forEach(r => {
+            const d = parseDateStrToObj(r.initial_val_date);
+            if (!d) return;
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!bucketMap.has(key)) {
+                bucketMap.set(key, { label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`, records: [] });
+            }
+            bucketMap.get(key).records.push(r);
+        });
+    }
+
+    // Sort buckets chronologically
+    let bucketKeys = Array.from(bucketMap.keys());
+    if (dispTrendState.grouping === 'day') {
+        bucketKeys = sortDateStrings(bucketKeys);
+    } else {
+        bucketKeys.sort();
+    }
+    const xLabels = bucketKeys.map(k => bucketMap.get(k).label);
+
+    // 5. Build line dataset for each Dispatch specialist
+    const datasets = dispNames.map((name, idx) => {
+        const counts = bucketKeys.map(k => {
+            const rows = bucketMap.get(k).records;
+            if (dispTrendState.metric === 'override') {
+                return rows.filter(r => r.overridden_by === name && r.dispatch_status === 'Override Done').length;
+            } else {
+                return rows.filter(r => r.overridden_by === name).length;
+            }
+        });
+
+        const color = DISPATCH_COLORS[name] || FALLBACK_PALETTE[idx % FALLBACK_PALETTE.length];
+
+        return {
+            label: name,
+            data: counts,
+            borderColor: color,
+            backgroundColor: color + '18',
+            pointBackgroundColor: color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 1.5,
+            pointRadius: 4.5,
+            pointHoverRadius: 7,
+            borderWidth: 2.5,
+            tension: 0.35,
+            fill: false
+        };
+    });
+
+    // 6. Update Summary Note
+    const summaryNote = document.getElementById('disp-trend-summary-note');
+    if (summaryNote) {
+        const metricName = dispTrendState.metric === 'override' ? 'Override Done' : 'All Actions';
+        const rangeNames = {
+            all: 'All Time',
+            today: `Today (${maxDateStr})`,
+            yesterday: `Yesterday (${secondLatestDateStr})`,
+            day_last_week: 'Same Day Last Week',
+            this_week: 'This Week',
+            last_week: 'Last Week',
+            this_month: 'This Month'
+        };
+        const rangeText = rangeNames[dispTrendState.range] || 'Filtered';
+        const totalActions = datasets.reduce((sum, ds) => sum + ds.data.reduce((a, b) => a + b, 0), 0);
+        summaryNote.textContent = `${metricName} • ${rangeText} • ${totalActions.toLocaleString()} override resolutions mapped`;
+    }
+
+    // 7. Render Chart.js Multi-Line Instance
+    charts.dispTrendLine = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: xLabels.length > 0 ? xLabels : ['No Data'],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        padding: 15,
+                        font: { size: 11, weight: '600' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 11 },
+                    padding: 10,
+                    boxPadding: 4,
+                    callbacks: {
+                        footer: (items) => {
+                            const sum = items.reduce((acc, item) => acc + (item.parsed.y || 0), 0);
+                            return `Total Period Overrides: ${sum.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                    ticks: {
+                        precision: 0,
+                        font: { size: 11 }
+                    }
+                }
             }
         }
     });
@@ -1799,25 +2390,10 @@ function initCustomReportBuilder() {
     const container = document.getElementById('cr-column-selector-container');
     if (!container) return;
 
-    // 1. Populate Dropdowns (Date, QA, Dispatcher)
-    const dateSelect = document.getElementById('cr-filter-date');
-    if (dateSelect) {
-        const uniqueDates = [...new Set(allData.map(r => r.initial_val_date).filter(Boolean))].sort((a, b) => {
-            const [m1, d1, y1] = a.split('/').map(Number);
-            const [m2, d2, y2] = b.split('/').map(Number);
-            return (y1 - y2) || (m1 - m2) || (d1 - d2);
-        });
-        const currentVal = dateSelect.value;
-        dateSelect.innerHTML = '<option value="ALL">All Dates (Full Dataset)</option>';
-        uniqueDates.forEach(d => {
-            const isToday = d === '10/13/2026';
-            dateSelect.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}${isToday ? ' (Today)' : ''}</option>`;
-        });
-        if (currentVal && uniqueDates.includes(currentVal)) {
-            dateSelect.value = currentVal;
-        }
-    }
+    // 1. Populate Multi-Date Checklist Selector
+    renderCustomReportDateCheckboxes();
 
+    // 2. Populate QA Dropdown
     const qaSelect = document.getElementById('cr-filter-qa');
     if (qaSelect) {
         const qas = [...new Set(allData.map(r => r.initial_validated_by).filter(Boolean))].sort();
@@ -1831,6 +2407,7 @@ function initCustomReportBuilder() {
         }
     }
 
+    // 3. Populate Dispatch Dropdown
     const dispSelect = document.getElementById('cr-filter-dispatcher');
     if (dispSelect) {
         const disps = [...new Set(allData.map(r => r.overridden_by).filter(Boolean))].sort();
@@ -1844,10 +2421,134 @@ function initCustomReportBuilder() {
         }
     }
 
-    // 2. Render Column Checkboxes grouped by stage
+    // 4. Render Column Checkboxes grouped by stage
     renderCustomReportColumnCheckboxes();
 
-    // 3. Trigger initial filtering and preview
+    // 5. Trigger initial filtering and preview
+    onCustomReportConfigChange();
+}
+
+function renderCustomReportDateCheckboxes() {
+    const container = document.getElementById('cr-date-checklist');
+    if (!container) return;
+
+    const allValDates = sortDateStrings([...new Set(allData.map(r => r.initial_val_date).filter(Boolean))]);
+    if (allValDates.length === 0) {
+        container.innerHTML = '<div class="text-slate-400 p-2 text-center text-xs">No validation dates found</div>';
+        return;
+    }
+
+    const latestDate = allValDates[allValDates.length - 1];
+    const secondLatestDate = allValDates.length > 1 ? allValDates[allValDates.length - 2] : null;
+
+    const isAll = crSelectedDates.has('ALL') || (crSelectedDates.size === allValDates.length && allValDates.length > 0);
+
+    // Option: "All Dates (Full Dataset)"
+    let html = `
+        <label class="flex items-center justify-between p-1.5 rounded-lg ${isAll ? 'bg-blue-50/80 border-blue-200 text-blue-900 font-semibold' : 'bg-white hover:bg-slate-100/80 text-slate-700'} border border-slate-200/80 cursor-pointer select-none transition text-xs">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" ${isAll ? 'checked' : ''} onchange="toggleCustomReportDate('ALL', this.checked)" class="rounded text-blue-600 focus:ring-0">
+                <span>All Dates (Full Dataset)</span>
+            </div>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700">${allData.length.toLocaleString()}</span>
+        </label>
+    `;
+
+    // Reverse chronological order (latest dates first)
+    const reversedDates = [...allValDates].reverse();
+    reversedDates.forEach(dStr => {
+        const isChecked = isAll || crSelectedDates.has(dStr);
+        const count = allData.filter(r => r.initial_val_date === dStr).length;
+        const dObj = parseDateStrToObj(dStr);
+        const dayName = dObj ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dObj.getDay()] : '';
+        const isToday = dStr === latestDate;
+        const isYesterday = dStr === secondLatestDate;
+
+        html += `
+            <label class="flex items-center justify-between p-1.5 rounded-lg ${isChecked ? 'bg-blue-50/50 border-blue-200' : 'bg-white hover:bg-slate-100/60'} border border-slate-200/70 cursor-pointer select-none transition text-xs">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCustomReportDate('${escapeHtml(dStr)}', this.checked)" class="rounded text-blue-600 focus:ring-0">
+                    <span class="font-medium text-slate-800">${escapeHtml(dStr)}</span>
+                    <span class="text-slate-400 text-[11px]">(${dayName})</span>
+                    ${isToday ? '<span class="text-[9px] px-1 py-0.2 rounded font-extrabold uppercase bg-emerald-100 text-emerald-800">Today</span>' : ''}
+                    ${isYesterday ? '<span class="text-[9px] px-1 py-0.2 rounded font-semibold bg-slate-200 text-slate-700">Yesterday</span>' : ''}
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isChecked ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">${count.toLocaleString()}</span>
+            </label>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    // Update summary text & badge
+    const summaryEl = document.getElementById('cr-selected-dates-summary');
+    const badgeEl = document.getElementById('cr-selected-dates-badge');
+    if (summaryEl && badgeEl) {
+        if (isAll) {
+            summaryEl.textContent = `All Dates Selected (${allValDates.length} dates)`;
+            badgeEl.textContent = 'All';
+            badgeEl.className = 'px-2 py-0.2 rounded-full font-bold bg-blue-100 text-blue-700 text-[10px]';
+        } else if (crSelectedDates.size > 0) {
+            const arr = Array.from(crSelectedDates);
+            summaryEl.textContent = arr.join(', ');
+            summaryEl.title = arr.join(', ');
+            badgeEl.textContent = `${arr.length} selected`;
+            badgeEl.className = 'px-2 py-0.2 rounded-full font-bold bg-emerald-100 text-emerald-700 text-[10px]';
+        } else {
+            summaryEl.textContent = 'No dates selected (0 matching)';
+            badgeEl.textContent = '0 selected';
+            badgeEl.className = 'px-2 py-0.2 rounded-full font-bold bg-rose-100 text-rose-700 text-[10px]';
+        }
+    }
+}
+
+function toggleCustomReportDate(dateStr, isChecked) {
+    const allValDates = sortDateStrings([...new Set(allData.map(r => r.initial_val_date).filter(Boolean))]);
+
+    if (dateStr === 'ALL') {
+        if (isChecked) {
+            crSelectedDates = new Set(['ALL']);
+        } else {
+            crSelectedDates = new Set();
+        }
+    } else {
+        if (crSelectedDates.has('ALL')) {
+            crSelectedDates = new Set(allValDates);
+            crSelectedDates.delete(dateStr);
+        } else {
+            if (isChecked) {
+                crSelectedDates.add(dateStr);
+            } else {
+                crSelectedDates.delete(dateStr);
+            }
+            if (crSelectedDates.size === allValDates.length) {
+                crSelectedDates = new Set(['ALL']);
+            }
+        }
+    }
+
+    renderCustomReportDateCheckboxes();
+    onCustomReportConfigChange();
+}
+
+function setCustomReportDates(mode) {
+    const allValDates = sortDateStrings([...new Set(allData.map(r => r.initial_val_date).filter(Boolean))]);
+    if (allValDates.length === 0) return;
+
+    const latestDate = allValDates[allValDates.length - 1];
+    const secondLatestDate = allValDates.length > 1 ? allValDates[allValDates.length - 2] : latestDate;
+
+    if (mode === 'all') {
+        crSelectedDates = new Set(['ALL']);
+    } else if (mode === 'today') {
+        crSelectedDates = new Set([latestDate]);
+    } else if (mode === 'yesterday') {
+        crSelectedDates = new Set([secondLatestDate]);
+    } else if (mode === 'clear') {
+        crSelectedDates = new Set();
+    }
+
+    renderCustomReportDateCheckboxes();
     onCustomReportConfigChange();
 }
 
@@ -1906,7 +2607,8 @@ function setCustomReportColumns(mode) {
 }
 
 function onCustomReportConfigChange() {
-    const dateVal = document.getElementById('cr-filter-date')?.value || 'ALL';
+    const isAllDates = crSelectedDates.has('ALL');
+    const hasAnyDatesSelected = isAllDates || crSelectedDates.size > 0;
     const initVal = document.getElementById('cr-filter-initial')?.value || 'ALL';
     const dispVal = document.getElementById('cr-filter-dispatch')?.value || 'ALL';
     const finalVal = document.getElementById('cr-filter-final')?.value || 'ALL';
@@ -1915,8 +2617,9 @@ function onCustomReportConfigChange() {
     const searchVal = (document.getElementById('cr-search-keyword')?.value || '').trim().toLowerCase();
 
     crMatchingRecords = allData.filter(r => {
-        // Date match (against Validation Date)
-        if (dateVal !== 'ALL' && r.initial_val_date !== dateVal) return false;
+        // Multi-Date match (against Validation Date)
+        if (!hasAnyDatesSelected) return false;
+        if (!isAllDates && !crSelectedDates.has(r.initial_val_date)) return false;
 
         // Initial Status match
         if (initVal !== 'ALL' && r.qa_initial_status !== initVal) return false;
@@ -2053,7 +2756,6 @@ function renderCustomReportPreview() {
 }
 
 function applyCustomReportPreset(presetId) {
-    const dateSelect = document.getElementById('cr-filter-date');
     const initSelect = document.getElementById('cr-filter-initial');
     const dispSelect = document.getElementById('cr-filter-dispatch');
     const finalSelect = document.getElementById('cr-filter-final');
@@ -2063,12 +2765,15 @@ function applyCustomReportPreset(presetId) {
     const filenameInput = document.getElementById('cr-filename');
     const sheetnameInput = document.getElementById('cr-sheetname');
 
+    // Reset date selection to ALL
+    crSelectedDates = new Set(['ALL']);
+    renderCustomReportDateCheckboxes();
+
     if (presetId === 'invalid_pending_override') {
         // USER'S EXACT REQUEST: all waybills that are invalid and didn't override yet
         if (initSelect) initSelect.value = 'Invalid';
         if (dispSelect) dispSelect.value = 'NOT_OVERRIDDEN';
         if (finalSelect) finalSelect.value = 'ALL';
-        if (dateSelect) dateSelect.value = 'ALL';
         if (qaSelect) qaSelect.value = 'ALL';
         if (dispatcherSelect) dispatcherSelect.value = 'ALL';
         if (searchInput) searchInput.value = '';
@@ -2084,7 +2789,6 @@ function applyCustomReportPreset(presetId) {
         if (initSelect) initSelect.value = 'For Validation';
         if (dispSelect) dispSelect.value = 'ALL';
         if (finalSelect) finalSelect.value = 'ALL';
-        if (dateSelect) dateSelect.value = 'ALL';
         if (qaSelect) qaSelect.value = 'ALL';
         if (dispatcherSelect) dispatcherSelect.value = 'ALL';
         if (searchInput) searchInput.value = '';
@@ -2099,7 +2803,6 @@ function applyCustomReportPreset(presetId) {
         if (initSelect) initSelect.value = 'ALL';
         if (dispSelect) dispSelect.value = 'Override Done';
         if (finalSelect) finalSelect.value = 'PENDING';
-        if (dateSelect) dateSelect.value = 'ALL';
         if (qaSelect) qaSelect.value = 'ALL';
         if (dispatcherSelect) dispatcherSelect.value = 'ALL';
         if (searchInput) searchInput.value = '';
@@ -2114,7 +2817,6 @@ function applyCustomReportPreset(presetId) {
         if (initSelect) initSelect.value = 'ALL';
         if (dispSelect) dispSelect.value = 'ALL';
         if (finalSelect) finalSelect.value = 'Invalid';
-        if (dateSelect) dateSelect.value = 'ALL';
         if (qaSelect) qaSelect.value = 'ALL';
         if (dispatcherSelect) dispatcherSelect.value = 'ALL';
         if (searchInput) searchInput.value = '';
@@ -2137,7 +2839,6 @@ function applyCustomReportPreset(presetId) {
         if (initSelect) initSelect.value = 'ALL';
         if (dispSelect) dispSelect.value = 'ALL';
         if (finalSelect) finalSelect.value = 'ALL';
-        if (dateSelect) dateSelect.value = 'ALL';
         if (qaSelect) qaSelect.value = 'ALL';
         if (dispatcherSelect) dispatcherSelect.value = 'ALL';
         if (searchInput) searchInput.value = '';
@@ -2154,7 +2855,6 @@ function applyCustomReportPreset(presetId) {
 }
 
 function resetCustomReportBuilder() {
-    const dateSelect = document.getElementById('cr-filter-date');
     const initSelect = document.getElementById('cr-filter-initial');
     const dispSelect = document.getElementById('cr-filter-dispatch');
     const finalSelect = document.getElementById('cr-filter-final');
@@ -2164,7 +2864,9 @@ function resetCustomReportBuilder() {
     const filenameInput = document.getElementById('cr-filename');
     const sheetnameInput = document.getElementById('cr-sheetname');
 
-    if (dateSelect) dateSelect.value = 'ALL';
+    crSelectedDates = new Set(['ALL']);
+    renderCustomReportDateCheckboxes();
+
     if (initSelect) initSelect.value = 'ALL';
     if (dispSelect) dispSelect.value = 'ALL';
     if (finalSelect) finalSelect.value = 'ALL';
@@ -2227,7 +2929,7 @@ function downloadCustomExcelReport() {
             ["Final QA Invalid", finalInvalid, (finalValid + finalInvalid) > 0 ? `${((finalInvalid / (finalValid + finalInvalid)) * 100).toFixed(1)}%` : '0%'],
             [],
             ["ACTIVE FILTER CRITERIA"],
-            ["Validation Date", document.getElementById('cr-filter-date')?.value || 'ALL'],
+            ["Validation Dates", crSelectedDates.has('ALL') ? "All Dates (Full Dataset)" : (crSelectedDates.size > 0 ? Array.from(crSelectedDates).join(', ') : "None")],
             ["Initial QA Status", document.getElementById('cr-filter-initial')?.value || 'ALL'],
             ["Dispatch Override Status", document.getElementById('cr-filter-dispatch')?.value || 'ALL'],
             ["Final QA Status", document.getElementById('cr-filter-final')?.value || 'ALL'],
