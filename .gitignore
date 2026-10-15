@@ -1,0 +1,13 @@
+# Temporary screenshots and test outputs
+*.png
+test_custom_export.xlsx
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

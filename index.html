@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waybill QA & Dispatch Operational Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554',
+                        },
+                        ice: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (XLSX) CDN for in-browser Excel generation -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- TOP HEADER -->
+    <header class="bg-gradient-to-r from-brand-900 via-brand-800 to-ice-700 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Title -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-ice-200 shadow-inner">
+                        <svg class="w-6 h-6 text-ice-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">Waybill QA & Dispatch Operational Dashboard</h1>
+                            <span id="live-sheet-status-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Connecting to Google Sheet...
+                            </span>
+                        </div>
+                        <p class="text-xs text-brand-200 flex items-center gap-2">
+                            <span>Google Sheets: <a href="https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/edit?usp=sharing" target="_blank" class="text-ice-200 hover:text-white underline">1l_WgHYJno...</a></span>
+                            <span>•</span>
+                            <span id="kpi-total-records-header">2,797 Total Records</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Auto-Sync Toggle -->
+                    <label class="hidden sm:inline-flex items-center gap-1.5 text-xs text-brand-200 cursor-pointer bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 select-none hover:bg-white/15 transition">
+                        <input type="checkbox" id="toggle-auto-sync" onchange="toggleAutoSync(this.checked)" class="rounded text-blue-600 focus:ring-0">
+                        <span>Auto-Sync</span>
+                    </label>
+
+                    <!-- Sync Button -->
+                    <button id="btn-sync-sheet" onclick="syncGoogleSheet()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm backdrop-blur transition" title="Fetch latest updates from Google Sheets">
+                        <svg class="w-4 h-4 mr-1.5 text-ice-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Sync Sheet
+                    </button>
+
+                    <!-- Custom Report Builder Menu -->
+                    <button onclick="switchTab('custom-report')" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm border border-blue-500 transition" title="Build and download custom filtered Excel reports">
+                        <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        Custom Report
+                    </button>
+
+                    <!-- Export Excel Menu -->
+                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-ice-500 hover:bg-ice-600 text-white shadow-sm border border-ice-400 transition" title="Download Excel Progress Report (.xlsx)">
+                        <svg class="w-4 h-4 mr-1.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Download Full Report
+                    </button>
+
+                    <!-- File Upload Input (Hidden) -->
+                    <label class="cursor-pointer inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-brand-700/60 hover:bg-brand-700 text-brand-100 border border-brand-500/40 transition" title="Upload custom CSV/XLSX">
+                        <svg class="w-4 h-4 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <input type="file" id="file-upload-input" accept=".csv, .xlsx, .xls" class="hidden">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- FILTER BAR -->
+    <section class="bg-white border-b border-slate-200/80 shadow-xs sticky top-16 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                
+                <!-- Date Filter Section (Day Selection) -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1" title="Waybill Initial Validation Date">
+                        <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Validation Day:
+                    </span>
+                    <div id="date-pills" class="flex flex-wrap items-center gap-1.5">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Secondary Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Date Dimension -->
+                    <select id="filter-date-field" class="text-xs rounded-lg border-slate-200 bg-slate-50 py-1.5 px-2 text-slate-700 font-medium hover:bg-slate-100 transition focus:ring-1 focus:ring-blue-500">
+                        <option value="initial_val_date" selected>By Validation Date (Default)</option>
+                        <option value="date">By Actual Waybill Date</option>
+                        <option value="dispatch_date">By Dispatch Date</option>
+                        <option value="final_val_date">By Final Val Date</option>
+                    </select>
+
+                    <!-- QA Filter -->
+                    <select id="filter-qa" class="text-xs rounded-lg border-slate-200 bg-slate-50 py-1.5 px-2 text-slate-700 font-medium hover:bg-slate-100 transition focus:ring-1 focus:ring-blue-500">
+                        <option value="ALL">All QA Specialists</option>
+                    </select>
+
+                    <!-- Dispatch Filter -->
+                    <select id="filter-dispatch" class="text-xs rounded-lg border-slate-200 bg-slate-50 py-1.5 px-2 text-slate-700 font-medium hover:bg-slate-100 transition focus:ring-1 focus:ring-blue-500">
+                        <option value="ALL">All Dispatch Specialists</option>
+                    </select>
+
+                    <!-- Initial Status -->
+                    <select id="filter-initial-status" class="text-xs rounded-lg border-slate-200 bg-slate-50 py-1.5 px-2 text-slate-700 font-medium hover:bg-slate-100 transition focus:ring-1 focus:ring-blue-500">
+                        <option value="ALL">All Initial Statuses</option>
+                        <option value="Valid">Initial Valid</option>
+                        <option value="Invalid">Initial Invalid</option>
+                        <option value="For Validation">Initial Pending (For Val)</option>
+                    </select>
+
+                    <!-- Dispatch Status -->
+                    <select id="filter-dispatch-status" class="text-xs rounded-lg border-slate-200 bg-slate-50 py-1.5 px-2 text-slate-700 font-medium hover:bg-slate-100 transition focus:ring-1 focus:ring-blue-500">
+                        <option value="ALL">All Dispatch Statuses</option>
+                        <option value="Override Done">Override Done</option>
+                        <option value="Pending">Pending Dispatch</option>
+                        <option value="No Action">No Action</option>
+                    </select>
+
+                    <!-- Final Status -->
+                    <select id="filter-final-status" class="text-xs rounded-lg border-slate-200 bg-slate-50 py-1.5 px-2 text-slate-700 font-medium hover:bg-slate-100 transition focus:ring-1 focus:ring-blue-500">
+                        <option value="ALL">All Final Statuses</option>
+                        <option value="Valid">Final Valid</option>
+                        <option value="Invalid">Final Invalid</option>
+                        <option value="Pending">Pending Final QA</option>
+                    </select>
+
+                    <!-- Reset Filters Button -->
+                    <button id="btn-reset-filters" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Reset
+                    </button>
+
+                    <span id="active-filters-count" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                        0 Active
+                    </span>
+                </div>
+            </div>
+
+            <!-- Active context summary banner -->
+            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span id="filter-context-text" class="font-medium text-slate-600">Showing All Dates</span>
+                <span class="text-[11px] text-slate-400">Click any row in the table to view full audit details</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN BODY -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+        <!-- KPI SUMMARY CARDS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <!-- Card 1: Total Waybills -->
+            <div class="bg-white rounded-2xl p-5 border border-ice-100 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute -right-3 -top-3 w-16 h-16 bg-ice-50 rounded-full flex items-center justify-center opacity-80">
+                    <svg class="w-8 h-8 text-ice-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m4 4v10M4 7v10l8 4"></path></svg>
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-ice-500"></span>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Waybills</h3>
+                </div>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <span id="kpi-total-waybills" class="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">2,797</span>
+                    <span class="text-xs font-semibold text-ice-700 bg-ice-100 px-2 py-0.5 rounded-full">100% Ingested</span>
+                </div>
+                <p id="kpi-total-sub" class="text-xs text-slate-500 mt-2 truncate">Total registered across all dates</p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div class="bg-ice-500 h-full rounded-full w-full"></div>
+                </div>
+            </div>
+
+            <!-- Card 2: Initial QA Validated -->
+            <div class="bg-white rounded-2xl p-5 border border-blue-100 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute -right-3 -top-3 w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center opacity-80">
+                    <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Initial QA Validated</h3>
+                </div>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <span id="kpi-init-total" class="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">2,526</span>
+                    <span class="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">90.3% Evaluated</span>
+                </div>
+                <div class="mt-2 flex items-center gap-3 text-xs">
+                    <span class="text-emerald-700 font-semibold" title="Initial Valid">✓ Valid: <span id="kpi-init-valid" class="font-bold">1,716</span></span>
+                    <span class="text-rose-600 font-semibold" title="Initial Invalid">✗ Invalid: <span id="kpi-init-invalid" class="font-bold">810</span></span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div id="kpi-init-bar" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 90.3%"></div>
+                </div>
+            </div>
+
+            <!-- Card 3: Dispatch Overrides -->
+            <div class="bg-white rounded-2xl p-5 border border-sky-100 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute -right-3 -top-3 w-16 h-16 bg-sky-50 rounded-full flex items-center justify-center opacity-80">
+                    <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Dispatch Overrides</h3>
+                </div>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <span id="kpi-disp-override" class="text-3xl font-extrabold text-blue-800 font-mono tracking-tight">234</span>
+                    <span class="text-xs font-semibold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-full">Override Done</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                    <span id="kpi-disp-rate" class="text-slate-600 font-medium">28.9% of invalid resolved</span>
+                    <span class="text-amber-600 font-semibold">Pending: <span id="kpi-disp-pending">637</span></span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div id="kpi-disp-bar" class="bg-sky-500 h-full rounded-full transition-all duration-300" style="width: 28.9%"></div>
+                </div>
+            </div>
+
+            <!-- Card 4: Final QA Validated -->
+            <div class="bg-white rounded-2xl p-5 border border-indigo-100 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute -right-3 -top-3 w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center opacity-80">
+                    <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Final QA Validated</h3>
+                </div>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <span id="kpi-final-total" class="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">462</span>
+                    <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Final Signed</span>
+                </div>
+                <div class="mt-2 flex items-center gap-3 text-xs">
+                    <span class="text-emerald-700 font-semibold">Valid: <span id="kpi-final-valid" class="font-bold">427 (92.4%)</span></span>
+                    <span class="text-rose-600 font-semibold">Invalid: <span id="kpi-final-invalid" class="font-bold">35</span></span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div id="kpi-final-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 92.4%"></div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- PROCESS FUNNEL PIPELINE -->
+        <section class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs">
+                        1→5
+                    </div>
+                    <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Operational Lifecycle Pipeline</h2>
+                </div>
+                <span class="text-xs font-medium text-slate-500">End-to-End Workflow Conversion</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 relative">
+                <!-- Step 1 -->
+                <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 relative">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase">Stage 1: Intake</div>
+                    <div class="text-lg font-black text-slate-800 font-mono mt-1" id="funnel-step1-count">2,797</div>
+                    <div class="text-xs text-slate-500 mt-1">Total Waybills Logged</div>
+                    <div class="mt-2 text-[10px] font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded inline-block">100% Ingested</div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-blue-50/60 rounded-xl p-3.5 border border-blue-200/80 relative">
+                    <div class="text-[11px] font-bold text-blue-500 uppercase">Stage 2: Initial QA</div>
+                    <div class="text-lg font-black text-blue-900 font-mono mt-1" id="funnel-step2-count">2,526</div>
+                    <div class="text-xs text-blue-700 mt-1">Total Evaluated</div>
+                    <div class="mt-2 text-[10px] font-semibold text-blue-800 bg-blue-100 px-2 py-0.5 rounded inline-block" id="funnel-step2-pct">90.3% Processed</div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-rose-50/50 rounded-xl p-3.5 border border-rose-200/70 relative">
+                    <div class="text-[11px] font-bold text-rose-500 uppercase">Stage 3: Defects Flagged</div>
+                    <div class="text-lg font-black text-rose-800 font-mono mt-1" id="funnel-step3-count">810</div>
+                    <div class="text-xs text-rose-700 mt-1">Escalated to Dispatch</div>
+                    <div class="mt-2 text-[10px] font-semibold text-rose-800 bg-rose-100 px-2 py-0.5 rounded inline-block" id="funnel-step3-pct">29.0% Re-routed</div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="bg-sky-50/60 rounded-xl p-3.5 border border-sky-200/80 relative">
+                    <div class="text-[11px] font-bold text-sky-600 uppercase">Stage 4: Dispatch Overrides</div>
+                    <div class="text-lg font-black text-sky-900 font-mono mt-1" id="funnel-step4-count">234</div>
+                    <div class="text-xs text-sky-700 mt-1">Resolved by Dispatch</div>
+                    <div class="mt-2 text-[10px] font-semibold text-sky-800 bg-sky-100 px-2 py-0.5 rounded inline-block" id="funnel-step4-pct">28.9% Resolved</div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="bg-emerald-50/60 rounded-xl p-3.5 border border-emerald-200/80 relative">
+                    <div class="text-[11px] font-bold text-emerald-600 uppercase">Stage 5: Final QA</div>
+                    <div class="text-lg font-black text-emerald-900 font-mono mt-1" id="funnel-step5-count">462</div>
+                    <div class="text-xs text-emerald-700 mt-1">Completed Final Signoff</div>
+                    <div class="mt-2 text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded inline-block" id="funnel-step5-pct">92.4% Pass Rate</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NAVIGATION TABS -->
+        <div class="border-b border-slate-200 bg-white rounded-t-xl px-2 pt-2 shadow-xs">
+            <nav class="flex space-x-1 sm:space-x-4 overflow-x-auto">
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg transition whitespace-nowrap" data-tab="overview">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Overview & Trends
+                </button>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="qa-report">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    QA Performance Report
+                </button>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="dispatch-report">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    Dispatch Team Report
+                </button>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="waybills">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                    Waybills Explorer
+                </button>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="progress-report">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Executive Progress Report
+                </button>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="custom-report">
+                    <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Custom Report Builder
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">New</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 1: OVERVIEW & TRENDS                       -->
+        <!-- ============================================== -->
+        <div id="tab-overview" class="tab-panel space-y-6">
+            <!-- Charts Row 1: Daily Trend & Doughnuts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Daily Trend (Spans 2 cols) -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800">Daily Waybill & Validation Trend</h3>
+                            <p class="text-xs text-slate-500">Volume across Waybill Dates for all pipeline stages</p>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                            Volume by Day
+                        </span>
+                    </div>
+                    <div class="h-64 sm:h-72">
+                        <canvas id="chart-daily-trend"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnuts Column -->
+                <div class="space-y-6">
+                    <!-- Initial QA Status Doughnut -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+                        <h3 class="text-sm font-bold text-slate-800 mb-1">Initial QA Status Breakdown</h3>
+                        <p class="text-xs text-slate-500 mb-3">Distribution of Valid vs Invalid vs Pending</p>
+                        <div class="h-44 flex items-center justify-center">
+                            <canvas id="chart-initial-breakdown"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Dispatch Status Doughnut -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+                        <h3 class="text-sm font-bold text-slate-800 mb-1">Dispatch Resolution Status</h3>
+                        <p class="text-xs text-slate-500 mb-3">Overrides Done vs Pending</p>
+                        <div class="h-44 flex items-center justify-center">
+                            <canvas id="chart-dispatch-breakdown"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2: Top Defects / Remarks -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Top QA Invalidation Reasons & Defect Types</h3>
+                        <p class="text-xs text-slate-500">Most frequent remarks resulting in Initial QA rejection and Dispatch escalation</p>
+                    </div>
+                </div>
+                <div class="h-56">
+                    <canvas id="chart-qa-remarks"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: QA PERFORMANCE REPORT                   -->
+        <!-- ============================================== -->
+        <div id="tab-qa-report" class="tab-panel hidden space-y-6">
+            <div class="bg-blue-50/60 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-bold text-blue-900">QA Specialist Performance Scorecard</h3>
+                    <p class="text-xs text-blue-700">Detailed breakdown of Initial and Final validations conducted by each QA team member across filtered dates.</p>
+                </div>
+                <button onclick="exportProgressReportExcel()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-xs transition self-start sm:self-auto">
+                    Export QA Report (.xlsx)
+                </button>
+            </div>
+
+            <!-- QA Comparison Chart -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+                <h3 class="text-sm font-bold text-slate-800 mb-1">QA Specialists: Initial vs Final Validations Volume</h3>
+                <p class="text-xs text-slate-500 mb-4">Comparison of throughput handled by each QA officer</p>
+                <div class="h-64">
+                    <canvas id="chart-qa-comparison"></canvas>
+                </div>
+            </div>
+
+            <!-- QA Data Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800">QA Specialists Output Matrix</h3>
+                    <span class="text-xs text-slate-400">Values update based on active date filters</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                                <th class="px-4 py-3">QA Specialist</th>
+                                <th class="px-4 py-3 text-right">Initial Handled</th>
+                                <th class="px-4 py-3 text-right text-emerald-700">Initial Valid</th>
+                                <th class="px-4 py-3 text-right text-rose-700">Initial Invalid</th>
+                                <th class="px-4 py-3 text-right text-slate-400">Initial Pending</th>
+                                <th class="px-4 py-3 text-right text-blue-700">Initial Valid %</th>
+                                <th class="px-4 py-3 text-right bg-sky-50/50">Final Handled</th>
+                                <th class="px-4 py-3 text-right text-emerald-700 bg-sky-50/50">Final Valid</th>
+                                <th class="px-4 py-3 text-right text-rose-700 bg-sky-50/50">Final Invalid</th>
+                                <th class="px-4 py-3 text-right bg-sky-50/50">Final Valid %</th>
+                                <th class="px-4 py-3 text-right text-blue-900 font-bold">Total All Handled</th>
+                                <th class="px-4 py-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qa-report-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                        <tfoot id="qa-report-tfoot">
+                            <!-- Populated by JS -->
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: DISPATCH TEAM REPORT                    -->
+        <!-- ============================================== -->
+        <div id="tab-dispatch-report" class="tab-panel hidden space-y-6">
+            <div class="bg-sky-50/60 border border-sky-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-bold text-sky-900">Dispatch Team Override & Resolution Scorecard</h3>
+                    <p class="text-xs text-sky-700">Detailed breakdown of invalid waybills reviewed and overridden by each Dispatch specialist.</p>
+                </div>
+                <button onclick="exportProgressReportExcel()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-sky-600 text-white rounded-lg hover:bg-sky-700 shadow-xs transition self-start sm:self-auto">
+                    Export Dispatch Report (.xlsx)
+                </button>
+            </div>
+
+            <!-- Dispatch Comparison Chart -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+                <h3 class="text-sm font-bold text-slate-800 mb-1">Dispatch Specialists: Override Resolution Output</h3>
+                <p class="text-xs text-slate-500 mb-4">Comparison of Override Done actions vs Pending by Dispatch specialist</p>
+                <div class="h-64">
+                    <canvas id="chart-dispatch-comparison"></canvas>
+                </div>
+            </div>
+
+            <!-- Dispatch Data Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800">Dispatch Specialists Action Matrix</h3>
+                    <span class="text-xs text-slate-400">Values update based on active date filters</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                                <th class="px-4 py-3">Dispatch Specialist</th>
+                                <th class="px-4 py-3 text-right">Total Actions Logged</th>
+                                <th class="px-4 py-3 text-right text-blue-700 font-bold">Override Done</th>
+                                <th class="px-4 py-3 text-right text-amber-600">Pending Review</th>
+                                <th class="px-4 py-3 text-right text-slate-400">No Action</th>
+                                <th class="px-4 py-3 text-right text-emerald-700 font-semibold">Override Resolution %</th>
+                                <th class="px-4 py-3 text-right text-sky-700 font-semibold">Share of All Overrides %</th>
+                                <th class="px-4 py-3 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dispatch-report-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                        <tfoot id="dispatch-report-tfoot">
+                            <!-- Populated by JS -->
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: WAYBILLS EXPLORER                       -->
+        <!-- ============================================== -->
+        <div id="tab-waybills" class="tab-panel hidden space-y-4">
+            <!-- Search & Table Controls -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-80">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="table-search" placeholder="Search waybill #, rider, remarks, QA..." class="block w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span>Show:</span>
+                        <select id="page-size-select" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white focus:ring-1 focus:ring-blue-500">
+                            <option value="15">15 rows</option>
+                            <option value="25" selected>25 rows</option>
+                            <option value="50">50 rows</option>
+                            <option value="100">100 rows</option>
+                        </select>
+                    </div>
+
+                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center text-xs font-medium px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-200">
+                        <svg class="w-3.5 h-3.5 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export Filtered
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 select-none">
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('date')" title="Actual Waybill Ingestion Date">Waybill Date ↕</th>
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('initial_val_date')" title="Initial QA Validation Date">Validation Date ↕</th>
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('waybill_no')">Waybill No. ↕</th>
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('rider')">Rider ↕</th>
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('qa_initial_status')">Initial QA ↕</th>
+                                <th class="px-3 py-3">Initial QA Agent</th>
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('dispatch_status')">Dispatch Status ↕</th>
+                                <th class="px-3 py-3">Overridden By</th>
+                                <th class="px-3 py-3 cursor-pointer hover:bg-slate-100" onclick="sortTable('final_val_status')">Final QA ↕</th>
+                                <th class="px-3 py-3">Final QA Agent</th>
+                                <th class="px-3 py-3">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="waybills-table-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Footer -->
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                    <div>
+                        Showing <span id="table-showing-start" class="font-bold text-slate-800">1</span> to <span id="table-showing-end" class="font-bold text-slate-800">25</span> of <span id="table-total-records" class="font-bold text-slate-800">2,797</span> records
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="table-btn-prev" onclick="prevPage()" class="px-3 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:pointer-events-none font-medium">
+                            Previous
+                        </button>
+                        <span id="table-current-page" class="font-semibold text-slate-700">1 of 112</span>
+                        <button id="table-btn-next" onclick="nextPage()" class="px-3 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:pointer-events-none font-medium">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 5: EXECUTIVE PROGRESS REPORT & EXCEL       -->
+        <!-- ============================================== -->
+        <div id="tab-progress-report" class="tab-panel hidden space-y-6">
+            <!-- Download Banner -->
+            <div class="bg-gradient-to-r from-brand-900 to-ice-800 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-ice-400/20 text-ice-200 border border-ice-400/30">
+                        Official Deliverable
+                    </div>
+                    <h2 class="text-xl font-bold text-white">Waybill QA & Dispatch Operational Progress Report</h2>
+                    <p class="text-xs text-brand-200 max-w-xl">
+                        A complete multi-tab formatted Excel workbook containing Executive Summary, Daily Breakdown, QA Specialist Scorecard, Dispatch Team Scorecard, and Full Waybill Records.
+                    </p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow transition text-center" title="Generate and download full Excel Progress Report">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Download Styled Excel (.xlsx)
+                    </button>
+                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-bold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur transition text-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Export Active View
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formatted Executive Summary Preview Card -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs space-y-6">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Task Progress Summary & Milestones</h3>
+                    <p class="text-xs text-slate-500">Operational performance review of waybill validation workflow</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Key Statistics Column -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                        <h4 class="text-xs font-bold text-brand-900 uppercase tracking-wider">Workflow Ingestion & Initial Validation</h4>
+                        <ul class="text-xs space-y-2 text-slate-700">
+                            <li class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-slate-500">Total Waybills Ingested:</span>
+                                <span id="rep-tot-waybills" class="font-bold text-slate-900">2,797</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-slate-500">Initial QA Evaluated:</span>
+                                <span id="rep-tot-init-eval" class="font-bold text-blue-700">2,526 (90.3%)</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60 pl-3">
+                                <span class="text-slate-500">└ Initial Valid (Passed):</span>
+                                <span id="rep-tot-init-valid" class="font-bold text-emerald-600">1,716 (61.4%)</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60 pl-3">
+                                <span class="text-slate-500">└ Initial Invalid (Defects):</span>
+                                <span id="rep-tot-init-invalid" class="font-bold text-rose-600">810 (29.0%)</span>
+                            </li>
+                            <li class="flex justify-between py-1 pl-3">
+                                <span class="text-slate-500">└ Initial Pending (For Validation):</span>
+                                <span id="rep-tot-init-pend" class="font-bold text-amber-600">271 (9.7%)</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Dispatch & Final QA Column -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                        <h4 class="text-xs font-bold text-ice-900 uppercase tracking-wider">Dispatch Override & Final QA Signoff</h4>
+                        <ul class="text-xs space-y-2 text-slate-700">
+                            <li class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-slate-500">Invalid Waybills to Dispatch:</span>
+                                <span class="font-bold text-slate-900">810 (100%)</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60 pl-3">
+                                <span class="text-slate-500">└ Dispatch Override Done:</span>
+                                <span id="rep-tot-disp-override" class="font-bold text-blue-700">234 (28.9% resolved)</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60 pl-3">
+                                <span class="text-slate-500">└ Dispatch Override Pending:</span>
+                                <span id="rep-tot-disp-pend" class="font-bold text-amber-600">576 (71.1% in progress)</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60">
+                                <span class="text-slate-500">Final QA Validated:</span>
+                                <span id="rep-tot-final-eval" class="font-bold text-emerald-700">462 (100% of final evaluated)</span>
+                            </li>
+                            <li class="flex justify-between py-1 border-b border-slate-200/60 pl-3">
+                                <span class="text-slate-500">└ Final Valid (Approved):</span>
+                                <span id="rep-tot-final-valid" class="font-bold text-emerald-600">427 (92.4%)</span>
+                            </li>
+                            <li class="flex justify-between py-1 pl-3">
+                                <span class="text-slate-500">└ Final Invalid (Rejected):</span>
+                                <span id="rep-tot-final-invalid" class="font-bold text-rose-600">35 (7.6%)</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Observations and Key Findings -->
+                <div class="bg-blue-50/40 border border-blue-200/80 rounded-xl p-4 space-y-2">
+                    <h4 class="text-xs font-bold text-blue-900 uppercase tracking-wider">Key Operational Findings</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 mt-2">
+                        <div class="p-3 bg-white rounded-lg border border-blue-100">
+                            <span class="font-semibold text-blue-800">Initial QA Throughput:</span>
+                            <p class="mt-1">Yesha Nicholai Lao (799) and Julius Rod Dayag (700) lead Initial QA volume, representing over 53% of all initial reviews.</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-blue-100">
+                            <span class="font-semibold text-sky-800">Dispatch Intervention:</span>
+                            <p class="mt-1">Danica Faye Quintos (90), Daniel Madarable (87), and Kim Novero (66) logged 243 override actions, successfully converting 234 invalid waybills.</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-blue-100">
+                            <span class="font-semibold text-emerald-800">Final Approval Quality:</span>
+                            <p class="mt-1">92.4% of final evaluated waybills achieved Valid approval, indicating high recovery and validation precision after Dispatch review.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 6: CUSTOMIZABLE EXCEL REPORT BUILDER       -->
+        <!-- ============================================== -->
+        <div id="tab-custom-report" class="tab-panel hidden space-y-6">
+            <!-- Header Banner with Presets -->
+            <div class="bg-gradient-to-r from-brand-900 via-blue-900 to-ice-800 rounded-2xl p-6 text-white shadow-md space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-400/20 text-ice-200 border border-blue-400/30">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                            Dynamic Report Generator
+                        </div>
+                        <h2 class="text-xl font-bold text-white mt-1">Customizable Excel Report Builder</h2>
+                        <p class="text-xs text-brand-200 max-w-2xl mt-1">
+                            Build exact, tailored Excel spreadsheets on-demand. Choose specific workflow filters (e.g., Invalid without Dispatch override), select only the columns your stakeholders need (e.g., Waybill ID, Rider, Initial Validator), preview live matching records, and download instantly.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="downloadCustomExcelReport()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition" title="Download Custom Excel (.xlsx)">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Download Custom Excel (.xlsx)
+                        </button>
+                        <button onclick="downloadCustomCSVReport()" class="inline-flex items-center px-3 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 transition">
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1-Click Operational Presets -->
+                <div class="pt-3 border-t border-white/15">
+                    <div class="text-[11px] font-bold text-ice-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        One-Click Quick Presets
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <!-- User's exact prompt preset -->
+                        <button onclick="applyCustomReportPreset('invalid_pending_override')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-900 shadow-sm transition flex items-center gap-1.5">
+                            <span>🚨</span> Invalid & Not Overridden Yet (Waybill ID + Rider + Validator)
+                        </button>
+                        <button onclick="applyCustomReportPreset('pending_initial_qa')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5">
+                            <span>⏳</span> Pending Initial QA
+                        </button>
+                        <button onclick="applyCustomReportPreset('overridden_awaiting_final')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5">
+                            <span>🔄</span> Overridden Awaiting Final QA
+                        </button>
+                        <button onclick="applyCustomReportPreset('final_qa_rejected')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5">
+                            <span>❌</span> Final QA Rejected
+                        </button>
+                        <button onclick="applyCustomReportPreset('user_minimal')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5">
+                            <span>👤</span> Minimal ID + Rider + Validator
+                        </button>
+                        <button onclick="applyCustomReportPreset('all_records_all_cols')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/15 text-ice-200 border border-white/10 transition">
+                            All Columns
+                        </button>
+                        <button onclick="resetCustomReportBuilder()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition">
+                            ↺ Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Controls: 1. Filter Criteria & 2. Column Selection -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Filter Criteria (5 cols) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">1</span>
+                            <h3 class="text-sm font-bold text-slate-900">Define Filter Conditions</h3>
+                        </div>
+                        <span id="custom-filter-match-pill" class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                            - Matching
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <!-- Date Filter -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Validation Work Date / Day</label>
+                            <select id="cr-filter-date" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">All Dates (Full Dataset)</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Initial QA Status -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Initial QA Validation Status</label>
+                            <select id="cr-filter-initial" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">All Initial Statuses</option>
+                                <option value="Invalid">❌ Invalid Only (Defects Flagged)</option>
+                                <option value="Valid">✓ Valid Only (Passed Initial)</option>
+                                <option value="For Validation">⏳ For Validation (Pending QA)</option>
+                            </select>
+                        </div>
+
+                        <!-- Dispatch Status (with special NOT_OVERRIDDEN option) -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Dispatch Override Status</label>
+                            <select id="cr-filter-dispatch" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">All Dispatch Statuses</option>
+                                <option value="NOT_OVERRIDDEN">🚨 Not Overridden Yet (Pending / No Action)</option>
+                                <option value="Override Done">✓ Override Done (Resolved by Dispatch)</option>
+                                <option value="Pending">⏳ Pending Dispatch Review</option>
+                                <option value="No Action">∅ No Action</option>
+                            </select>
+                        </div>
+
+                        <!-- Final QA Status -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Final QA Status</label>
+                            <select id="cr-filter-final" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">All Final Statuses</option>
+                                <option value="Valid">✓ Valid (Final Approved)</option>
+                                <option value="Invalid">❌ Invalid (Final Rejected)</option>
+                                <option value="PENDING">⏳ Awaiting Final Review (Pending)</option>
+                            </select>
+                        </div>
+
+                        <!-- Initial QA Specialist -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Initial QA Validator</label>
+                            <select id="cr-filter-qa" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">All QA Specialists</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Dispatch Specialist -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Dispatch Specialist</label>
+                            <select id="cr-filter-dispatcher" onchange="onCustomReportConfigChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">All Dispatch Specialists</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Search keyword -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Keyword Search (Rider, Waybill #, Remarks)</label>
+                            <div class="relative">
+                                <input type="text" id="cr-search-keyword" oninput="onCustomReportConfigChange()" placeholder="e.g. blurred ID, specific rider, 261..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs">
+                                <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Column Selection & Export Config (7 cols) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">2</span>
+                            <h3 class="text-sm font-bold text-slate-900">Choose Columns to Include</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="setCustomReportColumns('all')" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 transition">Select All</button>
+                            <span class="text-slate-300">•</span>
+                            <button onclick="setCustomReportColumns('none')" class="text-[11px] font-medium text-slate-500 hover:text-slate-700 transition">Clear All</button>
+                            <span class="text-slate-300">•</span>
+                            <button onclick="setCustomReportColumns('user_minimal')" class="text-[11px] font-bold text-amber-600 hover:text-amber-800 transition">ID + Rider + Validator Only</button>
+                        </div>
+                    </div>
+
+                    <!-- Column Checkboxes Grouped by Stage -->
+                    <div id="cr-column-selector-container" class="space-y-3">
+                        <!-- Populated dynamically with checkboxes -->
+                    </div>
+
+                    <!-- Step 3: Export Options -->
+                    <div class="pt-4 border-t border-slate-100 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">3</span>
+                            <h3 class="text-sm font-bold text-slate-900">Workbook & File Settings</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Excel File Name (.xlsx)</label>
+                                <input type="text" id="cr-filename" value="Custom_Waybill_Report.xlsx" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Sheet Tab Name</label>
+                                <input type="text" id="cr-sheetname" value="Waybills_Report" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-4 text-xs pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="cr-opt-kpi-summary" checked class="rounded text-blue-600 focus:ring-0">
+                                <span class="text-slate-700 font-medium">Include Executive KPI Summary Tab</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="cr-opt-blue-styling" checked class="rounded text-blue-600 focus:ring-0">
+                                <span class="text-slate-700 font-medium">Auto-fit Column Widths & Corporate Blue Headers</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Preview Card -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-bold text-slate-900">Live Report Preview</h3>
+                            <span id="cr-preview-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                                0 Matching Records
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Showing first 10 rows formatted with your active column selection</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="downloadCustomExcelReport()" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Download Excel (.xlsx)
+                        </button>
+                        <button onclick="downloadCustomCSVReport()" class="inline-flex items-center px-3 py-2 rounded-xl font-semibold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            Download CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Table Container -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-xs" id="cr-preview-table">
+                        <thead class="bg-slate-50" id="cr-preview-thead">
+                            <!-- Populated dynamically with chosen columns -->
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white" id="cr-preview-tbody">
+                            <!-- Populated dynamically with records -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                    <span id="cr-preview-footer-note">Showing preview of matching records. Download file for complete dataset.</span>
+                    <span id="cr-cols-count-note" class="font-medium text-blue-700">6 columns selected</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>Waybill QA & Dispatch Operational System • Corporate Light Blue Theme</span>
+            <span>Live Data Sync • Exportable to Excel (.xlsx)</span>
+        </div>
+    </footer>
+
+    <!-- WAYBILL DETAIL MODAL -->
+    <div id="waybill-modal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Waybill Lifecycle Details</span>
+                    <h3 class="text-lg font-black text-slate-900 font-mono" id="modal-wb-no">-</h3>
+                </div>
+                <button onclick="closeWaybillModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div><span class="text-slate-400">Rider:</span> <span id="modal-rider" class="font-semibold text-slate-800">-</span></div>
+                    <div><span class="text-slate-400">Actual Waybill Date:</span> <span id="modal-date" class="font-semibold text-slate-800">-</span></div>
+                </div>
+
+                <!-- Initial QA Stage -->
+                <div class="p-3 rounded-lg border border-blue-100 bg-blue-50/30 space-y-1.5">
+                    <div class="font-bold text-blue-900 flex items-center justify-between">
+                        <span>1. Initial QA Validation</span>
+                        <span id="modal-init-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white text-blue-700 border border-blue-200">-</span>
+                    </div>
+                    <div class="text-slate-600">Validation Date: <span id="modal-init-date" class="font-semibold text-blue-700">-</span> • Validated By: <span id="modal-init-by" class="font-semibold text-slate-800">-</span></div>
+                    <div class="text-slate-500">Remarks: <span id="modal-init-remarks" class="font-medium text-slate-700">-</span></div>
+                </div>
+
+                <!-- Dispatch Stage -->
+                <div class="p-3 rounded-lg border border-sky-100 bg-sky-50/30 space-y-1.5">
+                    <div class="font-bold text-sky-900 flex items-center justify-between">
+                        <span>2. Dispatch Review / Override</span>
+                        <span id="modal-disp-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white text-sky-700 border border-sky-200">-</span>
+                    </div>
+                    <div class="text-slate-600">Date: <span id="modal-disp-date" class="font-medium">-</span> • Overridden By: <span id="modal-disp-by" class="font-semibold text-slate-800">-</span></div>
+                    <div class="text-slate-500">(Old MDC) For Creation: <span id="modal-old-mdc" class="font-medium text-slate-700">-</span></div>
+                </div>
+
+                <!-- Final QA Stage -->
+                <div class="p-3 rounded-lg border border-emerald-100 bg-emerald-50/30 space-y-1.5">
+                    <div class="font-bold text-emerald-900 flex items-center justify-between">
+                        <span>3. Final QA Validation</span>
+                        <span id="modal-final-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-white text-emerald-700 border border-emerald-200">-</span>
+                    </div>
+                    <div class="text-slate-600">Date: <span id="modal-final-date" class="font-medium">-</span> • Validated By: <span id="modal-final-by" class="font-semibold text-slate-800">-</span></div>
+                    <div class="text-slate-500">Remarks: <span id="modal-final-remarks" class="font-medium text-slate-700">-</span></div>
+                </div>
+
+                <!-- Pharma Stage -->
+                <div class="p-2.5 rounded-lg border border-slate-100 bg-slate-50">
+                    <span class="text-slate-400">Pharma Remarks:</span> <span id="modal-pharma-remarks" class="font-medium text-slate-700">-</span>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeWaybillModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition">
+                    Close Details
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-notification" class="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white font-medium text-xs bg-blue-600 transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-none">
+        Notification
+    </div>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
