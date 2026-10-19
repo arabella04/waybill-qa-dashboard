@@ -144,11 +144,14 @@ function initFilterControls() {
 }
 
 function renderDatePills() {
-    const uniqueDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))].sort((a, b) => {
-        const da = a.split('/').map(Number);
-        const db = b.split('/').map(Number);
-        return (da[0] * 100 + da[1]) - (db[0] * 100 + db[1]);
-    });
+    const rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
+    const uniqueDates = typeof sortDateStrings === 'function'
+        ? sortDateStrings(rawDates)
+        : rawDates.sort((a, b) => {
+            const [m1, d1, y1] = a.split('/').map(Number);
+            const [m2, d2, y2] = b.split('/').map(Number);
+            return (y1 - y2) || (m1 - m2) || (d1 - d2);
+        });
 
     const datePillsContainer = document.getElementById('date-pills');
     if (!datePillsContainer) return;
@@ -166,7 +169,8 @@ function renderDatePills() {
     allBtn.onclick = () => selectDate('ALL');
     datePillsContainer.appendChild(allBtn);
 
-    const todayStr = '10/13/2026';
+    // Dynamically mark the newest/latest date of the waybills as Today
+    const todayStr = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : '';
 
     uniqueDates.forEach(d => {
         const rowsForDate = allData.filter(r => r[filters.dateField] === d);
