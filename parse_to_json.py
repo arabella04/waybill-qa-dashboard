@@ -31,8 +31,15 @@ for row in lines[9:]:
     rec = {
         headers[i]: row[i].strip() for i in range(16)
     }
-    # Only include non-empty rows
+    # Only include valid non-header data rows
     if any(rec.values()):
+        wb = rec.get('waybill_no', '').strip().lower()
+        d_val = rec.get('date', '').strip().lower()
+        init_d = rec.get('initial_val_date', '').strip().lower()
+        if wb in ('waybill no.', 'waybill no', 'waybill', 'waybill_no', 'waybill number') and d_val in ('date', 'date:'):
+            continue
+        if init_d in ('initial validation date', 'initial val date', 'validation date'):
+            continue
         records.append(rec)
 
 print(f"Parsed {len(records)} records")

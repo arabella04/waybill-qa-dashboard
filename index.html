@@ -88,7 +88,7 @@
                         <p class="text-xs text-brand-200 flex items-center gap-2">
                             <span>Google Sheets: <a href="https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/edit?usp=sharing" target="_blank" class="text-ice-200 hover:text-white underline">1l_WgHYJno...</a></span>
                             <span>•</span>
-                            <span id="kpi-total-records-header">2,797 Total Records</span>
+                            <span id="kpi-total-records-header">Loading Total Records...</span>
                         </p>
                     </div>
                 </div>
@@ -132,16 +132,31 @@
     <!-- FILTER BAR -->
     <section class="bg-white border-b border-slate-200/80 shadow-xs sticky top-16 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
                 
-                <!-- Date Filter Section (Day Selection) -->
+                <!-- Date Filter Section (Dropdown) -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1" title="Waybill Initial Validation Date">
-                        <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        Validation Day:
+                    <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1.5 shrink-0" title="Select operational day">
+                        <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span id="date-filter-label">Validation Date:</span>
                     </span>
-                    <div id="date-pills" class="flex flex-wrap items-center gap-1.5">
-                        <!-- Populated by JS -->
+
+                    <!-- Date Dropdown -->
+                    <div class="relative min-w-[210px] sm:min-w-[230px]">
+                        <select id="filter-date-select" class="w-full text-xs font-semibold rounded-lg border-slate-300 bg-white text-slate-800 py-1.5 pl-3 pr-8 shadow-xs hover:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition cursor-pointer">
+                            <option value="ALL">All Days (Loading...)</option>
+                        </select>
+                    </div>
+
+                    <!-- Quick Shortcuts -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button type="button" id="btn-quick-date-all" onclick="selectDate('ALL')" class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition shadow-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700">
+                            All Days
+                        </button>
+                        <button type="button" id="btn-quick-date-today" onclick="selectDate('TODAY')" class="px-2.5 py-1 text-xs font-bold rounded-lg border transition shadow-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Today
+                        </button>
                     </div>
                 </div>
 
@@ -225,7 +240,7 @@
                     <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Waybills</h3>
                 </div>
                 <div class="flex items-baseline gap-2 mt-2">
-                    <span id="kpi-total-waybills" class="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">2,797</span>
+                    <span id="kpi-total-waybills" class="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">--</span>
                     <span class="text-xs font-semibold text-ice-700 bg-ice-100 px-2 py-0.5 rounded-full">100% Ingested</span>
                 </div>
                 <p id="kpi-total-sub" class="text-xs text-slate-500 mt-2 truncate">Total registered across all dates</p>

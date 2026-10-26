@@ -88,6 +88,11 @@ function initData() {
 }
 
 function setupDashboard() {
+    const headerEl = document.getElementById('kpi-total-records-header');
+    if (headerEl && allData) {
+        headerEl.textContent = `${allData.length.toLocaleString()} Total Records`;
+    }
+
     initFilterControls();
     initCustomReportBuilder();
     setupEventListeners();
@@ -143,7 +148,7 @@ function initFilterControls() {
     }
 }
 
-function renderDatePills() {
+function renderDateDropdown() {
     const rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
     const uniqueDates = typeof sortDateStrings === 'function'
         ? sortDateStrings(rawDates)
@@ -153,57 +158,93 @@ function renderDatePills() {
             return (y1 - y2) || (m1 - m2) || (d1 - d2);
         });
 
-    const datePillsContainer = document.getElementById('date-pills');
-    if (!datePillsContainer) return;
-    
-    datePillsContainer.innerHTML = '';
-    
-    // "All Days" pill
-    const allBtn = document.createElement('button');
-    const isAllActive = filters.date === 'ALL';
-    allBtn.className = `date-pill px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 border ${
-        isAllActive ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:bg-sky-50'
-    }`;
-    allBtn.textContent = 'All Days';
-    allBtn.dataset.date = 'ALL';
-    allBtn.onclick = () => selectDate('ALL');
-    datePillsContainer.appendChild(allBtn);
+    const dateSelect = document.getElementById('filter-date-select');
+    const labelSpan = document.getElementById('date-filter-label');
+    const btnAll = document.getElementById('btn-quick-date-all');
+    const btnToday = document.getElementById('btn-quick-date-today');
+
+    if (labelSpan) {
+        if (filters.dateField === 'initial_val_date') {
+            labelSpan.textContent = 'Validation Date:';
+        } else if (filters.dateField === 'date') {
+            labelSpan.textContent = 'Waybill Date:';
+        } else if (filters.dateField === 'dispatch_date') {
+            labelSpan.textContent = 'Dispatch Date:';
+        } else if (filters.dateField === 'final_val_date') {
+            labelSpan.textContent = 'Final Val Date:';
+        } else {
+            labelSpan.textContent = 'Date:';
+        }
+    }
 
     // Dynamically mark the newest/latest date of the waybills as Today
     const todayStr = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : '';
 
-    uniqueDates.forEach(d => {
-        const rowsForDate = allData.filter(r => r[filters.dateField] === d);
-        const count = rowsForDate.length;
-        const relatedWbDates = [...new Set(rowsForDate.map(r => r.date).filter(Boolean))];
-        const isSelected = filters.date === d;
+    if (dateSelect) {
+        dateSelect.innerHTML = '';
 
-        const btn = document.createElement('button');
-        btn.className = `date-pill px-2.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 border flex items-center gap-1.5 ${
-            isSelected 
-                ? 'bg-blue-600 text-white border-blue-600 shadow-sm font-semibold' 
+        // All Days option
+        const allOpt = document.createElement('option');
+        allOpt.value = 'ALL';
+        allOpt.textContent = `All Days (${allData.length.toLocaleString()} total waybills)`;
+        dateSelect.appendChild(allOpt);
+
+        // Sort descending (newest dates first) so today and recent days are at the top
+        const descendingDates = [...uniqueDates].reverse();
+
+        descendingDates.forEach(d => {
+            const rowsForDate = allData.filter(r => r[filters.dateField] === d);
+            const count = rowsForDate.length;
+            const opt = document.createElement('option');
+            opt.value = d;
+            if (d === todayStr) {
+                opt.textContent = `${d} (TODAY) - ${count.toLocaleString()} waybills`;
+            } else {
+                opt.textContent = `${d} - ${count.toLocaleString()} waybills`;
+            }
+            dateSelect.appendChild(opt);
+        });
+
+        // Ensure selection matches filter
+        dateSelect.value = filters.date || 'ALL';
+    }
+
+    // Update Quick Action button styles
+    if (btnAll) {
+        const isAll = filters.date === 'ALL';
+        btnAll.className = `px-2.5 py-1 text-xs font-semibold rounded-lg border transition shadow-xs ${
+            isAll
+                ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:bg-sky-50'
         }`;
+    }
 
-        let labelHtml = `<span>${d}</span>`;
-        if (d === todayStr) {
-            labelHtml += `<span class="text-[9px] px-1 py-0.2 rounded font-extrabold uppercase ${isSelected ? 'bg-white text-blue-700' : 'bg-emerald-500 text-white'}">Today</span>`;
-        }
-        labelHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isSelected ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-500'}">${count}</span>`;
+    if (btnToday) {
+        const isToday = filters.date === todayStr && todayStr !== '';
+        btnToday.className = `px-2.5 py-1 text-xs font-bold rounded-lg border transition shadow-xs flex items-center gap-1 ${
+            isToday
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+        }`;
+        btnToday.title = todayStr ? `Latest Date: ${todayStr}` : 'No date available';
+    }
+}
 
-        btn.innerHTML = labelHtml;
-        btn.dataset.date = d;
-        btn.title = filters.dateField === 'initial_val_date' 
-            ? `Validation Date: ${d} (Actual Waybill Date: ${relatedWbDates.join(', ')}) • ${count} waybills`
-            : `${d} • ${count} waybills`;
-        btn.onclick = () => selectDate(d);
-        datePillsContainer.appendChild(btn);
-    });
+function renderDatePills() {
+    renderDateDropdown();
 }
 
 function selectDate(dateVal) {
-    filters.date = dateVal;
-    renderDatePills();
+    if (dateVal === 'TODAY') {
+        const rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
+        const uniqueDates = typeof sortDateStrings === 'function'
+            ? sortDateStrings(rawDates)
+            : rawDates.sort();
+        filters.date = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : 'ALL';
+    } else {
+        filters.date = dateVal;
+    }
+    renderDateDropdown();
     applyFilters();
 }
 
@@ -311,7 +352,7 @@ function setupEventListeners() {
 
 function resetAllFilters() {
     filters.date = 'ALL';
-    filters.dateField = 'date';
+    filters.dateField = 'initial_val_date';
     filters.qa = 'ALL';
     filters.dispatch = 'ALL';
     filters.initialStatus = 'ALL';
@@ -338,7 +379,7 @@ function resetAllFilters() {
     if (finalStatSelect) finalStatSelect.value = 'ALL';
 
     const dateFieldSelect = document.getElementById('filter-date-field');
-    if (dateFieldSelect) dateFieldSelect.value = 'date';
+    if (dateFieldSelect) dateFieldSelect.value = 'initial_val_date';
 
     selectDate('ALL');
 }
@@ -2052,6 +2093,11 @@ function syncGoogleSheetDirect(isManual = true) {
             allData = newRecords;
             lastSyncTimestamp = new Date();
             
+            const headerEl = document.getElementById('kpi-total-records-header');
+            if (headerEl) {
+                headerEl.textContent = `${allData.length.toLocaleString()} Total Records`;
+            }
+
             initFilterControls();
             initCustomReportBuilder();
             applyFilters();

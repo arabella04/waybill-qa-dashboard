@@ -182,7 +182,13 @@ for r in data:
     elif r['final_val_status'] == 'Invalid':
         st['final_invalid'] += 1
 
-dates_sorted = sorted([d for d in by_val_date.keys() if d != 'Pending'], key=lambda x: [int(p) for p in x.split('/')])
+def is_valid_slash_date(val):
+    if not val or val == 'Pending':
+        return False
+    parts = val.split('/')
+    return len(parts) == 3 and all(p.isdigit() for p in parts)
+
+dates_sorted = sorted([d for d in by_val_date.keys() if is_valid_slash_date(d)], key=lambda x: [int(p) for p in x.split('/')])
 if 'Pending' in by_val_date:
     dates_sorted.append('Pending')
 

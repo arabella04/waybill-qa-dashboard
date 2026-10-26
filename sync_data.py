@@ -37,11 +37,27 @@ def sync():
             row = row + [''] * (16 - len(row))
         rec = {headers[i]: row[i].strip() for i in range(16)}
         if any(rec.values()):
+            wb = rec.get('waybill_no', '').strip().lower()
+            d_val = rec.get('date', '').strip().lower()
+            init_d = rec.get('initial_val_date', '').strip().lower()
+            if wb in ('waybill no.', 'waybill no', 'waybill', 'waybill_no', 'waybill number') and d_val in ('date', 'date:'):
+                continue
+            if init_d in ('initial validation date', 'initial val date', 'validation date'):
+                continue
             records.append(rec)
     
     with open(JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(records, f, indent=2)
     print(f"Parsed and updated {len(records)} records in {JSON_PATH}")
+
+    # Regenerate data.js
+    data_js_path = os.path.join(BASE_DIR, "data.js")
+    with open(data_js_path, 'w', encoding='utf-8') as f:
+        f.write("// Waybill Raw Records Data\n")
+        f.write("window.WAYBILL_RECORDS = ")
+        json.dump(records, f)
+        f.write(";\n")
+    print(f"Updated {data_js_path}")
 
     # Run Excel generator
     gen_script = os.path.join(BASE_DIR, "generate_excel_report.py")
