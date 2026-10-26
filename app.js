@@ -149,7 +149,16 @@ function initFilterControls() {
 }
 
 function renderDateDropdown() {
-    const rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
+    let rawDates;
+    if (filters.dateField === 'initial_val_date') {
+        rawDates = [...new Set([
+            ...allData.map(r => r.initial_val_date),
+            ...allData.filter(r => r.final_val_status === 'Valid' || r.final_val_status === 'Invalid').map(r => r.final_val_date)
+        ].filter(Boolean))];
+    } else {
+        rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
+    }
+
     const uniqueDates = typeof sortDateStrings === 'function'
         ? sortDateStrings(rawDates)
         : rawDates.sort((a, b) => {
@@ -193,8 +202,13 @@ function renderDateDropdown() {
         const descendingDates = [...uniqueDates].reverse();
 
         descendingDates.forEach(d => {
-            const rowsForDate = allData.filter(r => r[filters.dateField] === d);
-            const count = rowsForDate.length;
+            let count;
+            if (filters.dateField === 'initial_val_date') {
+                count = allData.filter(r => r.initial_val_date === d || (r.final_val_date === d && (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid'))).length;
+            } else {
+                count = allData.filter(r => r[filters.dateField] === d).length;
+            }
+
             const opt = document.createElement('option');
             opt.value = d;
             if (d === todayStr) {
@@ -419,8 +433,15 @@ function applyFilters() {
     filteredData = allData.filter(r => {
         // Date Filter
         if (filters.date !== 'ALL') {
-            const targetDate = r[filters.dateField];
-            if (targetDate !== filters.date) return false;
+            if (filters.dateField === 'initial_val_date') {
+                // Validation Date covers both Initial and Final QA validation conducted on this date
+                const hasInitialOnDate = r.initial_val_date === filters.date;
+                const hasFinalOnDate = r.final_val_date === filters.date && (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid');
+                if (!hasInitialOnDate && !hasFinalOnDate) return false;
+            } else {
+                const targetDate = r[filters.dateField];
+                if (targetDate !== filters.date) return false;
+            }
         }
 
         // QA Filter (checks if person acted as initial or final QA)
@@ -529,13 +550,21 @@ function updateKpiCards() {
     const total = filteredData.length;
 
     // Initial QA
-    const initValid = filteredData.filter(r => r.qa_initial_status === 'Valid').length;
-    const initInvalid = filteredData.filter(r => r.qa_initial_status === 'Invalid').length;
-    const initPending = filteredData.filter(r => r.qa_initial_status === 'For Validation').length;
+    let initValid, initInvalid, initPending;
+    if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') {
+        initValid = filteredData.filter(r => r.initial_val_date === filters.date && r.qa_initial_status === 'Valid').length;
+        initInvalid = filteredData.filter(r => r.initial_val_date === filters.date && r.qa_initial_status === 'Invalid').length;
+        initPending = filteredData.filter(r => r.initial_val_date === filters.date && r.qa_initial_status === 'For Validation').length;
+    } else {
+        initValid = filteredData.filter(r => r.qa_initial_status === 'Valid').length;
+        initInvalid = filteredData.filter(r => r.qa_initial_status === 'Invalid').length;
+        initPending = filteredData.filter(r => r.qa_initial_status === 'For Validation').length;
+    }
     const initTotalDone = initValid + initInvalid;
-    const initValidPct = total > 0 ? ((initValid / total) * 100).toFixed(1) : 0;
-    const initInvalidPct = total > 0 ? ((initInvalid / total) * 100).toFixed(1) : 0;
-    const initPendingPct = total > 0 ? ((initPending / total) * 100).toFixed(1) : 0;
+    const initHandledTotal = initValid + initInvalid + initPending;
+    const initValidPct = initHandledTotal > 0 ? ((initValid / initHandledTotal) * 100).toFixed(1) : 0;
+    const initInvalidPct = initHandledTotal > 0 ? ((initInvalid / initHandledTotal) * 100).toFixed(1) : 0;
+    const initPendingPct = initHandledTotal > 0 ? ((initPending / initHandledTotal) * 100).toFixed(1) : 0;
 
     // Dispatch
     const dispOverride = filteredData.filter(r => r.dispatch_status === 'Override Done').length;
@@ -544,8 +573,14 @@ function updateKpiCards() {
     const dispResolutionRate = initInvalid > 0 ? ((dispOverride / initInvalid) * 100).toFixed(1) : 0;
 
     // Final QA
-    const finalValid = filteredData.filter(r => r.final_val_status === 'Valid').length;
-    const finalInvalid = filteredData.filter(r => r.final_val_status === 'Invalid').length;
+    let finalValid, finalInvalid;
+    if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') {
+        finalValid = filteredData.filter(r => r.final_val_date === filters.date && r.final_val_status === 'Valid').length;
+        finalInvalid = filteredData.filter(r => r.final_val_date === filters.date && r.final_val_status === 'Invalid').length;
+    } else {
+        finalValid = filteredData.filter(r => r.final_val_status === 'Valid').length;
+        finalInvalid = filteredData.filter(r => r.final_val_status === 'Invalid').length;
+    }
     const finalTotal = finalValid + finalInvalid;
     const finalValidRate = finalTotal > 0 ? ((finalValid / finalTotal) * 100).toFixed(1) : 0;
 
@@ -841,8 +876,22 @@ function renderQAReportTable() {
         if (filters.qa !== 'ALL' && filters.qa !== qa) return;
 
         // Data for this QA in current filtered set
-        const initRows = filteredData.filter(r => r.initial_validated_by === qa);
-        const finalRows = filteredData.filter(r => r.final_validated_by === qa);
+        const initRows = filteredData.filter(r => {
+            if (r.initial_validated_by !== qa) return false;
+            if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') {
+                return r.initial_val_date === filters.date;
+            }
+            return true;
+        });
+
+        const finalRows = filteredData.filter(r => {
+            if (r.final_validated_by !== qa) return false;
+            if (r.final_val_status !== 'Valid' && r.final_val_status !== 'Invalid') return false;
+            if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') {
+                return r.final_val_date === filters.date;
+            }
+            return true;
+        });
 
         const initHandled = initRows.length;
         const initValid = initRows.filter(r => r.qa_initial_status === 'Valid').length;
@@ -850,9 +899,9 @@ function renderQAReportTable() {
         const initPending = initRows.filter(r => r.qa_initial_status === 'For Validation').length;
         const initValidPct = initHandled > 0 ? ((initValid / initHandled) * 100).toFixed(1) : 0;
 
-        const finalHandled = finalRows.length;
         const finalValid = finalRows.filter(r => r.final_val_status === 'Valid').length;
         const finalInvalid = finalRows.filter(r => r.final_val_status === 'Invalid').length;
+        const finalHandled = finalValid + finalInvalid;
         const finalValidPct = finalHandled > 0 ? ((finalValid / finalHandled) * 100).toFixed(1) : 0;
 
         const combined = initHandled + finalHandled;
@@ -937,8 +986,22 @@ function renderQACharts() {
         ...allData.map(r => r.final_validated_by)
     ].filter(Boolean))].sort();
 
-    const initData = qaNames.map(name => filteredData.filter(r => r.initial_validated_by === name).length);
-    const finalData = qaNames.map(name => filteredData.filter(r => r.final_validated_by === name).length);
+    const initData = qaNames.map(name => {
+        return filteredData.filter(r => {
+            if (r.initial_validated_by !== name) return false;
+            if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') return r.initial_val_date === filters.date;
+            return true;
+        }).length;
+    });
+
+    const finalData = qaNames.map(name => {
+        return filteredData.filter(r => {
+            if (r.final_validated_by !== name) return false;
+            if (r.final_val_status !== 'Valid' && r.final_val_status !== 'Invalid') return false;
+            if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') return r.final_val_date === filters.date;
+            return true;
+        }).length;
+    });
 
     charts.qaComparison = new Chart(ctxQA, {
         type: 'bar',
@@ -1077,8 +1140,33 @@ function renderQATrendLineChart() {
 
     if (qaNames.length === 0) return;
 
-    // 2. Determine all distinct sorted validation dates in the dataset
-    const allValDates = sortDateStrings([...new Set(allData.map(r => r.initial_val_date).filter(Boolean))]);
+    // 2. Build discrete validation actions based on selected metric
+    let trendItems = [];
+    if (qaTrendState.metric === 'initial') {
+        trendItems = allData.filter(r => r.initial_val_date && r.initial_validated_by).map(r => ({
+            date: r.initial_val_date,
+            qa: r.initial_validated_by,
+            type: 'initial'
+        }));
+    } else if (qaTrendState.metric === 'final') {
+        trendItems = allData.filter(r => r.final_val_date && r.final_validated_by && (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid')).map(r => ({
+            date: r.final_val_date,
+            qa: r.final_validated_by,
+            type: 'final'
+        }));
+    } else {
+        // 'all': both initial and final validation events recorded by their respective date
+        allData.forEach(r => {
+            if (r.initial_val_date && r.initial_validated_by) {
+                trendItems.push({ date: r.initial_val_date, qa: r.initial_validated_by, type: 'initial' });
+            }
+            if (r.final_val_date && r.final_validated_by && (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid')) {
+                trendItems.push({ date: r.final_val_date, qa: r.final_validated_by, type: 'final' });
+            }
+        });
+    }
+
+    const allValDates = sortDateStrings([...new Set(trendItems.map(item => item.date))]);
     if (allValDates.length === 0) return;
 
     const maxDateStr = allValDates[allValDates.length - 1];
@@ -1089,80 +1177,80 @@ function renderQATrendLineChart() {
     const sevenDaysAgo = new Date(maxDateObj.getTime() - 7 * 24 * 60 * 60 * 1000);
     const targetDayLastWeekStr = `${sevenDaysAgo.getMonth() + 1}/${sevenDaysAgo.getDate()}/${sevenDaysAgo.getFullYear()}`;
 
-    // 3. Filter records according to qaTrendState.range
-    let trendPool = allData.filter(r => r.initial_val_date);
+    // 3. Filter items according to qaTrendState.range
+    let trendPool = trendItems;
     const currentWeekInfo = getIsoWeek(maxDateObj);
 
     if (qaTrendState.range === 'today') {
-        trendPool = trendPool.filter(r => r.initial_val_date === maxDateStr);
+        trendPool = trendPool.filter(item => item.date === maxDateStr);
     } else if (qaTrendState.range === 'yesterday') {
-        trendPool = trendPool.filter(r => r.initial_val_date === secondLatestDateStr);
+        trendPool = trendPool.filter(item => item.date === secondLatestDateStr);
     } else if (qaTrendState.range === 'day_last_week') {
-        const found = trendPool.filter(r => r.initial_val_date === targetDayLastWeekStr);
-        trendPool = found.length > 0 ? found : trendPool.filter(r => {
-            const d = parseDateStrToObj(r.initial_val_date);
+        const found = trendPool.filter(item => item.date === targetDayLastWeekStr);
+        trendPool = found.length > 0 ? found : trendPool.filter(item => {
+            const d = parseDateStrToObj(item.date);
             return d && d <= sevenDaysAgo;
         });
     } else if (qaTrendState.range === 'this_week') {
-        trendPool = trendPool.filter(r => {
-            const d = parseDateStrToObj(r.initial_val_date);
+        trendPool = trendPool.filter(item => {
+            const d = parseDateStrToObj(item.date);
             if (!d) return false;
             const w = getIsoWeek(d);
             return w.year === currentWeekInfo.year && w.week === currentWeekInfo.week;
         });
     } else if (qaTrendState.range === 'last_week') {
-        trendPool = trendPool.filter(r => {
-            const d = parseDateStrToObj(r.initial_val_date);
+        trendPool = trendPool.filter(item => {
+            const d = parseDateStrToObj(item.date);
             if (!d) return false;
             const w = getIsoWeek(d);
             return w.year === currentWeekInfo.year && w.week === currentWeekInfo.week - 1;
         });
     } else if (qaTrendState.range === 'this_month') {
-        trendPool = trendPool.filter(r => {
-            const d = parseDateStrToObj(r.initial_val_date);
+        trendPool = trendPool.filter(item => {
+            const d = parseDateStrToObj(item.date);
             if (!d) return false;
             return d.getFullYear() === maxDateObj.getFullYear() && d.getMonth() === maxDateObj.getMonth();
         });
     }
 
     // 4. Build time buckets according to qaTrendState.grouping
-    const bucketMap = new Map(); // key -> { label, records: [] }
+    const bucketMap = new Map(); // key -> { label, items: [] }
 
     if (qaTrendState.grouping === 'day') {
-        const poolDates = sortDateStrings([...new Set(trendPool.map(r => r.initial_val_date))]);
+        const poolDates = sortDateStrings([...new Set(trendPool.map(item => item.date))]);
         poolDates.forEach(dStr => {
             const dObj = parseDateStrToObj(dStr);
             const label = dObj ? formatDateWithDay(dObj) : dStr;
-            bucketMap.set(dStr, { label, records: [] });
+            bucketMap.set(dStr, { label, items: [] });
         });
-        trendPool.forEach(r => {
-            if (bucketMap.has(r.initial_val_date)) {
-                bucketMap.get(r.initial_val_date).records.push(r);
+        trendPool.forEach(item => {
+            if (bucketMap.has(item.date)) {
+                bucketMap.get(item.date).items.push(item);
             }
         });
     } else if (qaTrendState.grouping === 'week') {
         // Collect and sort all weeks
         const weekEntries = [];
-        trendPool.forEach(r => {
-            const d = parseDateStrToObj(r.initial_val_date);
+        trendPool.forEach(item => {
+            const d = parseDateStrToObj(item.date);
             if (!d) return;
             const w = getIsoWeek(d);
             const key = `${w.year}-W${String(w.week).padStart(2, '0')}`;
             if (!bucketMap.has(key)) {
-                bucketMap.set(key, { label: `Week ${w.week} (${w.year})`, records: [], sortVal: w.year * 100 + w.week });
+                bucketMap.set(key, { label: `Week ${w.week} (${w.year})`, items: [], sortVal: w.year * 100 + w.week });
             }
-            bucketMap.get(key).records.push(r);
+            bucketMap.get(key).items.push(item);
         });
     } else if (qaTrendState.grouping === 'month') {
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        trendPool.forEach(r => {
-            const d = parseDateStrToObj(r.initial_val_date);
+        trendPool.forEach(item => {
+            const d = parseDateStrToObj(item.date);
             if (!d) return;
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             if (!bucketMap.has(key)) {
-                bucketMap.set(key, { label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`, records: [], sortVal: key });
+                bucketMap.set(key, { label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`, items: [], sortVal: key });
             }
-            bucketMap.get(key).records.push(r);
+            bucketMap.get(key).items.push(item);
         });
     }
 
@@ -1178,15 +1266,8 @@ function renderQATrendLineChart() {
     // 5. Build line dataset for each QA specialist
     const datasets = qaNames.map((qa, idx) => {
         const counts = bucketKeys.map(k => {
-            const rows = bucketMap.get(k).records;
-            if (qaTrendState.metric === 'initial') {
-                return rows.filter(r => r.initial_validated_by === qa).length;
-            } else if (qaTrendState.metric === 'final') {
-                return rows.filter(r => r.final_validated_by === qa).length;
-            } else {
-                // total handled (initial or final)
-                return rows.filter(r => r.initial_validated_by === qa || r.final_validated_by === qa).length;
-            }
+            const items = bucketMap.get(k).items;
+            return items.filter(it => it.qa === qa).length;
         });
 
         const color = QA_COLORS[qa] || FALLBACK_PALETTE[idx % FALLBACK_PALETTE.length];
@@ -1986,15 +2067,24 @@ function exportProgressReportExcel() {
     ].filter(Boolean))].sort();
 
     qas.forEach(qa => {
-        const initRows = filteredData.filter(r => r.initial_validated_by === qa);
-        const finalRows = filteredData.filter(r => r.final_validated_by === qa);
+        const initRows = filteredData.filter(r => {
+            if (r.initial_validated_by !== qa) return false;
+            if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') return r.initial_val_date === filters.date;
+            return true;
+        });
+        const finalRows = filteredData.filter(r => {
+            if (r.final_validated_by !== qa) return false;
+            if (r.final_val_status !== 'Valid' && r.final_val_status !== 'Invalid') return false;
+            if (filters.date !== 'ALL' && filters.dateField === 'initial_val_date') return r.final_val_date === filters.date;
+            return true;
+        });
         const ih = initRows.length;
         const iv = initRows.filter(r => r.qa_initial_status === 'Valid').length;
         const ii = initRows.filter(r => r.qa_initial_status === 'Invalid').length;
         const ip = initRows.filter(r => r.qa_initial_status === 'For Validation').length;
-        const fh = finalRows.length;
         const fv = finalRows.filter(r => r.final_val_status === 'Valid').length;
         const fi = finalRows.filter(r => r.final_val_status === 'Invalid').length;
+        const fh = fv + fi;
         qaHeaders.push([
             qa, ih, iv, ii, ip, ih > 0 ? `${((iv/ih)*100).toFixed(1)}%` : '0%',
             fh, fv, fi, fh > 0 ? `${((fv/fh)*100).toFixed(1)}%` : '0%',
