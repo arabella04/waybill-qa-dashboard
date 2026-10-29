@@ -1,10 +1,12 @@
 import json
+import os
 from datetime import datetime
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-with open(r'C:\Users\1 Life\.gemini\antigravity\scratch\waybill-qa-dashboard\data.json', 'r', encoding='utf-8') as f:
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(BASE_DIR, 'data.json'), 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 wb = openpyxl.Workbook()
@@ -57,13 +59,20 @@ sub_cell.fill = blue_header_fill
 sub_cell.alignment = Alignment(horizontal="center", vertical="center")
 
 # KPI Summary Cards in Excel
+total_cnt = len(data) if data else 1
+init_val_cnt = sum(1 for r in data if r['qa_initial_status'] in ('Valid', 'Invalid'))
+init_v_cnt = sum(1 for r in data if r['qa_initial_status'] == 'Valid')
+init_i_cnt = sum(1 for r in data if r['qa_initial_status'] == 'Invalid')
+disp_ovr_cnt = sum(1 for r in data if r['dispatch_status'] == 'Override Done')
+final_val_cnt = sum(1 for r in data if r['final_val_status'] in ('Valid', 'Invalid'))
+
 kpis = [
     ("TOTAL WAYBILLS", len(data), "100.0% Logged", "A5:B5", "A6:B6", "A7:B7"),
-    ("INITIAL QA VALIDATED", sum(1 for r in data if r['qa_initial_status'] in ('Valid', 'Invalid')), "90.3% Processed", "C5:C5", "C6:C6", "C7:C7"),
-    ("INITIAL VALID", sum(1 for r in data if r['qa_initial_status'] == 'Valid'), "61.4% Quality Pass", "D5:D5", "D6:D6", "D7:D7"),
-    ("INITIAL INVALID", sum(1 for r in data if r['qa_initial_status'] == 'Invalid'), "29.0% Re-routed to Disp.", "E5:E5", "E6:E6", "E7:E7"),
-    ("DISPATCH OVERRIDES", sum(1 for r in data if r['dispatch_status'] == 'Override Done'), "28.9% Invalid Resolved", "F5:F5", "F6:F6", "F7:F7"),
-    ("FINAL QA VALIDATED", sum(1 for r in data if r['final_val_status'] in ('Valid', 'Invalid')), "462 Final Signed", "G5:G5", "G6:G7", "G7:G7")
+    ("INITIAL QA VALIDATED", init_val_cnt, f"{(init_val_cnt/total_cnt*100):.1f}% Processed", "C5:C5", "C6:C6", "C7:C7"),
+    ("INITIAL VALID", init_v_cnt, f"{(init_v_cnt/total_cnt*100):.1f}% Quality Pass", "D5:D5", "D6:D6", "D7:D7"),
+    ("INITIAL INVALID", init_i_cnt, f"{(init_i_cnt/total_cnt*100):.1f}% Re-routed to Disp.", "E5:E5", "E6:E6", "E7:E7"),
+    ("DISPATCH OVERRIDES", disp_ovr_cnt, f"{(disp_ovr_cnt/max(init_i_cnt, 1)*100):.1f}% Invalid Resolved", "F5:F5", "F6:F6", "F7:F7"),
+    ("FINAL QA VALIDATED", final_val_cnt, f"{final_val_cnt:,} Final Signed", "G5:G5", "G6:G7", "G7:G7")
 ]
 
 # Section 1: Executive KPI Table
@@ -499,6 +508,6 @@ for sheet in wb.worksheets:
                     max_len = max(max_len, 10)
         sheet.column_dimensions[col_letter].width = max(max_len + 4, 12)
 
-out_path = r'C:\Users\1 Life\.gemini\antigravity\scratch\waybill-qa-dashboard\Waybill_QA_Dispatch_Progress_Report.xlsx'
+out_path = os.path.join(BASE_DIR, 'Waybill_QA_Dispatch_Progress_Report.xlsx')
 wb.save(out_path)
 print(f"Excel report successfully generated at {out_path}")

@@ -5,6 +5,7 @@
 
 // Live Google Sheet Configuration
 const GOOGLE_SHEET_ID = "1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A";
+const GOOGLE_SHEET_GID = "1857013672"; // 'Waybill Record' tab
 let lastSyncTimestamp = null;
 let isSyncing = false;
 let autoSyncInterval = null;
@@ -2256,7 +2257,8 @@ function fetchGoogleSheetViaJSONP() {
         };
 
         const cacheBust = Date.now();
-        script.src = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&_=${cacheBust}`;
+        const gidParam = GOOGLE_SHEET_GID ? `gid=${GOOGLE_SHEET_GID}&` : '';
+        script.src = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?${gidParam}tqx=responseHandler:${callbackName}&_=${cacheBust}`;
         document.head.appendChild(script);
     });
 }
@@ -2279,7 +2281,10 @@ function parseGVizRows(rows) {
         const wbCell = c[1];
         if (!wbCell) continue;
 
-        const wbVal = String(wbCell.f !== undefined ? wbCell.f : (wbCell.v !== null ? wbCell.v : '')).trim();
+        let wbVal = String(wbCell.f !== undefined && wbCell.f !== null ? wbCell.f : (wbCell.v !== null && wbCell.v !== undefined ? wbCell.v : '')).trim();
+        if (wbVal.endsWith('.0')) {
+            wbVal = wbVal.slice(0, -2);
+        }
         // Check if row has a numeric waybill number (minimum 8 digits)
         if (!(/^\d{8,}$/.test(wbVal))) {
             continue;
@@ -2291,7 +2296,7 @@ function parseGVizRows(rows) {
             if (!cell) {
                 rec[headers[colIdx]] = '';
             } else {
-                let val = cell.f !== undefined ? cell.f : cell.v;
+                let val = cell.f !== undefined && cell.f !== null ? cell.f : cell.v;
                 if (val === null || val === undefined) {
                     val = '';
                 } else if (typeof val === 'string' && val.startsWith('Date(')) {
@@ -2300,6 +2305,8 @@ function parseGVizRows(rows) {
                     if (parts.length >= 3) {
                         val = `${parseInt(parts[1], 10) + 1}/${parts[2].trim()}/${parts[0].trim()}`;
                     }
+                } else if (colIdx === 1) {
+                    val = wbVal;
                 }
                 rec[headers[colIdx]] = String(val).trim();
             }
@@ -2311,7 +2318,8 @@ function parseGVizRows(rows) {
 
 function fetchGoogleSheetViaCSV() {
     const cacheBust = Date.now();
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&_=${cacheBust}`;
+    const gidParam = GOOGLE_SHEET_GID ? `&gid=${GOOGLE_SHEET_GID}` : '';
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv${gidParam}&_=${cacheBust}`;
     
     return fetch(csvUrl, { mode: 'cors' })
         .then(res => {

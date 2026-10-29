@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/export?format=csv"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/export?format=csv&gid=1857013672"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "data.csv")
 JSON_PATH = os.path.join(BASE_DIR, "data.json")
