@@ -59,6 +59,26 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404, "Excel report not found")
             return
 
+        elif path == "/download/rth-excel":
+            rth_path = os.path.join(BASE_DIR, "Waybill_RTH_Invalid_Documents_Report.xlsx")
+            if not os.path.exists(rth_path):
+                # Attempt to generate if missing
+                try:
+                    from generate_rth_report import generate_report
+                    generate_report()
+                except Exception as e:
+                    print("Error generating RTH report on demand:", e)
+            if os.path.exists(rth_path):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                self.send_header("Content-Disposition", 'attachment; filename="Waybill_RTH_Invalid_Documents_Report.xlsx"')
+                self.end_headers()
+                with open(rth_path, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_error(404, "RTH Excel report not found")
+            return
+
         # Default fallback to serve files
         super().do_GET()
 

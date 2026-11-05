@@ -59,11 +59,16 @@ def sync():
         f.write(";\n")
     print(f"Updated {data_js_path}")
 
-    # Run Excel generator
+    # Run Excel generators
     gen_script = os.path.join(BASE_DIR, "generate_excel_report.py")
     if os.path.exists(gen_script):
         subprocess.run([sys.executable, gen_script], check=True)
-        print("Regenerated Excel report.")
+        print("Regenerated Executive Excel report.")
+
+    rth_script = os.path.join(BASE_DIR, "generate_rth_report.py")
+    if os.path.exists(rth_script):
+        subprocess.run([sys.executable, rth_script], check=True)
+        print("Regenerated RTH Invalid Documents report.")
 
     return len(records)
 

@@ -107,6 +107,12 @@
                         Sync Sheet
                     </button>
 
+                    <!-- RTH Defect Report Menu -->
+                    <button onclick="switchTab('rth-report')" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm border border-rose-500 transition" title="RTH Invalid Documents & Rider Defect Report">
+                        <svg class="w-4 h-4 mr-1.5 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        RTH Notes
+                    </button>
+
                     <!-- Custom Report Builder Menu -->
                     <button onclick="switchTab('custom-report')" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm border border-blue-500 transition" title="Build and download custom filtered Excel reports">
                         <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
@@ -394,6 +400,11 @@
                 <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="progress-report">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Executive Progress Report
+                </button>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="rth-report">
+                    <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    RTH Defect Report
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">RTH Notes</span>
                 </button>
                 <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="custom-report">
                     <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
@@ -869,7 +880,281 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- TAB 6: CUSTOMIZABLE EXCEL REPORT BUILDER       -->
+        <!-- TAB 6: RTH DEFECT & INVALID DOCUMENTS REPORT   -->
+        <!-- ============================================== -->
+        <div id="tab-rth-report" class="tab-panel hidden space-y-6">
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-rose-900 via-brand-900 to-blue-900 rounded-2xl p-6 text-white shadow-md space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-400/20 text-rose-200 border border-rose-400/30">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            RTH Notes: Return To Hub Defect & Document Analysis
+                        </div>
+                        <h2 class="text-xl font-bold text-white mt-1">Waybill RTH Invalid Documents & Rider Defect Report</h2>
+                        <p class="text-xs text-rose-100 max-w-2xl mt-1">
+                            Weekly audit report (Saturday to Friday cycle) tracking invalid waybills, documents involved (<span class="font-bold text-white">MDC, RC, LOA, ID</span>), specific defect remarks, and rider error rankings with embedded Excel visual charts.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Download pre-generated Excel with charts -->
+                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition" title="Download Excel with embedded charts">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Download Excel with Charts (.xlsx)
+                        </button>
+                        <!-- Export Filtered Current View -->
+                        <button onclick="exportRTHFilteredExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Export Current Filtered View">
+                            <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Export Filtered (.xlsx)
+                        </button>
+                        <!-- Switch to Custom Builder -->
+                        <button onclick="applyCustomReportPreset('rth_invalid_documents')" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition" title="Open in Custom Report Builder">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                            Customize in Builder
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RTH Filter Bar -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <!-- Period / Date Filter -->
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Timeframe / Cycle</label>
+                        <select id="rth-filter-period" onchange="onRTHFilterChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                            <option value="ALL">All Invalids (Full Dataset)</option>
+                            <option value="CURRENT_WEEK">Current Weekly Cycle (Sat - Fri)</option>
+                            <option value="PREVIOUS_WEEK">Previous Weekly Cycle</option>
+                        </select>
+                    </div>
+
+                    <!-- Document Involved Filter -->
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Document Involved</label>
+                        <select id="rth-filter-document" onchange="onRTHFilterChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                            <option value="ALL">All Documents (ID, MDC, RC, LOA)</option>
+                            <option value="ID">ID Invalids (Identification)</option>
+                            <option value="MDC">MDC Invalids (Medical Certificate / Diff Sign)</option>
+                            <option value="RC">RC Invalids (Received Copy)</option>
+                            <option value="LOA">LOA Invalids (Letter of Authorization)</option>
+                            <option value="MULTI">Multi-Document Defects</option>
+                        </select>
+                    </div>
+
+                    <!-- Issue Category Filter -->
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Defect Category</label>
+                        <select id="rth-filter-category" onchange="onRTHFilterChange()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                            <option value="ALL">All Defect Categories</option>
+                            <option value="Missing Document">Missing Document</option>
+                            <option value="Signature Discrepancy">Signature Discrepancy (Diff Sign)</option>
+                            <option value="Blurred / Low Quality">Blurred / Low Quality Photo</option>
+                            <option value="Improper / Orientation">Improper / Inverted Orientation</option>
+                            <option value="Expired Document">Expired Document</option>
+                            <option value="Other Defect">Other Defect</option>
+                        </select>
+                    </div>
+
+                    <!-- Rider Search -->
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Search Rider / Waybill / Remarks</label>
+                        <div class="relative">
+                            <input type="text" id="rth-filter-search" oninput="onRTHFilterChange()" placeholder="e.g. Remoto, 2610..., diff sign" class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:ring-2 focus:ring-rose-500 focus:outline-none text-xs">
+                            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Summary Cards (4 Cards) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Card 1: Total Invalids -->
+                <div class="bg-white rounded-2xl p-5 border border-rose-100 shadow-xs relative overflow-hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Invalid Waybills</h3>
+                    </div>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="rth-kpi-total" class="text-3xl font-extrabold text-rose-800 font-mono tracking-tight">-</span>
+                        <span id="rth-kpi-total-badge" class="text-xs font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">Flagged Defects</span>
+                    </div>
+                    <p id="rth-kpi-total-sub" class="mt-2 text-xs text-slate-500">Across selected timeframe</p>
+                </div>
+
+                <!-- Card 2: Top Document Defect -->
+                <div class="bg-white rounded-2xl p-5 border border-amber-100 shadow-xs relative overflow-hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Highest Defect Document</h3>
+                    </div>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="rth-kpi-doc" class="text-2xl font-extrabold text-amber-800 font-mono tracking-tight">-</span>
+                    </div>
+                    <p id="rth-kpi-doc-sub" class="mt-2 text-xs text-slate-500">Most frequent document issue</p>
+                </div>
+
+                <!-- Card 3: Top Defective Rider -->
+                <div class="bg-white rounded-2xl p-5 border border-blue-100 shadow-xs relative overflow-hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Highest Defect Rider</h3>
+                    </div>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="rth-kpi-rider" class="text-lg font-extrabold text-blue-900 truncate tracking-tight">-</span>
+                    </div>
+                    <p id="rth-kpi-rider-sub" class="mt-2 text-xs text-slate-500">Highest invalid waybills</p>
+                </div>
+
+                <!-- Card 4: Primary Defect Category -->
+                <div class="bg-white rounded-2xl p-5 border border-purple-100 shadow-xs relative overflow-hidden">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Primary Issue Category</h3>
+                    </div>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="rth-kpi-category" class="text-2xl font-extrabold text-purple-900 tracking-tight">-</span>
+                    </div>
+                    <p id="rth-kpi-category-sub" class="mt-2 text-xs text-slate-500">Main root cause</p>
+                </div>
+            </div>
+
+            <!-- Visual Charts Section (2 Columns) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left 6 cols: Document Invalids Distribution -->
+                <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Which Documents Had Many Invalids</h3>
+                            <p class="text-xs text-slate-500">Total invalid volume by document type (ID, MDC, RC, LOA)</p>
+                        </div>
+                        <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">Documents</span>
+                    </div>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="chart-rth-documents"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right 6 cols: Top Riders with Invalids -->
+                <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Who's Rider Has Higher Invalids</h3>
+                            <p class="text-xs text-slate-500">Top 10 riders ranked by highest count of invalid waybills</p>
+                        </div>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">Top Riders</span>
+                    </div>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="chart-rth-riders"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Defect Category Breakdown & Summary Matrix -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left: Category Doughnut Chart (5 cols) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="border-b border-slate-100 pb-3">
+                        <h3 class="text-sm font-bold text-slate-900">Defect Issue Categories</h3>
+                        <p class="text-xs text-slate-500">Breakdown of reasons why waybills were flagged as invalid</p>
+                    </div>
+                    <div class="h-56 flex items-center justify-center">
+                        <canvas id="chart-rth-categories"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right: Document Impact Matrix Table (7 cols) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="border-b border-slate-100 pb-3">
+                        <h3 class="text-sm font-bold text-slate-900">Document Defect Summary Matrix</h3>
+                        <p class="text-xs text-slate-500">Detailed volume, share of defects, and frequent defect remarks</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-600 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-200 bg-slate-50">
+                                <tr>
+                                    <th class="px-3 py-2">Document</th>
+                                    <th class="px-3 py-2 text-right">Invalid Count</th>
+                                    <th class="px-3 py-2 text-right">Share %</th>
+                                    <th class="px-3 py-2">Primary Issues Detected</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rth-matrix-tbody" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Records Table: Waybill, Document Involved, Document Issue, Rider Name -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-bold text-slate-900">RTH Invalid Waybills Master Table</h3>
+                            <span id="rth-table-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+                                Loading...
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            Required Columns: <span class="font-semibold text-slate-700">Waybill No.</span> • <span class="font-semibold text-slate-700">Document Involved</span> • <span class="font-semibold text-slate-700">Document Issue (Remarks)</span> • <span class="font-semibold text-slate-700">Rider Name</span>
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportRTHFilteredExcel()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export Current Table (.xlsx)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-xs text-left divide-y divide-slate-200">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] tracking-wider font-semibold">
+                            <tr>
+                                <th class="px-3 py-2.5 text-center w-10">#</th>
+                                <th class="px-3 py-2.5 font-bold text-blue-900">Waybill No.</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-800">Document Involved</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-800">Document Issue (Full Remarks)</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-800">Rider Name</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-800">Issue Category</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-800">Validation Date</th>
+                                <th class="px-3 py-2.5 font-bold text-slate-800">Initial Validated By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-rth-body" class="bg-white divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                    <div id="rth-page-records-info">
+                        Showing 0 of 0 records
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="btn-rth-prev" onclick="changeRTHPage(-1)" class="px-3 py-1.5 rounded-lg border border-slate-300 font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+                        <span id="rth-page-info" class="font-semibold text-slate-700">
+                            Page 1 of 1
+                        </span>
+                        <button id="btn-rth-next" onclick="changeRTHPage(1)" class="px-3 py-1.5 rounded-lg border border-slate-300 font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 7: CUSTOMIZABLE EXCEL REPORT BUILDER       -->
         <!-- ============================================== -->
         <div id="tab-custom-report" class="tab-panel hidden space-y-6">
             <!-- Header Banner with Presets -->
@@ -904,6 +1189,10 @@
                         One-Click Quick Presets
                     </div>
                     <div class="flex flex-wrap gap-2">
+                        <!-- RTH Defect Note Preset -->
+                        <button onclick="applyCustomReportPreset('rth_invalid_documents')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 hover:bg-rose-400 text-white shadow-sm transition flex items-center gap-1.5">
+                            <span>📋</span> RTH Notes: Waybill + Document Involved + Issue + Rider
+                        </button>
                         <!-- User's exact prompt preset -->
                         <button onclick="applyCustomReportPreset('invalid_pending_override')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-900 shadow-sm transition flex items-center gap-1.5">
                             <span>🚨</span> Invalid & Not Overridden Yet (Waybill ID + Rider + Validator)
