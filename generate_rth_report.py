@@ -15,6 +15,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import BarChart, PieChart, Reference
 from openpyxl.chart.label import DataLabelList
+from openpyxl.chart.data_source import AxDataSource, StrRef, StrData, StrVal
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, 'data.json')
@@ -373,13 +374,22 @@ def generate_report():
     chart_doc.title = "Document Invalids Distribution"
     chart_doc.y_axis.title = "Number of Invalid Waybills"
     chart_doc.x_axis.title = "Document Type"
-    chart_doc.width = 16
-    chart_doc.height = 11
+    chart_doc.width = 17
+    chart_doc.height = 12
 
     data_doc = Reference(ws_sum, min_col=2, min_row=10, max_row=doc_row_start + len(top_docs) - 1)
     cats_doc = Reference(ws_sum, min_col=1, min_row=11, max_row=doc_row_start + len(top_docs) - 1)
     chart_doc.add_data(data_doc, titles_from_data=True)
-    chart_doc.set_categories(cats_doc)
+    
+    # Explicitly configure categories with cached string labels so Excel displays category names
+    doc_labels = [d[0] for d in top_docs]
+    doc_pts = [StrVal(idx=i, v=str(lbl)) for i, lbl in enumerate(doc_labels)]
+    doc_cache = StrData(ptCount=len(doc_labels), pt=doc_pts)
+    chart_doc.series[0].cat = AxDataSource(strRef=StrRef(f=str(cats_doc), strCache=doc_cache))
+    
+    # Show values directly on bars
+    chart_doc.dataLabels = DataLabelList()
+    chart_doc.dataLabels.showVal = True
     chart_doc.legend = None  # No legend needed for single series
     ws_sum.add_chart(chart_doc, "A26")
 
@@ -388,15 +398,27 @@ def generate_report():
     chart_rider.type = "bar" # horizontal bar
     chart_rider.style = 13
     chart_rider.title = "Top Riders by Invalid Waybill Count"
-    chart_rider.x_axis.title = "Invalid Waybills"
-    chart_rider.y_axis.title = "Rider Name"
-    chart_rider.width = 19
-    chart_rider.height = 13
+    chart_rider.x_axis.title = "Rider Name" # Category Axis (vertical in horizontal bar)
+    chart_rider.y_axis.title = "Number of Invalid Waybills" # Value Axis (horizontal in horizontal bar)
+    chart_rider.width = 24
+    chart_rider.height = 15
 
     data_rider = Reference(ws_sum, min_col=8, min_row=10, max_row=rider_row_start + len(top_riders) - 1)
     cats_rider = Reference(ws_sum, min_col=7, min_row=11, max_row=rider_row_start + len(top_riders) - 1)
     chart_rider.add_data(data_rider, titles_from_data=True)
-    chart_rider.set_categories(cats_rider)
+    
+    # Explicitly configure categories with cached string labels for full rider names
+    rider_labels = [r[0] for r in top_riders]
+    rider_pts = [StrVal(idx=i, v=str(lbl)) for i, lbl in enumerate(rider_labels)]
+    rider_cache = StrData(ptCount=len(rider_labels), pt=rider_pts)
+    chart_rider.series[0].cat = AxDataSource(strRef=StrRef(f=str(cats_rider), strCache=rider_cache))
+    
+    # Reverse category orientation so Rank 1 rider appears at the top
+    chart_rider.x_axis.scaling.orientation = "maxMin"
+    
+    # Show values directly on bars
+    chart_rider.dataLabels = DataLabelList()
+    chart_rider.dataLabels.showVal = True
     chart_rider.legend = None
     ws_sum.add_chart(chart_rider, "F26")
 

@@ -3577,7 +3577,7 @@ function renderRTHCharts(records) {
             type: 'bar',
             indexAxis: 'y',
             data: {
-                labels: top10.map(t => t[0].split(',')[0]), // Shorten name to surname for crisp chart
+                labels: top10.map(t => t[0]), // Full actual rider name
                 datasets: [{
                     label: 'Invalid Waybills',
                     data: top10.map(t => t[1]),
