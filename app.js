@@ -3607,6 +3607,89 @@ function renderRTHCharts(records) {
         });
     }
 
+    // 2.5. Chart: All Riders Invalid Waybills Distribution (Line Graph)
+    const ctxAllRiders = document.getElementById('chart-rth-all-riders-line');
+    if (ctxAllRiders) {
+        if (charts.rthAllRiders) charts.rthAllRiders.destroy();
+
+        const riderCounts = {};
+        records.forEach(r => {
+            const name = r.rider || 'Unknown Rider';
+            riderCounts[name] = (riderCounts[name] || 0) + 1;
+        });
+
+        const allRidersSorted = Object.entries(riderCounts)
+            .sort((a, b) => b[1] - a[1]);
+
+        const badgeEl = document.getElementById('rth-all-riders-badge');
+        if (badgeEl) badgeEl.textContent = `${allRidersSorted.length} Riders`;
+
+        charts.rthAllRiders = new Chart(ctxAllRiders, {
+            type: 'line',
+            data: {
+                labels: allRidersSorted.map(r => r[0]),
+                datasets: [{
+                    label: 'Invalid Waybills',
+                    data: allRidersSorted.map(r => r[1]),
+                    borderColor: '#2563EB',
+                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 2.5,
+                    pointRadius: allRidersSorted.length > 30 ? 2.5 : 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#1E3A8A'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => {
+                                const idx = items[0].dataIndex;
+                                return `#${idx + 1}: ${allRidersSorted[idx][0]}`;
+                            },
+                            label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1)}% of all invalids)`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        title: {
+                            display: true,
+                            text: 'Number of Invalid Waybills',
+                            color: '#64748B',
+                            font: { size: 11, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: { size: 10 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Riders (Ranked #1 to #' + allRidersSorted.length + ')',
+                            color: '#64748B',
+                            font: { size: 11, weight: 'bold' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     // 3. Chart: Defect Categories Doughnut
     const ctxCats = document.getElementById('chart-rth-categories');
     if (ctxCats) {
@@ -3850,12 +3933,12 @@ function exportRTHFilteredExcel() {
         ["LOA (Letter of Authorization)", docCounts.LOA, `${((docCounts.LOA / total) * 100).toFixed(1)}%`],
         ["Other / Not Specified", docCounts.Other, `${((docCounts.Other / total) * 100).toFixed(1)}%`],
         [],
-        ["2. TOP RIDERS WITH HIGHEST INVALIDS", "INVALID WAYBILLS", "SHARE %"]
+        ["2. TOP 10 RIDERS WITH HIGHEST INVALIDS", "INVALID WAYBILLS", "SHARE %"]
     ];
 
     Object.entries(riderCounts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 15)
+        .slice(0, 10)
         .forEach(([rider, cnt]) => {
             summaryRows.push([rider, cnt, `${((cnt / total) * 100).toFixed(1)}%`]);
         });
@@ -3910,6 +3993,16 @@ function exportRTHFilteredExcel() {
         { wch: 24 }  // Validator
     ];
     XLSX.utils.book_append_sheet(wb, wsData, "RTH_Invalid_Waybills");
+
+    // 3. Complete All Riders Defect Rankings Sheet
+    const allRidersRanked = Object.entries(riderCounts).sort((a, b) => b[1] - a[1]);
+    const riderRows = [["Rank", "Rider Name", "Invalid Waybills Count", "Share %"]];
+    allRidersRanked.forEach(([rider, cnt], idx) => {
+        riderRows.push([idx + 1, rider, cnt, `${((cnt / total) * 100).toFixed(1)}%`]);
+    });
+    const wsRiders = XLSX.utils.aoa_to_sheet(riderRows);
+    wsRiders['!cols'] = [{ wch: 8 }, { wch: 32 }, { wch: 22 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, wsRiders, "All_Riders_Rankings");
 
     const fileName = `Waybill_RTH_Invalid_Documents_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, fileName);

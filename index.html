@@ -1040,14 +1040,33 @@
                 <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900">Who's Rider Has Higher Invalids</h3>
+                            <h3 class="text-sm font-bold text-slate-900">Top 10 Riders with Highest Invalids</h3>
                             <p class="text-xs text-slate-500">Top 10 riders ranked by highest count of invalid waybills</p>
                         </div>
-                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">Top Riders</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">Top 10</span>
                     </div>
                     <div class="h-64 flex items-center justify-center">
                         <canvas id="chart-rth-riders"></canvas>
                     </div>
+                </div>
+            </div>
+
+            <!-- Full Fleet: All Riders Invalid Waybills Line Graph -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-bold text-slate-900">All Riders Invalid Waybills Distribution (Line Graph)</h3>
+                            <span id="rth-all-riders-badge" class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">58 Riders</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Continuous volume distribution line graph showing invalid waybill counts across all riders</p>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-slate-600">
+                        <span class="inline-flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-600 rounded"></span> Invalids Trendline</span>
+                    </div>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="chart-rth-all-riders-line"></canvas>
                 </div>
             </div>
 

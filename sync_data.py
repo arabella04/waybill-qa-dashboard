@@ -2,6 +2,7 @@ import urllib.request
 import csv
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -37,12 +38,9 @@ def sync():
             row = row + [''] * (16 - len(row))
         rec = {headers[i]: row[i].strip() for i in range(16)}
         if any(rec.values()):
-            wb = rec.get('waybill_no', '').strip().lower()
-            d_val = rec.get('date', '').strip().lower()
-            init_d = rec.get('initial_val_date', '').strip().lower()
-            if wb in ('waybill no.', 'waybill no', 'waybill', 'waybill_no', 'waybill number') and d_val in ('date', 'date:'):
-                continue
-            if init_d in ('initial validation date', 'initial val date', 'validation date'):
+            wb = rec.get('waybill_no', '').strip()
+            # Require minimum 8 digits valid waybill format, exactly matching dashboard filter
+            if not re.match(r'^\d{8,}$', wb):
                 continue
             records.append(rec)
     

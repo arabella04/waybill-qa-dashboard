@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from openpyxl.chart import BarChart, PieChart, Reference
+from openpyxl.chart import BarChart, PieChart, LineChart, Reference
 from openpyxl.chart.label import DataLabelList
 from openpyxl.chart.data_source import AxDataSource, StrRef, StrData, StrVal
 
@@ -97,9 +97,10 @@ def generate_report():
     with open(DATA_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # Filter to invalid waybills
-    invalid_records = [r for r in data if r.get('qa_initial_status') == 'Invalid']
-    print(f"Found {len(invalid_records):,} invalid waybills out of {len(data):,} total records.")
+    # Filter to valid waybills with standard numeric format (digits >= 8), matching dashboard exactly
+    valid_data = [r for r in data if re.match(r'^\d{8,}$', r.get('waybill_no', '').strip())]
+    invalid_records = [r for r in valid_data if r.get('qa_initial_status') == 'Invalid']
+    print(f"Found {len(invalid_records):,} invalid waybills out of {len(valid_data):,} total records.")
 
     wb = openpyxl.Workbook()
 
@@ -273,8 +274,8 @@ def generate_report():
         ws_sum.cell(row=tot_r, column=col).border = summary_border
         ws_sum.cell(row=tot_r, column=col).fill = accent_fill
 
-    # Table 2: Top 15 Riders with Invalids
-    ws_sum["F9"] = "2. TOP RIDERS WITH HIGHEST INVALIDS"
+    # Table 2: Top 10 Riders with Invalids
+    ws_sum["F9"] = "2. TOP 10 RIDERS WITH HIGHEST INVALIDS"
     ws_sum["F9"].font = section_font
 
     rider_headers = ["Rank", "Rider Name", "Total Invalids", "% Share", "Top Doc Involved"]
@@ -285,7 +286,7 @@ def generate_report():
         cell.alignment = align_center
         cell.border = thin_border
 
-    top_riders = rider_counts.most_common(12)
+    top_riders = rider_counts.most_common(10)
     rider_row_start = 11
     for idx, (r_name, r_cnt) in enumerate(top_riders):
         r_num = rider_row_start + idx
@@ -393,15 +394,15 @@ def generate_report():
     chart_doc.legend = None  # No legend needed for single series
     ws_sum.add_chart(chart_doc, "A26")
 
-    # Chart 2: Horizontal Bar Chart of Top Riders with Invalids
+    # Chart 2: Horizontal Bar Chart of Top 10 Riders with Invalids
     chart_rider = BarChart()
     chart_rider.type = "bar" # horizontal bar
     chart_rider.style = 13
-    chart_rider.title = "Top Riders by Invalid Waybill Count"
+    chart_rider.title = "Top 10 Riders by Invalid Waybill Count"
     chart_rider.x_axis.title = "Rider Name" # Category Axis (vertical in horizontal bar)
     chart_rider.y_axis.title = "Number of Invalid Waybills" # Value Axis (horizontal in horizontal bar)
     chart_rider.width = 24
-    chart_rider.height = 15
+    chart_rider.height = 14
 
     data_rider = Reference(ws_sum, min_col=8, min_row=10, max_row=rider_row_start + len(top_riders) - 1)
     cats_rider = Reference(ws_sum, min_col=7, min_row=11, max_row=rider_row_start + len(top_riders) - 1)
@@ -576,6 +577,45 @@ def generate_report():
             c.border = thin_border
 
     ws_rider.auto_filter.ref = f"A5:H{len(all_riders_ranked) + 5}"
+
+    # =========================================================================
+    # Chart 3: Line Chart of ALL Riders' Invalids Distribution (Sheet 1)
+    # =========================================================================
+    chart_all_riders = LineChart()
+    chart_all_riders.title = f"All Riders Invalid Waybills Distribution (All {len(all_riders_ranked)} Riders)"
+    chart_all_riders.style = 13
+    chart_all_riders.y_axis.title = "Number of Invalid Waybills"
+    chart_all_riders.x_axis.title = f"Riders (Ranked #1 to #{len(all_riders_ranked)})"
+    chart_all_riders.width = 33
+    chart_all_riders.height = 14
+
+    data_all_riders = Reference(ws_rider, min_col=3, min_row=5, max_row=5 + len(all_riders_ranked))
+    cats_all_riders = Reference(ws_rider, min_col=2, min_row=6, max_row=5 + len(all_riders_ranked))
+    chart_all_riders.add_data(data_all_riders, titles_from_data=True)
+
+    all_rider_names = [r[0] for r in all_riders_ranked]
+    ar_pts = [StrVal(idx=i, v=str(lbl)) for i, lbl in enumerate(all_rider_names)]
+    ar_cache = StrData(ptCount=len(all_rider_names), pt=ar_pts)
+    chart_all_riders.series[0].cat = AxDataSource(strRef=StrRef(f=str(cats_all_riders), strCache=ar_cache))
+    chart_all_riders.series[0].smooth = True
+    chart_all_riders.legend = None
+    ws_sum.add_chart(chart_all_riders, "A43")
+
+    # =========================================================================
+    # Chart 4: Line Chart on Sheet 3 (Rider Defect Rankings) beside the table
+    # =========================================================================
+    chart_sheet3 = LineChart()
+    chart_sheet3.title = f"Rider Defect Volume Curve (All {len(all_riders_ranked)} Riders)"
+    chart_sheet3.style = 13
+    chart_sheet3.y_axis.title = "Number of Invalid Waybills"
+    chart_sheet3.x_axis.title = "Rider"
+    chart_sheet3.width = 24
+    chart_sheet3.height = 18
+    chart_sheet3.add_data(data_all_riders, titles_from_data=True)
+    chart_sheet3.series[0].cat = AxDataSource(strRef=StrRef(f=str(cats_all_riders), strCache=ar_cache))
+    chart_sheet3.series[0].smooth = True
+    chart_sheet3.legend = None
+    ws_rider.add_chart(chart_sheet3, "J5")
 
     # Auto-fit Column Widths across all sheets
     for ws in [ws_sum, ws_data, ws_rider]:
