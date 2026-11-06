@@ -3200,6 +3200,69 @@ const rthFilters = {
 };
 
 let rthFilteredRecords = [];
+let rthDocView = 'bar';       // 'bar' | 'donut'
+let rthRiderView = 'bar';     // 'bar' | 'stacked'
+let rthAllRidersView = 'line'; // 'line' | 'tiers'
+
+function setRTHDocView(mode) {
+    rthDocView = mode;
+    const btnBar = document.getElementById('btn-rth-doc-bar');
+    const btnDonut = document.getElementById('btn-rth-doc-donut');
+    if (btnBar && btnDonut) {
+        if (mode === 'bar') {
+            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-rose-700 shadow-xs';
+            btnDonut.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        } else {
+            btnDonut.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-rose-700 shadow-xs';
+            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        }
+    }
+    const title = document.getElementById('rth-doc-chart-title');
+    const sub = document.getElementById('rth-doc-chart-sub');
+    if (title) title.textContent = mode === 'bar' ? 'Which Documents Had Many Invalids' : 'Document Invalids Market Share (%)';
+    if (sub) sub.textContent = mode === 'bar' ? 'Total invalid volume by document type (ID, MDC, RC, LOA)' : 'Proportion of invalid waybills by document type';
+    renderRTHCharts(rthFilteredRecords);
+}
+
+function setRTHRiderView(mode) {
+    rthRiderView = mode;
+    const btnBar = document.getElementById('btn-rth-rider-bar');
+    const btnStacked = document.getElementById('btn-rth-rider-stacked');
+    if (btnBar && btnStacked) {
+        if (mode === 'bar') {
+            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
+            btnStacked.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        } else {
+            btnStacked.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
+            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        }
+    }
+    const title = document.getElementById('rth-rider-chart-title');
+    const sub = document.getElementById('rth-rider-chart-sub');
+    if (title) title.textContent = mode === 'bar' ? 'Top 10 Riders with Highest Invalids' : 'Top 10 Riders by Document Defect (Stacked)';
+    if (sub) sub.textContent = mode === 'bar' ? 'Top 10 riders ranked by highest count of invalid waybills' : 'Breakdown of ID, MDC, RC, and LOA defects for the top 10 riders';
+    renderRTHCharts(rthFilteredRecords);
+}
+
+function setRTHAllRidersView(mode) {
+    rthAllRidersView = mode;
+    const btnLine = document.getElementById('btn-rth-all-line');
+    const btnTiers = document.getElementById('btn-rth-all-tiers');
+    if (btnLine && btnTiers) {
+        if (mode === 'line') {
+            btnLine.className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
+            btnTiers.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        } else {
+            btnTiers.className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
+            btnLine.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        }
+    }
+    const title = document.getElementById('rth-all-riders-title');
+    const desc = document.getElementById('rth-all-riders-desc');
+    if (title) title.textContent = mode === 'line' ? 'All Riders Invalid Waybills Distribution (Line Graph)' : 'Fleet Defect Severity Tiers (Risk Segmentation)';
+    if (desc) desc.textContent = mode === 'line' ? 'Continuous volume distribution line graph showing invalid waybill counts across all riders' : 'Categorization of riders into Critical (150+), High (80-149), Moderate (30-79), and Low (<30) invalid brackets';
+    renderRTHCharts(rthFilteredRecords);
+}
 
 function classifyDocumentInvolved(remarks) {
     if (!remarks) return 'Not Specified';
@@ -3416,6 +3479,22 @@ function renderRTHReport() {
 
     rthFilteredRecords = records;
 
+    // Dynamically update download button labels to match active filter
+    const btnDownloadVisualLabel = document.getElementById('btn-rth-download-visual-label');
+    const btnExportFilteredLabel = document.getElementById('btn-rth-export-filtered-label');
+    if (btnDownloadVisualLabel) {
+        if (rthFilters.period === 'ALL') {
+            btnDownloadVisualLabel.textContent = "Download Overall Excel (with Charts)";
+        } else if (rthFilters.period.startsWith('WEEK:')) {
+            btnDownloadVisualLabel.textContent = "Download Latest Week Excel (with Charts)";
+        } else {
+            btnDownloadVisualLabel.textContent = "Download Filtered Excel (with Charts)";
+        }
+    }
+    if (btnExportFilteredLabel) {
+        btnExportFilteredLabel.textContent = `Export Filtered (${records.length.toLocaleString()} Rows)`;
+    }
+
     // Update Components
     updateRTHKpis(records);
     renderRTHCharts(records);
@@ -3497,7 +3576,7 @@ function updateRTHKpis(records) {
 function renderRTHCharts(records) {
     if (typeof Chart === 'undefined') return;
 
-    // 1. Chart: Document Invalids Distribution
+    // 1. Chart: Document Invalids Distribution (Bar vs Donut)
     const ctxDoc = document.getElementById('chart-rth-documents');
     if (ctxDoc) {
         if (charts.rthDocuments) charts.rthDocuments.destroy();
@@ -3520,94 +3599,219 @@ function renderRTHCharts(records) {
             if (!matched) { docCounts['Other / Cert']++; }
         });
 
-        charts.rthDocuments = new Chart(ctxDoc, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(docCounts),
-                datasets: [{
-                    label: 'Invalid Waybills Impacted',
-                    data: Object.values(docCounts),
-                    backgroundColor: [
-                        '#F59E0B', // Amber for ID
-                        '#2563EB', // Blue for MDC
-                        '#9333EA', // Purple for RC
-                        '#E11D48', // Rose for LOA
-                        '#64748B'  // Slate for Other
-                    ],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} invalid waybills`
+        const totalDocMentions = Object.values(docCounts).reduce((a, b) => a + b, 0) || 1;
+
+        if (rthDocView === 'donut') {
+            charts.rthDocuments = new Chart(ctxDoc, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(docCounts),
+                    datasets: [{
+                        data: Object.values(docCounts),
+                        backgroundColor: [
+                            '#F59E0B', // Amber for ID
+                            '#2563EB', // Blue for MDC
+                            '#9333EA', // Purple for RC
+                            '#E11D48', // Rose for LOA
+                            '#64748B'  // Slate for Other
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                font: { size: 11, weight: 'bold' },
+                                boxWidth: 14,
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const val = ctx.parsed;
+                                    const pct = ((val / totalDocMentions) * 100).toFixed(1);
+                                    return ` ${val.toLocaleString()} mentions (${pct}% share)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '58%'
+                }
+            });
+        } else {
+            charts.rthDocuments = new Chart(ctxDoc, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(docCounts),
+                    datasets: [{
+                        label: 'Invalid Waybills Impacted',
+                        data: Object.values(docCounts),
+                        backgroundColor: [
+                            '#F59E0B', // Amber for ID
+                            '#2563EB', // Blue for MDC
+                            '#9333EA', // Purple for RC
+                            '#E11D48', // Rose for LOA
+                            '#64748B'  // Slate for Other
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const val = ctx.parsed.y;
+                                    const pct = ((val / Math.max(records.length, 1)) * 100).toFixed(1);
+                                    return ` ${val.toLocaleString()} invalid waybills (${pct}% of invalids)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
                         }
                     }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
                 }
-            }
-        });
+            });
+        }
     }
 
-    // 2. Chart: Top 10 Riders with Highest Invalids
+    // 2. Chart: Top 10 Riders with Highest Invalids (Total Bar vs Stacked by Doc)
     const ctxRiders = document.getElementById('chart-rth-riders');
     if (ctxRiders) {
         if (charts.rthRiders) charts.rthRiders.destroy();
 
         const riderCounts = {};
+        const riderDocs = {};
         records.forEach(r => {
             const name = r.rider || 'Unknown Rider';
             riderCounts[name] = (riderCounts[name] || 0) + 1;
+            if (!riderDocs[name]) {
+                riderDocs[name] = { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+            }
+            const d = r.document_involved || '';
+            if (d.includes('ID')) riderDocs[name].ID++;
+            if (d.includes('MDC')) riderDocs[name].MDC++;
+            if (d.includes('RC')) riderDocs[name].RC++;
+            if (d.includes('LOA')) riderDocs[name].LOA++;
         });
 
         const top10 = Object.entries(riderCounts)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 10);
 
-        charts.rthRiders = new Chart(ctxRiders, {
-            type: 'bar',
-            indexAxis: 'y',
-            data: {
-                labels: top10.map(t => t[0]), // Full actual rider name
-                datasets: [{
-                    label: 'Invalid Waybills',
-                    data: top10.map(t => t[1]),
-                    backgroundColor: '#1E3A8A', // Navy Blue
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => top10[items[0].dataIndex][0],
-                            label: (ctx) => ` ${ctx.parsed.x.toLocaleString()} invalid waybills`
+        if (rthRiderView === 'stacked') {
+            const top10Names = top10.map(t => t[0]);
+            charts.rthRiders = new Chart(ctxRiders, {
+                type: 'bar',
+                indexAxis: 'y',
+                data: {
+                    labels: top10Names,
+                    datasets: [
+                        {
+                            label: 'ID Defects',
+                            data: top10Names.map(name => riderDocs[name]?.ID || 0),
+                            backgroundColor: '#F59E0B',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'MDC Defects',
+                            data: top10Names.map(name => riderDocs[name]?.MDC || 0),
+                            backgroundColor: '#2563EB',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'RC Defects',
+                            data: top10Names.map(name => riderDocs[name]?.RC || 0),
+                            backgroundColor: '#9333EA',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'LOA Defects',
+                            data: top10Names.map(name => riderDocs[name]?.LOA || 0),
+                            backgroundColor: '#E11D48',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { boxWidth: 12, font: { size: 10 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => top10[items[0].dataIndex][0],
+                                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString()}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        },
+                        y: {
+                            stacked: true
                         }
                     }
+                }
+            });
+        } else {
+            charts.rthRiders = new Chart(ctxRiders, {
+                type: 'bar',
+                indexAxis: 'y',
+                data: {
+                    labels: top10.map(t => t[0]), // Full actual rider name
+                    datasets: [{
+                        label: 'Invalid Waybills',
+                        data: top10.map(t => t[1]),
+                        backgroundColor: '#1E3A8A', // Navy Blue
+                        borderRadius: 6
+                    }]
                 },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => top10[items[0].dataIndex][0],
+                                label: (ctx) => ` ${ctx.parsed.x.toLocaleString()} invalid waybills`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
-    // 2.5. Chart: All Riders Invalid Waybills Distribution (Line Graph)
+    // 2.5. Chart: All Riders Invalid Waybills Distribution (Line Graph vs Severity Tiers)
     const ctxAllRiders = document.getElementById('chart-rth-all-riders-line');
     if (ctxAllRiders) {
         if (charts.rthAllRiders) charts.rthAllRiders.destroy();
@@ -3624,70 +3828,157 @@ function renderRTHCharts(records) {
         const badgeEl = document.getElementById('rth-all-riders-badge');
         if (badgeEl) badgeEl.textContent = `${allRidersSorted.length} Riders`;
 
-        charts.rthAllRiders = new Chart(ctxAllRiders, {
-            type: 'line',
-            data: {
-                labels: allRidersSorted.map(r => r[0]),
-                datasets: [{
-                    label: 'Invalid Waybills',
-                    data: allRidersSorted.map(r => r[1]),
-                    borderColor: '#2563EB',
-                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
-                    fill: true,
-                    tension: 0.35,
-                    borderWidth: 2.5,
-                    pointRadius: allRidersSorted.length > 30 ? 2.5 : 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#1E3A8A'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => {
-                                const idx = items[0].dataIndex;
-                                return `#${idx + 1}: ${allRidersSorted[idx][0]}`;
-                            },
-                            label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1)}% of all invalids)`
+        if (rthAllRidersView === 'tiers') {
+            const totInv = records.length;
+            const isLargeScope = totInv > 3000;
+            const tiers = isLargeScope ? [
+                { name: 'Critical (>= 200)', min: 200, max: 999999, color: '#EF4444' },
+                { name: 'High (100 - 199)', min: 100, max: 199, color: '#F59E0B' },
+                { name: 'Moderate (50 - 99)', min: 50, max: 99, color: '#6366F1' },
+                { name: 'Low (< 50)', min: 1, max: 49, color: '#10B981' }
+            ] : [
+                { name: 'Critical (>= 40)', min: 40, max: 999999, color: '#EF4444' },
+                { name: 'High (20 - 39)', min: 20, max: 39, color: '#F59E0B' },
+                { name: 'Moderate (10 - 19)', min: 10, max: 19, color: '#6366F1' },
+                { name: 'Low (< 10)', min: 1, max: 9, color: '#10B981' }
+            ];
+
+            const tierRiders = [];
+            const tierWaybills = [];
+            tiers.forEach(t => {
+                const group = allRidersSorted.filter(r => r[1] >= t.min && r[1] <= t.max);
+                tierRiders.push(group.length);
+                tierWaybills.push(group.reduce((acc, curr) => acc + curr[1], 0));
+            });
+
+            charts.rthAllRiders = new Chart(ctxAllRiders, {
+                type: 'bar',
+                data: {
+                    labels: tiers.map(t => t.name),
+                    datasets: [
+                        {
+                            label: 'Number of Riders',
+                            data: tierRiders,
+                            backgroundColor: tiers.map(t => t.color),
+                            borderRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Invalid Waybills Generated',
+                            data: tierWaybills,
+                            backgroundColor: 'rgba(30, 58, 138, 0.25)',
+                            borderColor: '#1E3A8A',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            yAxisID: 'y1'
                         }
-                    }
+                    ]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 },
-                        title: {
-                            display: true,
-                            text: 'Number of Invalid Waybills',
-                            color: '#64748B',
-                            font: { size: 11, weight: 'bold' }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    if (ctx.datasetIndex === 0) {
+                                        return ` ${ctx.parsed.y} riders in this tier`;
+                                    } else {
+                                        const pct = ((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1);
+                                        return ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${pct}% of total defects)`;
+                                    }
+                                }
+                            }
                         }
                     },
-                    x: {
-                        ticks: {
-                            autoSkip: true,
-                            maxRotation: 45,
-                            minRotation: 45,
-                            font: { size: 10 }
-                        },
-                        title: {
+                    scales: {
+                        y: {
+                            type: 'linear',
                             display: true,
-                            text: 'Riders (Ranked #1 to #' + allRidersSorted.length + ')',
-                            color: '#64748B',
-                            font: { size: 11, weight: 'bold' }
+                            position: 'left',
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            title: { display: true, text: 'Riders Count', color: '#64748B' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            ticks: { precision: 0 },
+                            title: { display: true, text: 'Invalid Waybills Volume', color: '#1E3A8A' }
                         }
                     }
                 }
-            }
-        });
+            });
+        } else {
+            charts.rthAllRiders = new Chart(ctxAllRiders, {
+                type: 'line',
+                data: {
+                    labels: allRidersSorted.map(r => r[0]),
+                    datasets: [{
+                        label: 'Invalid Waybills',
+                        data: allRidersSorted.map(r => r[1]),
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2.5,
+                        pointRadius: allRidersSorted.length > 30 ? 2.5 : 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#1E3A8A'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const idx = items[0].dataIndex;
+                                    return `#${idx + 1}: ${allRidersSorted[idx][0]}`;
+                                },
+                                label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1)}% of all invalids)`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            title: {
+                                display: true,
+                                text: 'Number of Invalid Waybills',
+                                color: '#64748B',
+                                font: { size: 11, weight: 'bold' }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                autoSkip: true,
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: { size: 10 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Riders (Ranked #1 to #' + allRidersSorted.length + ')',
+                                color: '#64748B',
+                                font: { size: 11, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     // 3. Chart: Defect Categories Doughnut
@@ -3876,14 +4167,71 @@ function changeRTHPage(delta) {
     renderRTHDataTable();
 }
 
-function downloadRTHVisualExcel() {
+async function downloadRTHVisualExcel() {
+    const period = rthFilters.period || 'ALL';
+
+    // 1. If running on local server with Python backend available
+    const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalServer) {
+        showNotification("Generating custom filtered Excel report with embedded charts...", "info");
+        try {
+            const res = await fetch(`/download/rth-excel?period=${encodeURIComponent(period)}`);
+            if (res.ok) {
+                const blob = await res.blob();
+                const disposition = res.headers.get('content-disposition') || '';
+                let filename = 'Waybill_RTH_Report.xlsx';
+                const match = disposition.match(/filename="?([^";]+)"?/);
+                if (match && match[1]) filename = match[1];
+
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+                showNotification(`Downloaded visual Excel report: ${filename}`, "success");
+                return;
+            }
+        } catch (e) {
+            console.warn("Local dynamic report generation failed, falling back to static bundles:", e);
+        }
+    }
+
+    // 2. Static deployment (Netlify / GitHub Pages) fallback:
+    if (period.startsWith('WEEK:')) {
+        // Latest weekly cycle static bundle
+        const link = document.createElement('a');
+        link.href = 'Waybill_RTH_Report_Latest_Week.xlsx';
+        link.download = 'Waybill_RTH_Report_Latest_Week.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification("Downloaded Latest Week RTH Visual Report (.xlsx)", "success");
+    } else if (period === 'ALL') {
+        // Overall static bundle
+        const link = document.createElement('a');
+        link.href = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
+        link.download = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification("Downloaded Overall Master RTH Visual Report (.xlsx)", "success");
+    } else {
+        // Specific custom date on static host -> export filtered workbook with complete tabs
+        exportRTHFilteredExcel();
+    }
+}
+
+function downloadRTHOverallVisualExcel() {
     const link = document.createElement('a');
     link.href = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
     link.download = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showNotification("Downloading RTH Invalid Documents Report with Visualizations (.xlsx)...", "success");
+    showNotification("Downloaded Overall Master RTH Report with Visualizations (All 6,077 Invalids)", "success");
 }
 
 function exportRTHFilteredExcel() {

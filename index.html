@@ -898,15 +898,20 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <!-- Download pre-generated Excel with charts -->
-                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition" title="Download Excel with embedded charts">
+                        <!-- Download pre-generated Excel with charts matching active filter -->
+                        <button id="btn-rth-download-visual" onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition" title="Download Excel with embedded charts matching filter">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Download Excel with Charts (.xlsx)
+                            <span id="btn-rth-download-visual-label">Download Excel with Charts (.xlsx)</span>
+                        </button>
+                        <!-- Download Overall Master Report -->
+                        <button onclick="downloadRTHOverallVisualExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Download Full Overall Master Report (All Dates)">
+                            <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            <span>Download Overall Master</span>
                         </button>
                         <!-- Export Filtered Current View -->
-                        <button onclick="exportRTHFilteredExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Export Current Filtered View">
-                            <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            Export Filtered (.xlsx)
+                        <button onclick="exportRTHFilteredExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Export Current Filtered View to Excel">
+                            <svg class="w-4 h-4 mr-1.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span id="btn-rth-export-filtered-label">Export Filtered (.xlsx)</span>
                         </button>
                         <!-- Switch to Custom Builder -->
                         <button onclick="applyCustomReportPreset('rth_invalid_documents')" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition" title="Open in Custom Report Builder">
@@ -1026,10 +1031,16 @@
                 <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900">Which Documents Had Many Invalids</h3>
-                            <p class="text-xs text-slate-500">Total invalid volume by document type (ID, MDC, RC, LOA)</p>
+                            <h3 id="rth-doc-chart-title" class="text-sm font-bold text-slate-900">Which Documents Had Many Invalids</h3>
+                            <p id="rth-doc-chart-sub" class="text-xs text-slate-500">Total invalid volume by document type (ID, MDC, RC, LOA)</p>
                         </div>
-                        <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">Documents</span>
+                        <div class="flex items-center gap-1.5">
+                            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px]">
+                                <button id="btn-rth-doc-bar" onclick="setRTHDocView('bar')" class="px-2 py-0.5 rounded-md font-semibold bg-white text-rose-700 shadow-xs">Bar</button>
+                                <button id="btn-rth-doc-donut" onclick="setRTHDocView('donut')" class="px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800">Donut</button>
+                            </div>
+                            <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">Documents</span>
+                        </div>
                     </div>
                     <div class="h-64 flex items-center justify-center">
                         <canvas id="chart-rth-documents"></canvas>
@@ -1040,10 +1051,16 @@
                 <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900">Top 10 Riders with Highest Invalids</h3>
-                            <p class="text-xs text-slate-500">Top 10 riders ranked by highest count of invalid waybills</p>
+                            <h3 id="rth-rider-chart-title" class="text-sm font-bold text-slate-900">Top 10 Riders with Highest Invalids</h3>
+                            <p id="rth-rider-chart-sub" class="text-xs text-slate-500">Top 10 riders ranked by highest count of invalid waybills</p>
                         </div>
-                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">Top 10</span>
+                        <div class="flex items-center gap-1.5">
+                            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px]">
+                                <button id="btn-rth-rider-bar" onclick="setRTHRiderView('bar')" class="px-2 py-0.5 rounded-md font-semibold bg-white text-blue-700 shadow-xs">Total</button>
+                                <button id="btn-rth-rider-stacked" onclick="setRTHRiderView('stacked')" class="px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800">By Doc</button>
+                            </div>
+                            <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">Top 10</span>
+                        </div>
                     </div>
                     <div class="h-64 flex items-center justify-center">
                         <canvas id="chart-rth-riders"></canvas>
@@ -1051,18 +1068,21 @@
                 </div>
             </div>
 
-            <!-- Full Fleet: All Riders Invalid Waybills Line Graph -->
+            <!-- Full Fleet: All Riders Invalid Waybills Line Graph & Tiers -->
             <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 class="text-sm font-bold text-slate-900">All Riders Invalid Waybills Distribution (Line Graph)</h3>
+                            <h3 id="rth-all-riders-title" class="text-sm font-bold text-slate-900">All Riders Invalid Waybills Distribution (Line Graph)</h3>
                             <span id="rth-all-riders-badge" class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">58 Riders</span>
                         </div>
-                        <p class="text-xs text-slate-500">Continuous volume distribution line graph showing invalid waybill counts across all riders</p>
+                        <p id="rth-all-riders-desc" class="text-xs text-slate-500">Continuous volume distribution line graph showing invalid waybill counts across all riders</p>
                     </div>
-                    <div class="flex items-center gap-3 text-xs text-slate-600">
-                        <span class="inline-flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-600 rounded"></span> Invalids Trendline</span>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg text-xs">
+                            <button id="btn-rth-all-line" onclick="setRTHAllRidersView('line')" class="px-2.5 py-1 rounded-md font-semibold bg-white text-blue-700 shadow-xs">Fleet Curve (Line)</button>
+                            <button id="btn-rth-all-tiers" onclick="setRTHAllRidersView('tiers')" class="px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800">Severity Tiers (Bar)</button>
+                        </div>
                     </div>
                 </div>
                 <div class="h-64 flex items-center justify-center">

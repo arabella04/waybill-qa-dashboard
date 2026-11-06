@@ -60,24 +60,29 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         elif path == "/download/rth-excel":
-            rth_path = os.path.join(BASE_DIR, "Waybill_RTH_Invalid_Documents_Report.xlsx")
-            if not os.path.exists(rth_path):
-                # Attempt to generate if missing
-                try:
-                    from generate_rth_report import generate_report
-                    generate_report()
-                except Exception as e:
-                    print("Error generating RTH report on demand:", e)
-            if os.path.exists(rth_path):
-                self.send_response(200)
-                self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                self.send_header("Content-Disposition", 'attachment; filename="Waybill_RTH_Invalid_Documents_Report.xlsx"')
-                self.end_headers()
-                with open(rth_path, "rb") as f:
-                    self.wfile.write(f.read())
-            else:
-                self.send_error(404, "RTH Excel report not found")
-            return
+            query = urllib.parse.parse_qs(parsed_path.query)
+            period = query.get('period', [None])[0]
+            try:
+                from generate_rth_report import generate_report
+                if period and period != 'ALL':
+                    generated_file = generate_report(period_filter=period)
+                else:
+                    generated_file = os.path.join(BASE_DIR, "Waybill_RTH_Invalid_Documents_Report.xlsx")
+                    if not os.path.exists(generated_file):
+                        generate_report()
+                if os.path.exists(generated_file):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    filename = os.path.basename(generated_file)
+                    self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+                    self.end_headers()
+                    with open(generated_file, "rb") as f:
+                        self.wfile.write(f.read())
+                    return
+            except Exception as e:
+                print("Error serving RTH excel:", e)
+                self.send_error(500, f"Error generating Excel: {str(e)}")
+                return
 
         # Default fallback to serve files
         super().do_GET()
