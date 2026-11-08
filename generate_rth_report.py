@@ -104,22 +104,29 @@ def generate_report(period_filter=None, output_path=None):
         sorted_weeks = sorted(weeks.items(), key=lambda x: x[1]['sat'], reverse=True)
         if period_filter == 'latest_week' and sorted_weeks:
             target_key, target_week = sorted_weeks[0]
-        elif period_filter.startswith('WEEK:') and period_filter.replace('WEEK:', '') in weeks:
-            target_key = period_filter.replace('WEEK:', '')
-            target_week = weeks[target_key]
-        elif sorted_weeks:
-            target_key, target_week = sorted_weeks[0]
-        else:
-            target_week = None
+        elif period_filter.startswith('WEEK:'):
+            search_key = period_filter.replace('WEEK:', '').strip()
+            match = [item for item in sorted_weeks if item[0] == search_key or item[0].startswith(search_key)]
+            if match:
+                target_key, target_week = match[0]
+            elif sorted_weeks:
+                target_key, target_week = sorted_weeks[0]
+            else:
+                target_week = None
 
         if target_week:
             sat = target_week['sat']
             fri = target_week['fri']
             scope_records = target_week['records']
-            period_title_tag = f"LATEST WEEK ({sat.strftime('%b %d').upper()} - {fri.strftime('%b %d, %Y').upper()})"
+            is_latest = (period_filter == 'latest_week') or (sorted_weeks and target_key == sorted_weeks[0][0])
+            week_label = f"{sat.strftime('%b %d').upper()} - {fri.strftime('%b %d, %Y').upper()}"
+            period_title_tag = f"LATEST WEEK ({week_label})" if is_latest else f"WEEK ({week_label})"
             period_subtitle_tag = f"Weekly Cycle: {sat.strftime('%B %d')} to {fri.strftime('%B %d, %Y')} (Saturday to Friday Cycle)"
             if not output_path:
-                output_path = os.path.join(BASE_DIR, 'Waybill_RTH_Report_Latest_Week.xlsx')
+                if is_latest:
+                    output_path = os.path.join(BASE_DIR, 'Waybill_RTH_Report_Latest_Week.xlsx')
+                else:
+                    output_path = os.path.join(BASE_DIR, f'Waybill_RTH_Report_Week_{target_key}.xlsx')
         else:
             scope_records = valid_data
             if not output_path:
@@ -800,3 +807,6 @@ if __name__ == '__main__':
     generate_report(period_filter=None)
     # 2. Generate Latest Week Report (Saturday to Friday Cycle)
     generate_report(period_filter='latest_week')
+    # 3. Generate All Historical Weekly Cycles for static deployment
+    for wk in ['2026-10-24', '2026-10-17', '2026-10-10', '2026-10-03']:
+        generate_report(period_filter=f'WEEK:{wk}')

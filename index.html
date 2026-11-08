@@ -912,9 +912,9 @@
                             <span>Download Overall Master</span>
                         </button>
                         <!-- Export Filtered Current View -->
-                        <button onclick="exportRTHFilteredExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Export Current Filtered View to Excel">
+                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Download Report with Embedded Charts matching active filter">
                             <svg class="w-4 h-4 mr-1.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span id="btn-rth-export-filtered-label">Export Filtered (.xlsx)</span>
+                            <span id="btn-rth-export-filtered-label">Download Filtered (.xlsx)</span>
                         </button>
                         <!-- Switch to Custom Builder -->
                         <button onclick="applyCustomReportPreset('rth_invalid_documents')" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition" title="Open in Custom Report Builder">
@@ -1141,9 +1141,9 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button onclick="exportRTHFilteredExcel()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition">
+                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition" title="Download Excel with Embedded Charts matching current filter">
                             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Export Current Table (.xlsx)
+                            Export Visual Excel (.xlsx)
                         </button>
                     </div>
                 </div>

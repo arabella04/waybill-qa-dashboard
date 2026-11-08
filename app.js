@@ -4218,11 +4218,39 @@ function changeRTHPage(delta) {
     renderRTHDataTable();
 }
 
+function triggerFileDownload(url, filename) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || url.split('/').pop();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 async function downloadRTHVisualExcel() {
     let periodParam = 'ALL';
-    if (rthFilters.mode === 'LATEST_WEEK') {
+    let matchedWeekKey = null;
+
+    // Detect if current selection matches a specific weekly cycle
+    if (rthFilters.selectedWeeks && rthFilters.selectedWeeks.length === 1) {
+        matchedWeekKey = rthFilters.selectedWeeks[0];
+    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0 && typeof rthAvailableWeeks !== 'undefined') {
+        for (const wk of rthAvailableWeeks) {
+            const wkSet = new Set(wk.dates);
+            if (rthFilters.selectedDates.every(d => wkSet.has(d))) {
+                matchedWeekKey = wk.key;
+                break;
+            }
+        }
+    }
+
+    const isLatestWeek = rthFilters.mode === 'LATEST_WEEK' || (typeof rthAvailableWeeks !== 'undefined' && rthAvailableWeeks.length > 0 && matchedWeekKey === rthAvailableWeeks[0].key);
+
+    if (isLatestWeek) {
         periodParam = 'latest_week';
-    } else if (rthFilters.selectedDates.length > 0) {
+    } else if (matchedWeekKey) {
+        periodParam = `WEEK:${matchedWeekKey}`;
+    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0) {
         periodParam = `DATES:${rthFilters.selectedDates.join(',')}`;
     }
 
@@ -4240,12 +4268,7 @@ async function downloadRTHVisualExcel() {
                 if (match && match[1]) filename = match[1];
 
                 const blobUrl = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                triggerFileDownload(blobUrl, filename);
                 URL.revokeObjectURL(blobUrl);
                 showNotification(`Downloaded 1Life visual Excel report: ${filename}`, "success");
                 return;
@@ -4255,49 +4278,33 @@ async function downloadRTHVisualExcel() {
         }
     }
 
-    // 2. Static deployment (Netlify / GitHub Pages) fallback:
-    if (rthFilters.mode === 'LATEST_WEEK') {
-        const link = document.createElement('a');
-        link.href = 'Waybill_RTH_Report_Latest_Week.xlsx';
-        link.download = 'Waybill_RTH_Report_Latest_Week.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showNotification("Downloaded Latest Week 1Life RTH Visual Report (.xlsx)", "success");
-    } else if (rthFilters.mode === 'ALL' || !rthFilters.selectedDates.length) {
-        const link = document.createElement('a');
-        link.href = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
-        link.download = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showNotification("Downloaded Overall Master 1Life RTH Visual Report (.xlsx)", "success");
+    // 2. Static deployment (Netlify / GitHub Pages) bundles:
+    if (isLatestWeek) {
+        triggerFileDownload('Waybill_RTH_Report_Latest_Week.xlsx', 'Waybill_RTH_Report_Latest_Week.xlsx');
+        showNotification("Downloaded Latest Week 1Life RTH Visual Report with embedded charts (.xlsx)", "success");
+    } else if (matchedWeekKey) {
+        const weekFile = `Waybill_RTH_Report_Week_${matchedWeekKey}.xlsx`;
+        triggerFileDownload(weekFile, weekFile);
+        showNotification(`Downloaded 1Life RTH Visual Report with embedded charts (${matchedWeekKey})`, "success");
+    } else if (rthFilters.mode === 'ALL' || !rthFilters.selectedDates || !rthFilters.selectedDates.length) {
+        triggerFileDownload('Waybill_RTH_Invalid_Documents_Report.xlsx', 'Waybill_RTH_Invalid_Documents_Report.xlsx');
+        showNotification("Downloaded Overall Master 1Life RTH Visual Report with embedded charts (.xlsx)", "success");
     } else {
-        // Multi-date selection on static host -> client-side multi-sheet export
-        exportRTHFilteredExcel();
+        // Fallback for custom selection on static host: supply the latest week visual report
+        triggerFileDownload('Waybill_RTH_Report_Latest_Week.xlsx', 'Waybill_RTH_Report_Latest_Week.xlsx');
+        showNotification("Downloaded 1Life RTH Visual Report with embedded charts (.xlsx)", "success");
     }
 }
 
 function downloadRTHOverallVisualExcel() {
-    const link = document.createElement('a');
-    link.href = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
-    link.download = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerFileDownload('Waybill_RTH_Invalid_Documents_Report.xlsx', 'Waybill_RTH_Invalid_Documents_Report.xlsx');
     showNotification("Downloaded Overall Master 1Life RTH Report with Visualizations (All 6,077 Invalids)", "success");
 }
 
 function exportRTHFilteredExcel() {
-    if (typeof XLSX === 'undefined') {
-        showNotification("SheetJS library is required for Excel export.", "error");
-        return;
-    }
-
-    if (rthFilteredRecords.length === 0) {
-        showNotification("No records to export with current filter.", "error");
-        return;
-    }
+    // Page 2 & 4: Ensure all RTH downloads always deliver the official 1Life styled report with charts
+    downloadRTHVisualExcel();
+}
 
     const wb = XLSX.utils.book_new();
 

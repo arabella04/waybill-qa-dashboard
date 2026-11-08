@@ -84,8 +84,21 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(500, f"Error generating Excel: {str(e)}")
                 return
 
+        elif path in ("/ws", "/api/info", "/sockjs-node"):
+            # Acknowledge browser dev/hot-reload polling quietly
+            self.send_response(204)
+            self.end_headers()
+            return
+
         # Default fallback to serve files
         super().do_GET()
+
+    def log_message(self, format, *args):
+        # Silence repeated websocket and dev polling from cluttering terminal logs
+        if len(args) > 0 and isinstance(args[0], str):
+            if any(k in args[0] for k in ("/ws", "/api/info", "/sockjs-node", "favicon.ico")):
+                return
+        super().log_message(format, *args)
 
 def run_server():
     socketserver.TCPServer.allow_reuse_address = True
