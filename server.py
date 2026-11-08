@@ -84,7 +84,7 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(500, f"Error generating Excel: {str(e)}")
                 return
 
-        elif path in ("/ws", "/api/info", "/sockjs-node"):
+        elif any(path.startswith(prefix) for prefix in ("/ws", "/api/info", "/sockjs-node")):
             # Acknowledge browser dev/hot-reload polling quietly
             self.send_response(204)
             self.end_headers()
@@ -93,8 +93,18 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
         # Default fallback to serve files
         super().do_GET()
 
+    def log_error(self, format, *args):
+        # Completely silence 404/file-not-found error logs for websocket/dev polling
+        req_path = getattr(self, 'path', '')
+        if any(req_path.startswith(k) for k in ("/ws", "/api/info", "/sockjs-node", "/favicon.ico")):
+            return
+        super().log_error(format, *args)
+
     def log_message(self, format, *args):
         # Silence repeated websocket and dev polling from cluttering terminal logs
+        req_path = getattr(self, 'path', '')
+        if any(req_path.startswith(k) for k in ("/ws", "/api/info", "/sockjs-node", "/favicon.ico")):
+            return
         if len(args) > 0 and isinstance(args[0], str):
             if any(k in args[0] for k in ("/ws", "/api/info", "/sockjs-node", "favicon.ico")):
                 return
