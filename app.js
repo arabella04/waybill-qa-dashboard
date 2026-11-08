@@ -3191,9 +3191,10 @@ function downloadCustomCSVReport() {
 // ==========================================
 
 const rthFilters = {
-    period: 'ALL',
+    mode: 'ALL',            // 'ALL' | 'LATEST_WEEK' | 'OCT_2026' | 'NOV_2026' | 'CUSTOM'
+    selectedDates: [],      // Array of date strings: ['11/5/2026', '11/4/2026']
+    selectedWeeks: [],      // Array of week keys: ['2026-10-31_2026-11-06']
     document: 'ALL',
-    category: 'ALL',
     search: '',
     page: 1,
     pageSize: 25
@@ -3201,8 +3202,20 @@ const rthFilters = {
 
 let rthFilteredRecords = [];
 let rthDocView = 'bar';       // 'bar' | 'donut'
-let rthRiderView = 'bar';     // 'bar' | 'stacked'
-let rthAllRidersView = 'line'; // 'line' | 'tiers'
+let rthRiderView = 'stacked'; // 'stacked' | 'bar' (Default to stacked per Page 4 item 6!)
+let rthRiderSort = 'surname'; // 'surname' | 'volume' (Default to surname per Page 4 item 7!)
+
+let rthAvailableWeeks = [];
+let rthAvailableDates = [];
+
+function getRiderSurname(name) {
+    if (!name) return 'Unknown';
+    const clean = name.trim();
+    if (clean.includes(',')) {
+        return clean.split(',')[0].trim();
+    }
+    return clean.split(' ')[0].trim();
+}
 
 function setRTHDocView(mode) {
     rthDocView = mode;
@@ -3210,57 +3223,51 @@ function setRTHDocView(mode) {
     const btnDonut = document.getElementById('btn-rth-doc-donut');
     if (btnBar && btnDonut) {
         if (mode === 'bar') {
-            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-rose-700 shadow-xs';
+            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-teal-700 shadow-xs';
             btnDonut.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
         } else {
-            btnDonut.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-rose-700 shadow-xs';
+            btnDonut.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-teal-700 shadow-xs';
             btnBar.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
         }
     }
-    const title = document.getElementById('rth-doc-chart-title');
-    const sub = document.getElementById('rth-doc-chart-sub');
-    if (title) title.textContent = mode === 'bar' ? 'Which Documents Had Many Invalids' : 'Document Invalids Market Share (%)';
-    if (sub) sub.textContent = mode === 'bar' ? 'Total invalid volume by document type (ID, MDC, RC, LOA)' : 'Proportion of invalid waybills by document type';
     renderRTHCharts(rthFilteredRecords);
 }
 
 function setRTHRiderView(mode) {
     rthRiderView = mode;
-    const btnBar = document.getElementById('btn-rth-rider-bar');
     const btnStacked = document.getElementById('btn-rth-rider-stacked');
-    if (btnBar && btnStacked) {
-        if (mode === 'bar') {
-            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
-            btnStacked.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
-        } else {
-            btnStacked.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
+    const btnBar = document.getElementById('btn-rth-rider-bar');
+    if (btnStacked && btnBar) {
+        if (mode === 'stacked') {
+            btnStacked.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-teal-700 shadow-xs';
             btnBar.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+        } else {
+            btnBar.className = 'px-2 py-0.5 rounded-md font-semibold bg-white text-teal-700 shadow-xs';
+            btnStacked.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 hover:text-slate-800';
         }
     }
-    const title = document.getElementById('rth-rider-chart-title');
-    const sub = document.getElementById('rth-rider-chart-sub');
-    if (title) title.textContent = mode === 'bar' ? 'Top 10 Riders with Highest Invalids' : 'Top 10 Riders by Document Defect (Stacked)';
-    if (sub) sub.textContent = mode === 'bar' ? 'Top 10 riders ranked by highest count of invalid waybills' : 'Breakdown of ID, MDC, RC, and LOA defects for the top 10 riders';
     renderRTHCharts(rthFilteredRecords);
 }
 
-function setRTHAllRidersView(mode) {
-    rthAllRidersView = mode;
-    const btnLine = document.getElementById('btn-rth-all-line');
-    const btnTiers = document.getElementById('btn-rth-all-tiers');
-    if (btnLine && btnTiers) {
-        if (mode === 'line') {
-            btnLine.className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
-            btnTiers.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+function setRTHRiderSort(mode) {
+    rthRiderSort = mode;
+    const btnSurname = document.getElementById('btn-rth-sort-surname');
+    const btnVolume = document.getElementById('btn-rth-sort-volume');
+    if (btnSurname && btnVolume) {
+        if (mode === 'surname') {
+            btnSurname.className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-teal-700 shadow-xs';
+            btnVolume.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800';
         } else {
-            btnTiers.className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-blue-700 shadow-xs';
-            btnLine.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800';
+            btnVolume.className = 'px-2.5 py-1 rounded-md font-semibold bg-white text-teal-700 shadow-xs';
+            btnSurname.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 hover:text-slate-800';
         }
     }
-    const title = document.getElementById('rth-all-riders-title');
     const desc = document.getElementById('rth-all-riders-desc');
-    if (title) title.textContent = mode === 'line' ? 'All Riders Invalid Waybills Distribution (Line Graph)' : 'Fleet Defect Severity Tiers (Risk Segmentation)';
-    if (desc) desc.textContent = mode === 'line' ? 'Continuous volume distribution line graph showing invalid waybill counts across all riders' : 'Categorization of riders into Critical (150+), High (80-149), Moderate (30-79), and Low (<30) invalid brackets';
+    if (desc) {
+        desc.textContent = mode === 'surname' 
+            ? 'Vertical bar chart showing invalid waybill volume per rider, sorted alphabetically by surname'
+            : 'Vertical bar chart showing invalid waybill volume per rider, sorted by total invalids (high to low)';
+    }
     renderRTHCharts(rthFilteredRecords);
 }
 
@@ -3269,8 +3276,7 @@ function classifyDocumentInvolved(remarks) {
     const txt = remarks.toLowerCase().trim();
     const docs = [];
     
-    // MDC: explicit 'mdc' or 'diff sign' / 'different sign'
-    // User rule: "if u see a remarks like diff sign that is mdc"
+    // MDC: Medicine Consent Form (User rule: if u see remarks like diff sign that is MDC)
     if (
         txt.includes('mdc') ||
         txt.includes('diff sign') ||
@@ -3352,10 +3358,8 @@ function parseSlashDate(str) {
 }
 
 function getSaturdayFridayRange(date) {
-    // Return start (Saturday) and end (Friday) for any given Date
-    // JS getDay(): Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6
     const day = date.getDay();
-    const diffToSat = (day + 1) % 7; // days since Saturday
+    const diffToSat = (day + 1) % 7;
     const sat = new Date(date);
     sat.setDate(sat.getDate() - diffToSat);
     sat.setHours(0, 0, 0, 0);
@@ -3367,65 +3371,254 @@ function getSaturdayFridayRange(date) {
     return { start: sat, end: fri };
 }
 
+// Multi-Date Picker Toggle & Document Listener
+function toggleRTHDateDropdown(e) {
+    if (e) e.stopPropagation();
+    const panel = document.getElementById('rth-date-dropdown-panel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+}
+
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('rth-date-picker-container');
+    const panel = document.getElementById('rth-date-dropdown-panel');
+    if (container && panel && !container.contains(e.target)) {
+        panel.classList.add('hidden');
+    }
+});
+
 function initRTHPeriodDropdown() {
-    const periodSelect = document.getElementById('rth-filter-period');
-    if (!periodSelect) return;
+    const listEl = document.getElementById('rth-date-checkbox-list');
+    if (!listEl) return;
 
     const invalidRecs = allData.filter(r => r.qa_initial_status === 'Invalid');
     
     // Group invalid dates into Saturday-to-Friday weekly cycles
     const weekMap = new Map();
-    const dateList = [];
+    const dateCounts = new Map();
 
     invalidRecs.forEach(r => {
         const dStr = r.initial_val_date || r.date;
-        const dt = parseSlashDate(dStr);
-        if (dt) {
-            const { start, end } = getSaturdayFridayRange(dt);
-            const key = `${start.toISOString().slice(0, 10)}_${end.toISOString().slice(0, 10)}`;
-            if (!weekMap.has(key)) {
-                const sStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                const eStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                weekMap.set(key, { label: `${sStr} - ${eStr}`, start, end, count: 0 });
+        if (dStr) {
+            dateCounts.set(dStr, (dateCounts.get(dStr) || 0) + 1);
+            const dt = parseSlashDate(dStr);
+            if (dt) {
+                const { start, end } = getSaturdayFridayRange(dt);
+                const key = `${start.toISOString().slice(0, 10)}_${end.toISOString().slice(0, 10)}`;
+                if (!weekMap.has(key)) {
+                    const sStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const eStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    weekMap.set(key, { key, label: `${sStr} - ${eStr}`, start, end, count: 0, dates: new Set() });
+                }
+                weekMap.get(key).count++;
+                weekMap.get(key).dates.add(dStr);
             }
-            weekMap.get(key).count++;
-
-            if (!dateList.includes(dStr)) dateList.push(dStr);
         }
     });
 
-    // Sort weeks descending
-    const sortedWeeks = Array.from(weekMap.entries()).sort((a, b) => b[1].start - a[1].start);
+    rthAvailableWeeks = Array.from(weekMap.values()).sort((a, b) => b.start - a.start);
+    rthAvailableDates = Array.from(dateCounts.entries())
+        .map(([dateStr, count]) => ({ dateStr, count, dt: parseSlashDate(dateStr) }))
+        .sort((a, b) => (b.dt || 0) - (a.dt || 0));
+
+    // Default to ALL
+    rthFilters.mode = 'ALL';
+    rthFilters.selectedDates = [];
+    rthFilters.selectedWeeks = [];
+
+    renderRTHDateCheckboxes();
+    updateRTHDateSummaryUI();
+}
+
+function renderRTHDateCheckboxes(filterText = '') {
+    const listEl = document.getElementById('rth-date-checkbox-list');
+    if (!listEl) return;
+
+    const q = filterText.toLowerCase().trim();
+    const isAll = rthFilters.mode === 'ALL';
+
+    const filteredWeeks = rthAvailableWeeks.filter(w => !q || w.label.toLowerCase().includes(q));
+    const filteredDates = rthAvailableDates.filter(d => !q || d.dateStr.toLowerCase().includes(q));
 
     let html = `
-        <option value="ALL">All Invalids (${invalidRecs.length.toLocaleString()} Total Records)</option>
-        <optgroup label="Weekly Cycles (Saturday to Friday)">
+        <div class="space-y-3">
+            <!-- Weekly Cycles Section -->
+            <div>
+                <div class="text-[10px] uppercase font-bold text-teal-800 tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>Weekly Cycles (Sat - Fri)</span>
+                    <span class="text-slate-400 font-normal text-[10px]">${filteredWeeks.length} cycles</span>
+                </div>
+                <div class="space-y-1">
     `;
 
-    sortedWeeks.forEach(([key, info], idx) => {
-        const tag = idx === 0 ? ' (Latest Cycle)' : '';
-        html += `<option value="WEEK:${key}">${info.label}${tag} • ${info.count.toLocaleString()} invalids</option>`;
+    filteredWeeks.forEach((w, idx) => {
+        const isChecked = isAll || rthFilters.selectedWeeks.includes(w.key);
+        const tag = idx === 0 ? ' <span class="text-[10px] px-1.5 py-0.2 rounded bg-teal-100 text-teal-800 font-bold">Latest</span>' : '';
+        html += `
+            <label class="flex items-center justify-between p-1.5 rounded hover:bg-teal-50/60 cursor-pointer transition text-xs border border-transparent hover:border-teal-100">
+                <span class="flex items-center gap-2">
+                    <input type="checkbox" onchange="onRTHDateCheckboxToggle('week', '${w.key}', this.checked)" ${isChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
+                    <span class="font-medium text-slate-800">${escapeHtml(w.label)}${tag}</span>
+                </span>
+                <span class="font-mono text-[11px] text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded">${w.count.toLocaleString()}</span>
+            </label>
+        `;
     });
 
-    html += `</optgroup><optgroup label="Individual Validation Dates">`;
-    dateList.sort((a, b) => (parseSlashDate(b) || 0) - (parseSlashDate(a) || 0)).forEach(dStr => {
-        const cnt = invalidRecs.filter(r => (r.initial_val_date || r.date) === dStr).length;
-        html += `<option value="DATE:${dStr}">${dStr} (${cnt} invalids)</option>`;
-    });
-    html += `</optgroup>`;
+    html += `
+                </div>
+            </div>
 
-    periodSelect.innerHTML = html;
+            <!-- Individual Dates Section -->
+            <div class="border-t border-slate-100 pt-2">
+                <div class="text-[10px] uppercase font-bold text-teal-800 tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>Individual Validation Dates</span>
+                    <span class="text-slate-400 font-normal text-[10px]">${filteredDates.length} days</span>
+                </div>
+                <div class="space-y-1">
+    `;
+
+    filteredDates.forEach(d => {
+        const isChecked = isAll || rthFilters.selectedDates.includes(d.dateStr);
+        html += `
+            <label class="flex items-center justify-between p-1.5 rounded hover:bg-teal-50/60 cursor-pointer transition text-xs border border-transparent hover:border-teal-100">
+                <span class="flex items-center gap-2">
+                    <input type="checkbox" onchange="onRTHDateCheckboxToggle('date', '${d.dateStr}', this.checked)" ${isChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
+                    <span class="font-medium text-slate-700">${escapeHtml(d.dateStr)}</span>
+                </span>
+                <span class="font-mono text-[11px] text-slate-600 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">${d.count.toLocaleString()}</span>
+            </label>
+        `;
+    });
+
+    html += `
+                </div>
+            </div>
+        </div>
+    `;
+
+    listEl.innerHTML = html;
+}
+
+function filterRTHDateCheckboxes() {
+    const input = document.getElementById('rth-date-search');
+    const q = input ? input.value : '';
+    renderRTHDateCheckboxes(q);
+}
+
+function onRTHDateCheckboxToggle(type, value, isChecked) {
+    if (rthFilters.mode === 'ALL') {
+        // When user toggles from ALL, start with all selected then toggle this one off, or start custom
+        rthFilters.mode = 'CUSTOM';
+        rthFilters.selectedDates = rthAvailableDates.map(d => d.dateStr);
+        rthFilters.selectedWeeks = rthAvailableWeeks.map(w => w.key);
+    }
+
+    if (type === 'week') {
+        const targetWeek = rthAvailableWeeks.find(w => w.key === value);
+        if (isChecked) {
+            if (!rthFilters.selectedWeeks.includes(value)) rthFilters.selectedWeeks.push(value);
+            if (targetWeek) {
+                targetWeek.dates.forEach(d => {
+                    if (!rthFilters.selectedDates.includes(d)) rthFilters.selectedDates.push(d);
+                });
+            }
+        } else {
+            rthFilters.selectedWeeks = rthFilters.selectedWeeks.filter(k => k !== value);
+            if (targetWeek) {
+                const datesToRemove = new Set(targetWeek.dates);
+                rthFilters.selectedDates = rthFilters.selectedDates.filter(d => !datesToRemove.has(d));
+            }
+        }
+    } else if (type === 'date') {
+        if (isChecked) {
+            if (!rthFilters.selectedDates.includes(value)) rthFilters.selectedDates.push(value);
+        } else {
+            rthFilters.selectedDates = rthFilters.selectedDates.filter(d => d !== value);
+        }
+    }
+
+    updateRTHDateSummaryUI();
+    renderRTHDateCheckboxes(document.getElementById('rth-date-search')?.value || '');
+    rthFilters.page = 1;
+    renderRTHReport();
+}
+
+function setRTHDateQuickMode(mode) {
+    rthFilters.mode = mode;
+    if (mode === 'ALL') {
+        rthFilters.selectedDates = [];
+        rthFilters.selectedWeeks = [];
+    } else if (mode === 'LATEST_WEEK') {
+        if (rthAvailableWeeks.length > 0) {
+            const latest = rthAvailableWeeks[0];
+            rthFilters.selectedWeeks = [latest.key];
+            rthFilters.selectedDates = Array.from(latest.dates);
+        }
+    } else if (mode === 'OCT_2026') {
+        rthFilters.selectedWeeks = [];
+        rthFilters.selectedDates = rthAvailableDates
+            .filter(d => d.dateStr.startsWith('10/') || (d.dt && d.dt.getMonth() === 9))
+            .map(d => d.dateStr);
+    } else if (mode === 'NOV_2026') {
+        rthFilters.selectedWeeks = [];
+        rthFilters.selectedDates = rthAvailableDates
+            .filter(d => d.dateStr.startsWith('11/') || (d.dt && d.dt.getMonth() === 10))
+            .map(d => d.dateStr);
+    }
+
+    updateRTHDateSummaryUI();
+    renderRTHDateCheckboxes(document.getElementById('rth-date-search')?.value || '');
+    rthFilters.page = 1;
+    renderRTHReport();
+}
+
+function clearRTHDateSelections() {
+    rthFilters.mode = 'CUSTOM';
+    rthFilters.selectedDates = [];
+    rthFilters.selectedWeeks = [];
+    updateRTHDateSummaryUI();
+    renderRTHDateCheckboxes(document.getElementById('rth-date-search')?.value || '');
+    rthFilters.page = 1;
+    renderRTHReport();
+}
+
+function applyRTHDateSelection() {
+    const panel = document.getElementById('rth-date-dropdown-panel');
+    if (panel) panel.classList.add('hidden');
+    renderRTHReport();
+}
+
+function updateRTHDateSummaryUI() {
+    const summaryBadge = document.getElementById('rth-date-selected-summary');
+    const displayLabel = document.getElementById('rth-date-display-label');
+    const checkedCounter = document.getElementById('rth-date-checked-counter');
+
+    const totalInvalids = allData.filter(r => r.qa_initial_status === 'Invalid').length;
+
+    if (rthFilters.mode === 'ALL' || (!rthFilters.selectedDates.length && !rthFilters.selectedWeeks.length)) {
+        if (summaryBadge) summaryBadge.textContent = `All Dates (${totalInvalids.toLocaleString()})`;
+        if (displayLabel) displayLabel.textContent = `All Invalids (${totalInvalids.toLocaleString()} Master Dataset)`;
+        if (checkedCounter) checkedCounter.textContent = `All ${totalInvalids.toLocaleString()} Invalids selected`;
+    } else if (rthFilters.mode === 'LATEST_WEEK' && rthAvailableWeeks.length > 0) {
+        const latest = rthAvailableWeeks[0];
+        if (summaryBadge) summaryBadge.textContent = `Latest Week (${latest.count.toLocaleString()})`;
+        if (displayLabel) displayLabel.textContent = `Latest Week: ${latest.label} (${latest.count.toLocaleString()})`;
+        if (checkedCounter) checkedCounter.textContent = `${latest.count.toLocaleString()} Invalids in Latest Week`;
+    } else {
+        const numDays = rthFilters.selectedDates.length;
+        const matchingInvalids = allData.filter(r => r.qa_initial_status === 'Invalid' && rthFilters.selectedDates.includes(r.initial_val_date || r.date)).length;
+        if (summaryBadge) summaryBadge.textContent = `${numDays} Dates (${matchingInvalids.toLocaleString()})`;
+        if (displayLabel) displayLabel.textContent = `${numDays} Dates Selected (${matchingInvalids.toLocaleString()} Invalids)`;
+        if (checkedCounter) checkedCounter.textContent = `${numDays} Dates, ${matchingInvalids.toLocaleString()} Invalids selected`;
+    }
 }
 
 function onRTHFilterChange() {
-    const periodEl = document.getElementById('rth-filter-period');
     const docEl = document.getElementById('rth-filter-document');
-    const catEl = document.getElementById('rth-filter-category');
     const searchEl = document.getElementById('rth-filter-search');
 
-    if (periodEl) rthFilters.period = periodEl.value;
     if (docEl) rthFilters.document = docEl.value;
-    if (catEl) rthFilters.category = catEl.value;
     if (searchEl) rthFilters.search = searchEl.value.trim().toLowerCase();
 
     rthFilters.page = 1;
@@ -3435,20 +3628,15 @@ function onRTHFilterChange() {
 function renderRTHReport() {
     let records = allData.filter(r => r.qa_initial_status === 'Invalid');
 
-    // 1. Timeframe Filter
-    if (rthFilters.period && rthFilters.period !== 'ALL') {
-        if (rthFilters.period.startsWith('WEEK:')) {
-            const [sIso, eIso] = rthFilters.period.replace('WEEK:', '').split('_');
-            const sDate = new Date(sIso + 'T00:00:00');
-            const eDate = new Date(eIso + 'T23:59:59');
-            records = records.filter(r => {
-                const dt = parseSlashDate(r.initial_val_date || r.date);
-                return dt && dt >= sDate && dt <= eDate;
-            });
-        } else if (rthFilters.period.startsWith('DATE:')) {
-            const targetDate = rthFilters.period.replace('DATE:', '');
-            records = records.filter(r => (r.initial_val_date || r.date) === targetDate);
-        }
+    // 1. Flexible Timeframe Filter (Multi-Date / Multi-Week)
+    if (rthFilters.mode === 'ALL' || (!rthFilters.selectedDates.length && !rthFilters.selectedWeeks.length)) {
+        // Full dataset
+    } else {
+        const allowedDates = new Set(rthFilters.selectedDates);
+        records = records.filter(r => {
+            const d = r.initial_val_date || r.date;
+            return allowedDates.has(d);
+        });
     }
 
     // 2. Document Involved Filter
@@ -3460,12 +3648,7 @@ function renderRTHReport() {
         }
     }
 
-    // 3. Issue Category Filter
-    if (rthFilters.category && rthFilters.category !== 'ALL') {
-        records = records.filter(r => r.issue_category === rthFilters.category);
-    }
-
-    // 4. Keyword Search
+    // 3. Keyword Search
     if (rthFilters.search) {
         const q = rthFilters.search;
         records = records.filter(r => {
@@ -3483,12 +3666,12 @@ function renderRTHReport() {
     const btnDownloadVisualLabel = document.getElementById('btn-rth-download-visual-label');
     const btnExportFilteredLabel = document.getElementById('btn-rth-export-filtered-label');
     if (btnDownloadVisualLabel) {
-        if (rthFilters.period === 'ALL') {
+        if (rthFilters.mode === 'ALL' || (!rthFilters.selectedDates.length && !rthFilters.selectedWeeks.length)) {
             btnDownloadVisualLabel.textContent = "Download Overall Excel (with Charts)";
-        } else if (rthFilters.period.startsWith('WEEK:')) {
+        } else if (rthFilters.mode === 'LATEST_WEEK') {
             btnDownloadVisualLabel.textContent = "Download Latest Week Excel (with Charts)";
         } else {
-            btnDownloadVisualLabel.textContent = "Download Filtered Excel (with Charts)";
+            btnDownloadVisualLabel.textContent = `Download Filtered Excel (${records.length.toLocaleString()} Invalids)`;
         }
     }
     if (btnExportFilteredLabel) {
@@ -3558,45 +3741,46 @@ function updateRTHKpis(records) {
         riderSub.textContent = `${topRiderEntry[1].toLocaleString()} invalid waybills (${((topRiderEntry[1] / totalCount) * 100).toFixed(1)}% share)`;
     }
 
-    // Top Category
-    const catCounts = {};
+    // Top Defect Issue (Remarks)
+    const issueCounts = {};
     records.forEach(r => {
-        const cat = r.issue_category || 'Other Defect';
-        catCounts[cat] = (catCounts[cat] || 0) + 1;
+        const iss = (r.document_issue || '').trim() || 'Unspecified';
+        issueCounts[iss] = (issueCounts[iss] || 0) + 1;
     });
-    const topCatEntry = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
-    if (catEl && topCatEntry) {
-        catEl.textContent = topCatEntry[0];
+    const topIssueEntry = Object.entries(issueCounts).sort((a, b) => b[1] - a[1])[0];
+    if (catEl && topIssueEntry) {
+        catEl.textContent = topIssueEntry[0].length > 25 ? topIssueEntry[0].slice(0, 25) + '...' : topIssueEntry[0];
+        catEl.title = topIssueEntry[0];
     }
-    if (catSub && topCatEntry) {
-        catSub.textContent = `${topCatEntry[1].toLocaleString()} cases (${((topCatEntry[1] / totalCount) * 100).toFixed(1)}% of defects)`;
+    if (catSub && topIssueEntry) {
+        catSub.textContent = `${topIssueEntry[1].toLocaleString()} cases (${((topIssueEntry[1] / totalCount) * 100).toFixed(1)}% of defects)`;
     }
 }
 
 function renderRTHCharts(records) {
     if (typeof Chart === 'undefined') return;
 
-    // 1. Chart: Document Invalids Distribution (Bar vs Donut)
+    // 1. Chart: Invalid Documents Distribution (Page 2 item 3: MDC = Medicine Consent Form)
     const ctxDoc = document.getElementById('chart-rth-documents');
     if (ctxDoc) {
         if (charts.rthDocuments) charts.rthDocuments.destroy();
 
         const docCounts = {
             'ID (Identification)': 0,
-            'MDC (Medical Cert)': 0,
+            'MDC (Medicine Consent Form)': 0,
             'RC (Received Copy)': 0,
             'LOA (Auth Letter)': 0,
-            'Other / Cert': 0
+            'Other': 0
         };
 
         records.forEach(r => {
             const d = r.document_involved || '';
             let matched = false;
             if (d.includes('ID')) { docCounts['ID (Identification)']++; matched = true; }
-            if (d.includes('MDC')) { docCounts['MDC (Medical Cert)']++; matched = true; }
+            if (d.includes('MDC')) { docCounts['MDC (Medicine Consent Form)']++; matched = true; }
             if (d.includes('RC')) { docCounts['RC (Received Copy)']++; matched = true; }
             if (d.includes('LOA')) { docCounts['LOA (Auth Letter)']++; matched = true; }
-            if (!matched) { docCounts['Other / Cert']++; }
+            if (!matched) { docCounts['Other']++; }
         });
 
         const totalDocMentions = Object.values(docCounts).reduce((a, b) => a + b, 0) || 1;
@@ -3610,9 +3794,9 @@ function renderRTHCharts(records) {
                         data: Object.values(docCounts),
                         backgroundColor: [
                             '#F59E0B', // Amber for ID
-                            '#2563EB', // Blue for MDC
-                            '#9333EA', // Purple for RC
-                            '#E11D48', // Rose for LOA
+                            '#0D9488', // Teal for MDC (Medicine Consent Form)
+                            '#8B5CF6', // Purple for RC
+                            '#EC4899', // Rose for LOA
                             '#64748B'  // Slate for Other
                         ],
                         borderWidth: 2,
@@ -3655,9 +3839,9 @@ function renderRTHCharts(records) {
                         data: Object.values(docCounts),
                         backgroundColor: [
                             '#F59E0B', // Amber for ID
-                            '#2563EB', // Blue for MDC
-                            '#9333EA', // Purple for RC
-                            '#E11D48', // Rose for LOA
+                            '#0D9488', // Teal for MDC
+                            '#8B5CF6', // Purple for RC
+                            '#EC4899', // Rose for LOA
                             '#64748B'  // Slate for Other
                         ],
                         borderRadius: 6
@@ -3689,7 +3873,7 @@ function renderRTHCharts(records) {
         }
     }
 
-    // 2. Chart: Top 10 Riders with Highest Invalids (Total Bar vs Stacked by Doc)
+    // 2. Chart: Top 10 Riders Defect Breakdown by Document (Page 4 item 6)
     const ctxRiders = document.getElementById('chart-rth-riders');
     if (ctxRiders) {
         if (charts.rthRiders) charts.rthRiders.destroy();
@@ -3728,21 +3912,21 @@ function renderRTHCharts(records) {
                             borderRadius: 4
                         },
                         {
-                            label: 'MDC Defects',
+                            label: 'MDC (Medicine Consent)',
                             data: top10Names.map(name => riderDocs[name]?.MDC || 0),
-                            backgroundColor: '#2563EB',
+                            backgroundColor: '#0D9488',
                             borderRadius: 4
                         },
                         {
                             label: 'RC Defects',
                             data: top10Names.map(name => riderDocs[name]?.RC || 0),
-                            backgroundColor: '#9333EA',
+                            backgroundColor: '#8B5CF6',
                             borderRadius: 4
                         },
                         {
                             label: 'LOA Defects',
                             data: top10Names.map(name => riderDocs[name]?.LOA || 0),
-                            backgroundColor: '#E11D48',
+                            backgroundColor: '#EC4899',
                             borderRadius: 4
                         }
                     ]
@@ -3780,11 +3964,11 @@ function renderRTHCharts(records) {
                 type: 'bar',
                 indexAxis: 'y',
                 data: {
-                    labels: top10.map(t => t[0]), // Full actual rider name
+                    labels: top10.map(t => t[0]),
                     datasets: [{
-                        label: 'Invalid Waybills',
+                        label: 'Total Invalid Waybills',
                         data: top10.map(t => t[1]),
-                        backgroundColor: '#1E3A8A', // Navy Blue
+                        backgroundColor: '#0F766E', // 1Life Dark Teal
                         borderRadius: 6
                     }]
                 },
@@ -3811,7 +3995,7 @@ function renderRTHCharts(records) {
         }
     }
 
-    // 2.5. Chart: All Riders Invalid Waybills Distribution (Line Graph vs Severity Tiers)
+    // 3. Chart: Rider Invalid Waybill Distribution Count (Vertical Column Bar Chart, Page 4 item 7)
     const ctxAllRiders = document.getElementById('chart-rth-all-riders-line');
     if (ctxAllRiders) {
         if (charts.rthAllRiders) charts.rthAllRiders.destroy();
@@ -3822,201 +4006,67 @@ function renderRTHCharts(records) {
             riderCounts[name] = (riderCounts[name] || 0) + 1;
         });
 
-        const allRidersSorted = Object.entries(riderCounts)
-            .sort((a, b) => b[1] - a[1]);
+        let allRidersList = Object.entries(riderCounts);
+
+        // Sort by surname or volume (Page 4 item 7: "Sort them by rider's surname, not by ranking. Remove 'Riders (Ranked #1 to #58)' below and change it with their names instead.")
+        if (rthRiderSort === 'surname') {
+            allRidersList.sort((a, b) => getRiderSurname(a[0]).localeCompare(getRiderSurname(b[0])));
+        } else {
+            allRidersList.sort((a, b) => b[1] - a[1]);
+        }
 
         const badgeEl = document.getElementById('rth-all-riders-badge');
-        if (badgeEl) badgeEl.textContent = `${allRidersSorted.length} Riders`;
+        if (badgeEl) badgeEl.textContent = `${allRidersList.length} Riders`;
 
-        if (rthAllRidersView === 'tiers') {
-            const totInv = records.length;
-            const isLargeScope = totInv > 3000;
-            const tiers = isLargeScope ? [
-                { name: 'Critical (>= 200)', min: 200, max: 999999, color: '#EF4444' },
-                { name: 'High (100 - 199)', min: 100, max: 199, color: '#F59E0B' },
-                { name: 'Moderate (50 - 99)', min: 50, max: 99, color: '#6366F1' },
-                { name: 'Low (< 50)', min: 1, max: 49, color: '#10B981' }
-            ] : [
-                { name: 'Critical (>= 40)', min: 40, max: 999999, color: '#EF4444' },
-                { name: 'High (20 - 39)', min: 20, max: 39, color: '#F59E0B' },
-                { name: 'Moderate (10 - 19)', min: 10, max: 19, color: '#6366F1' },
-                { name: 'Low (< 10)', min: 1, max: 9, color: '#10B981' }
-            ];
-
-            const tierRiders = [];
-            const tierWaybills = [];
-            tiers.forEach(t => {
-                const group = allRidersSorted.filter(r => r[1] >= t.min && r[1] <= t.max);
-                tierRiders.push(group.length);
-                tierWaybills.push(group.reduce((acc, curr) => acc + curr[1], 0));
-            });
-
-            charts.rthAllRiders = new Chart(ctxAllRiders, {
-                type: 'bar',
-                data: {
-                    labels: tiers.map(t => t.name),
-                    datasets: [
-                        {
-                            label: 'Number of Riders',
-                            data: tierRiders,
-                            backgroundColor: tiers.map(t => t.color),
-                            borderRadius: 6,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Invalid Waybills Generated',
-                            data: tierWaybills,
-                            backgroundColor: 'rgba(30, 58, 138, 0.25)',
-                            borderColor: '#1E3A8A',
-                            borderWidth: 2,
-                            borderRadius: 6,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => {
-                                    if (ctx.datasetIndex === 0) {
-                                        return ` ${ctx.parsed.y} riders in this tier`;
-                                    } else {
-                                        const pct = ((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1);
-                                        return ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${pct}% of total defects)`;
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            title: { display: true, text: 'Riders Count', color: '#64748B' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            beginAtZero: true,
-                            grid: { drawOnChartArea: false },
-                            ticks: { precision: 0 },
-                            title: { display: true, text: 'Invalid Waybills Volume', color: '#1E3A8A' }
-                        }
-                    }
-                }
-            });
-        } else {
-            charts.rthAllRiders = new Chart(ctxAllRiders, {
-                type: 'line',
-                data: {
-                    labels: allRidersSorted.map(r => r[0]),
-                    datasets: [{
-                        label: 'Invalid Waybills',
-                        data: allRidersSorted.map(r => r[1]),
-                        borderColor: '#2563EB',
-                        backgroundColor: 'rgba(37, 99, 235, 0.12)',
-                        fill: true,
-                        tension: 0.35,
-                        borderWidth: 2.5,
-                        pointRadius: allRidersSorted.length > 30 ? 2.5 : 4,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#1E3A8A'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: (items) => {
-                                    const idx = items[0].dataIndex;
-                                    return `#${idx + 1}: ${allRidersSorted[idx][0]}`;
-                                },
-                                label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1)}% of all invalids)`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            title: {
-                                display: true,
-                                text: 'Number of Invalid Waybills',
-                                color: '#64748B',
-                                font: { size: 11, weight: 'bold' }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                autoSkip: true,
-                                maxRotation: 45,
-                                minRotation: 45,
-                                font: { size: 10 }
-                            },
-                            title: {
-                                display: true,
-                                text: 'Riders (Ranked #1 to #' + allRidersSorted.length + ')',
-                                color: '#64748B',
-                                font: { size: 11, weight: 'bold' }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // 3. Chart: Defect Categories Doughnut
-    const ctxCats = document.getElementById('chart-rth-categories');
-    if (ctxCats) {
-        if (charts.rthCategories) charts.rthCategories.destroy();
-
-        const catCounts = {};
-        records.forEach(r => {
-            const cat = r.issue_category || 'Other Defect';
-            catCounts[cat] = (catCounts[cat] || 0) + 1;
-        });
-
-        const sortedCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1]);
-
-        charts.rthCategories = new Chart(ctxCats, {
-            type: 'doughnut',
+        charts.rthAllRiders = new Chart(ctxAllRiders, {
+            type: 'bar',
             data: {
-                labels: sortedCats.map(c => c[0]),
+                labels: allRidersList.map(r => getRiderSurname(r[0])),
                 datasets: [{
-                    data: sortedCats.map(c => c[1]),
-                    backgroundColor: [
-                        '#EF4444', // Red for Missing
-                        '#F59E0B', // Amber for Improper
-                        '#3B82F6', // Blue for Signature
-                        '#8B5CF6', // Purple for Blurred
-                        '#10B981', // Green for Expired
-                        '#64748B'  // Gray for Other
-                    ]
+                    label: 'Invalid Waybills',
+                    data: allRidersList.map(r => r[1]),
+                    backgroundColor: '#0D9488', // 1Life Teal
+                    hoverBackgroundColor: '#0F766E',
+                    borderRadius: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { boxWidth: 12, font: { size: 10 } }
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => allRidersList[items[0].dataIndex][0],
+                            label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} invalid waybills (${((ctx.parsed.y / Math.max(records.length, 1)) * 100).toFixed(1)}% of defects)`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        title: {
+                            display: true,
+                            text: 'Number of Invalid Waybills',
+                            color: '#0F766E',
+                            font: { size: 11, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 60,
+                            minRotation: 45,
+                            font: { size: 9, weight: '600' },
+                            color: '#334155'
+                        },
+                        title: {
+                            display: true,
+                            text: rthRiderSort === 'surname' ? 'Rider Surname (Alphabetical A to Z)' : 'Riders (Ranked by Invalid Volume)',
+                            color: '#0F766E',
+                            font: { size: 11, weight: 'bold' }
+                        }
                     }
                 }
             }
@@ -4031,50 +4081,56 @@ function renderRTHMatrixTable(records) {
     const total = Math.max(records.length, 1);
     const docData = [
         {
-            name: "ID (Identification)",
+            name: "ID (Valid ID / Identification)",
+            code: "ID",
             badge: "bg-amber-100 text-amber-800 border-amber-200",
             count: records.filter(r => (r.document_involved || '').includes('ID')).length,
             issues: "Improper ID, blurred ID, no ID file, inverted ID, expired ID"
         },
         {
-            name: "MDC (Medical Doctors Certification)",
-            badge: "bg-blue-100 text-blue-800 border-blue-200",
+            name: "MDC (Medicine Consent Form)",
+            code: "MDC",
+            badge: "bg-teal-100 text-teal-800 border-teal-200",
             count: records.filter(r => (r.document_involved || '').includes('MDC')).length,
-            issues: "Diff sign in MDC, no MDC, invalid MDC, different signature"
+            issues: "Different signature in MDC, no MDC, invalid MDC, signature discrepancy"
         },
         {
             name: "RC (Received / Receiving Copy)",
+            code: "RC",
             badge: "bg-purple-100 text-purple-800 border-purple-200",
             count: records.filter(r => (r.document_involved || '').includes('RC')).length,
-            issues: "Blurred RC, no sign in RC, no RC copy, no RC name"
+            issues: "Blurred RC, no signature in RC, missing RC copy, unreadable receiver name"
         },
         {
             name: "LOA (Letter of Authorization)",
+            code: "LOA",
             badge: "bg-rose-100 text-rose-800 border-rose-200",
             count: records.filter(r => (r.document_involved || '').includes('LOA')).length,
-            issues: "No LOA, expired LOA, blurred LOA copy"
+            issues: "Missing LOA, expired LOA, blurred LOA copy"
         },
         {
-            name: "Multi-Document Invalids",
+            name: "Multi-Document Defects",
+            code: "MULTI",
             badge: "bg-slate-100 text-slate-800 border-slate-200",
             count: records.filter(r => (r.document_involved || '').includes(',')).length,
-            issues: "Simultaneous defects (e.g. MDC & ID, RC & ID)"
+            issues: "Simultaneous defects across 2 or more documents (e.g. MDC & ID, RC & ID)"
         }
     ];
 
     tbody.innerHTML = docData.map(d => `
-        <tr class="hover:bg-slate-50 transition-colors">
+        <tr class="hover:bg-teal-50/30 transition-colors">
             <td class="px-3 py-2.5 font-bold text-slate-800 flex items-center gap-1.5">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${d.badge}">${d.name.split(' ')[0]}</span>
-                <span class="text-xs text-slate-700">${escapeHtml(d.name)}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${d.badge}">${d.code}</span>
+                <span class="text-xs text-slate-800">${escapeHtml(d.name)}</span>
             </td>
-            <td class="px-3 py-2.5 text-right font-mono font-bold text-slate-900">${d.count.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-right font-mono font-bold text-teal-900">${d.count.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-right font-medium text-slate-600">${((d.count / total) * 100).toFixed(1)}%</td>
             <td class="px-3 py-2.5 text-slate-500 text-[11px]">${escapeHtml(d.issues)}</td>
         </tr>
     `).join('');
 }
 
+// 7-Column Master Table (NO Issue Category per Page 1 item 2 & Page 5 item 2)
 function renderRTHDataTable() {
     const tbody = document.getElementById('table-rth-body');
     const pageRecordsInfo = document.getElementById('rth-page-records-info');
@@ -4111,7 +4167,7 @@ function renderRTHDataTable() {
     if (pageRecords.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="px-4 py-8 text-center text-slate-400 font-medium">
+                <td colspan="7" class="px-4 py-8 text-center text-slate-400 font-medium">
                     No invalid waybills match the current filter criteria.
                 </td>
             </tr>
@@ -4124,7 +4180,7 @@ function renderRTHDataTable() {
         const docs = (r.document_involved || '').split(', ');
         const badges = docs.map(d => {
             let cls = 'bg-slate-100 text-slate-700 border-slate-200';
-            if (d === 'MDC') cls = 'bg-blue-100 text-blue-800 border-blue-200';
+            if (d === 'MDC') cls = 'bg-teal-100 text-teal-800 border-teal-200';
             else if (d === 'ID') cls = 'bg-amber-100 text-amber-800 border-amber-200';
             else if (d === 'RC') cls = 'bg-purple-100 text-purple-800 border-purple-200';
             else if (d === 'LOA') cls = 'bg-rose-100 text-rose-800 border-rose-200';
@@ -4132,9 +4188,9 @@ function renderRTHDataTable() {
         }).join(' ');
 
         return `
-            <tr class="hover:bg-rose-50/30 transition-colors border-b border-slate-100">
+            <tr class="hover:bg-teal-50/40 transition-colors border-b border-slate-100">
                 <td class="px-3 py-2 text-center text-slate-400 text-xs font-mono">${rowIdx}</td>
-                <td class="px-3 py-2 font-mono font-bold text-blue-700 cursor-pointer hover:underline" onclick="showWaybillModal('${escapeHtml(r.waybill_no)}')">
+                <td class="px-3 py-2 font-mono font-bold text-teal-800 cursor-pointer hover:underline" onclick="showWaybillModal('${escapeHtml(r.waybill_no)}')">
                     ${escapeHtml(r.waybill_no)}
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap">
@@ -4145,11 +4201,6 @@ function renderRTHDataTable() {
                 </td>
                 <td class="px-3 py-2 font-semibold text-slate-800 whitespace-nowrap">
                     ${escapeHtml(r.rider || '-')}
-                </td>
-                <td class="px-3 py-2 whitespace-nowrap text-slate-600">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                        ${escapeHtml(r.issue_category || 'Other')}
-                    </span>
                 </td>
                 <td class="px-3 py-2 whitespace-nowrap text-slate-600 font-mono text-xs">
                     ${escapeHtml(r.initial_val_date || r.date || '-')}
@@ -4168,14 +4219,19 @@ function changeRTHPage(delta) {
 }
 
 async function downloadRTHVisualExcel() {
-    const period = rthFilters.period || 'ALL';
+    let periodParam = 'ALL';
+    if (rthFilters.mode === 'LATEST_WEEK') {
+        periodParam = 'latest_week';
+    } else if (rthFilters.selectedDates.length > 0) {
+        periodParam = `DATES:${rthFilters.selectedDates.join(',')}`;
+    }
 
     // 1. If running on local server with Python backend available
     const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (isLocalServer) {
-        showNotification("Generating custom filtered Excel report with embedded charts...", "info");
+        showNotification("Generating 1Life visual Excel report with embedded charts...", "info");
         try {
-            const res = await fetch(`/download/rth-excel?period=${encodeURIComponent(period)}`);
+            const res = await fetch(`/download/rth-excel?period=${encodeURIComponent(periodParam)}`);
             if (res.ok) {
                 const blob = await res.blob();
                 const disposition = res.headers.get('content-disposition') || '';
@@ -4191,7 +4247,7 @@ async function downloadRTHVisualExcel() {
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(blobUrl);
-                showNotification(`Downloaded visual Excel report: ${filename}`, "success");
+                showNotification(`Downloaded 1Life visual Excel report: ${filename}`, "success");
                 return;
             }
         } catch (e) {
@@ -4200,26 +4256,24 @@ async function downloadRTHVisualExcel() {
     }
 
     // 2. Static deployment (Netlify / GitHub Pages) fallback:
-    if (period.startsWith('WEEK:')) {
-        // Latest weekly cycle static bundle
+    if (rthFilters.mode === 'LATEST_WEEK') {
         const link = document.createElement('a');
         link.href = 'Waybill_RTH_Report_Latest_Week.xlsx';
         link.download = 'Waybill_RTH_Report_Latest_Week.xlsx';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showNotification("Downloaded Latest Week RTH Visual Report (.xlsx)", "success");
-    } else if (period === 'ALL') {
-        // Overall static bundle
+        showNotification("Downloaded Latest Week 1Life RTH Visual Report (.xlsx)", "success");
+    } else if (rthFilters.mode === 'ALL' || !rthFilters.selectedDates.length) {
         const link = document.createElement('a');
         link.href = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
         link.download = 'Waybill_RTH_Invalid_Documents_Report.xlsx';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showNotification("Downloaded Overall Master RTH Visual Report (.xlsx)", "success");
+        showNotification("Downloaded Overall Master 1Life RTH Visual Report (.xlsx)", "success");
     } else {
-        // Specific custom date on static host -> export filtered workbook with complete tabs
+        // Multi-date selection on static host -> client-side multi-sheet export
         exportRTHFilteredExcel();
     }
 }
@@ -4231,7 +4285,7 @@ function downloadRTHOverallVisualExcel() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showNotification("Downloaded Overall Master RTH Report with Visualizations (All 6,077 Invalids)", "success");
+    showNotification("Downloaded Overall Master 1Life RTH Report with Visualizations (All 6,077 Invalids)", "success");
 }
 
 function exportRTHFilteredExcel() {
@@ -4247,11 +4301,23 @@ function exportRTHFilteredExcel() {
 
     const wb = XLSX.utils.book_new();
 
-    // 1. Summary Sheet
+    // Determine scope records for assigned waybill count (Page 7 item 3)
+    let scopeAllRecords = allData;
+    if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0) {
+        const setDates = new Set(rthFilters.selectedDates);
+        scopeAllRecords = allData.filter(r => setDates.has(r.initial_val_date || r.date));
+    }
+    const assignedCounts = {};
+    scopeAllRecords.forEach(r => {
+        const name = (r.rider || '').trim() || 'Unknown';
+        assignedCounts[name] = (assignedCounts[name] || 0) + 1;
+    });
+
+    // 1. Executive Summary Sheet
     const total = rthFilteredRecords.length;
     const docCounts = { ID: 0, MDC: 0, RC: 0, LOA: 0, Other: 0 };
     const riderCounts = {};
-    const catCounts = {};
+    const riderDocs = {};
 
     rthFilteredRecords.forEach(r => {
         const d = r.document_involved || '';
@@ -4262,54 +4328,49 @@ function exportRTHFilteredExcel() {
         if (d.includes('LOA')) { docCounts.LOA++; matched = true; }
         if (!matched) docCounts.Other++;
 
-        const rider = r.rider || 'Unknown';
+        const rider = (r.rider || '').trim() || 'Unknown';
         riderCounts[rider] = (riderCounts[rider] || 0) + 1;
-
-        const cat = r.issue_category || 'Other';
-        catCounts[cat] = (catCounts[cat] || 0) + 1;
+        if (!riderDocs[rider]) riderDocs[rider] = { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+        if (d.includes('ID')) riderDocs[rider].ID++;
+        if (d.includes('MDC')) riderDocs[rider].MDC++;
+        if (d.includes('RC')) riderDocs[rider].RC++;
+        if (d.includes('LOA')) riderDocs[rider].LOA++;
     });
 
     const summaryRows = [
-        ["WAYBILL RTH INVALID DOCUMENTS REPORT SUMMARY"],
+        ["1Life TASK MONITORING - WAYBILL RTH DEFECT & DOCUMENT ANALYSIS"],
+        ["Generated by: QA – Data and Analytics Team | 1Life Inc. Philippines (hello@1life.ph)"],
         ["Generated Date", new Date().toLocaleString()],
         ["Total Filtered Invalids", total],
         [],
-        ["1. DOCUMENTS INVOLVED SUMMARY", "COUNT", "SHARE %"],
-        ["ID (Identification)", docCounts.ID, `${((docCounts.ID / total) * 100).toFixed(1)}%`],
-        ["MDC (Medical Certification)", docCounts.MDC, `${((docCounts.MDC / total) * 100).toFixed(1)}%`],
-        ["RC (Received Copy)", docCounts.RC, `${((docCounts.RC / total) * 100).toFixed(1)}%`],
+        ["1. INVALID DOCUMENTS DISTRIBUTION", "COUNT", "SHARE %"],
+        ["ID (Valid ID / Identification)", docCounts.ID, `${((docCounts.ID / total) * 100).toFixed(1)}%`],
+        ["MDC (Medicine Consent Form)", docCounts.MDC, `${((docCounts.MDC / total) * 100).toFixed(1)}%`],
+        ["RC (Received / Receiving Copy)", docCounts.RC, `${((docCounts.RC / total) * 100).toFixed(1)}%`],
         ["LOA (Letter of Authorization)", docCounts.LOA, `${((docCounts.LOA / total) * 100).toFixed(1)}%`],
-        ["Other / Not Specified", docCounts.Other, `${((docCounts.Other / total) * 100).toFixed(1)}%`],
+        ["Other / Unspecified", docCounts.Other, `${((docCounts.Other / total) * 100).toFixed(1)}%`],
         [],
-        ["2. TOP 10 RIDERS WITH HIGHEST INVALIDS", "INVALID WAYBILLS", "SHARE %"]
+        ["2. TOP 10 RIDERS WITH HIGHEST INVALIDS", "# ASSIGNED", "INVALID WAYBILLS", "SHARE %"]
     ];
 
     Object.entries(riderCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-        .forEach(([rider, cnt]) => {
-            summaryRows.push([rider, cnt, `${((cnt / total) * 100).toFixed(1)}%`]);
-        });
-
-    summaryRows.push([]);
-    summaryRows.push(["3. DEFECT CATEGORY BREAKDOWN", "COUNT", "SHARE %"]);
-    Object.entries(catCounts)
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([cat, cnt]) => {
-            summaryRows.push([cat, cnt, `${((cnt / total) * 100).toFixed(1)}%`]);
+        .forEach(([rider, cnt], idx) => {
+            const assigned = assignedCounts[rider] || cnt;
+            summaryRows.push([`${idx + 1}. ${rider}`, assigned, cnt, `${((cnt / total) * 100).toFixed(1)}%`]);
         });
 
     const wsSum = XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSum['!cols'] = [{ wch: 35 }, { wch: 18 }, { wch: 15 }];
-    XLSX.utils.book_append_sheet(wb, wsSum, "Executive_Summary");
+    wsSum['!cols'] = [{ wch: 38 }, { wch: 18 }, { wch: 18 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, wsSum, "Executive Summary");
 
-    // 2. Exact Required Records Sheet: Waybill No., Document Involved, Document Issue, Rider Name
+    // 2. Exact Required Records Sheet: Waybill No., Document Involved, Document Issue, Rider Name (NO Issue Category!)
     const recordHeaders = [
         "Waybill No.",
         "Document Involved",
         "Document Issue (Remarks)",
         "Rider Name",
-        "Defect Category",
         "Actual Waybill Date",
         "Validation Date",
         "Initial Validated By"
@@ -4322,7 +4383,6 @@ function exportRTHFilteredExcel() {
             r.document_involved,
             r.document_issue,
             r.rider,
-            r.issue_category,
             r.date,
             r.initial_val_date,
             r.initial_validated_by
@@ -4331,28 +4391,80 @@ function exportRTHFilteredExcel() {
 
     const wsData = XLSX.utils.aoa_to_sheet(dataRows);
     wsData['!cols'] = [
-        { wch: 16 }, // Waybill
+        { wch: 16 }, // Waybill No. (Page 5 item 1: "The Waybill column is too long. Make it just enough.")
         { wch: 22 }, // Document Involved
-        { wch: 35 }, // Document Issue
+        { wch: 38 }, // Document Issue
         { wch: 28 }, // Rider Name
-        { wch: 20 }, // Category
         { wch: 15 }, // Waybill Date
         { wch: 15 }, // Validation Date
         { wch: 24 }  // Validator
     ];
-    XLSX.utils.book_append_sheet(wb, wsData, "RTH_Invalid_Waybills");
+    XLSX.utils.book_append_sheet(wb, wsData, "RTH Invalid Waybills");
 
-    // 3. Complete All Riders Defect Rankings Sheet
+    // 3. Complete All Riders Defect Rankings Sheet (Page 7 item 3: # of Waybills Assigned + TOTAL row)
     const allRidersRanked = Object.entries(riderCounts).sort((a, b) => b[1] - a[1]);
-    const riderRows = [["Rank", "Rider Name", "Invalid Waybills Count", "Share %"]];
-    allRidersRanked.forEach(([rider, cnt], idx) => {
-        riderRows.push([idx + 1, rider, cnt, `${((cnt / total) * 100).toFixed(1)}%`]);
-    });
-    const wsRiders = XLSX.utils.aoa_to_sheet(riderRows);
-    wsRiders['!cols'] = [{ wch: 8 }, { wch: 32 }, { wch: 22 }, { wch: 14 }];
-    XLSX.utils.book_append_sheet(wb, wsRiders, "All_Riders_Rankings");
+    const riderRows = [
+        ["Rank", "Rider Name", "# of Waybills Assigned", "Total Invalids", "% Share", "ID Defects", "MDC Defects", "RC Defects", "LOA Defects"]
+    ];
 
-    const fileName = `Waybill_RTH_Invalid_Documents_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    let sumAssigned = 0;
+    let sumInvalids = 0;
+    let sumID = 0;
+    let sumMDC = 0;
+    let sumRC = 0;
+    let sumLOA = 0;
+
+    allRidersRanked.forEach(([rider, cnt], idx) => {
+        const assigned = assignedCounts[rider] || cnt;
+        const dMap = riderDocs[rider] || { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+        sumAssigned += assigned;
+        sumInvalids += cnt;
+        sumID += dMap.ID;
+        sumMDC += dMap.MDC;
+        sumRC += dMap.RC;
+        sumLOA += dMap.LOA;
+
+        riderRows.push([
+            idx + 1,
+            rider,
+            assigned,
+            cnt,
+            `${((cnt / total) * 100).toFixed(1)}%`,
+            dMap.ID,
+            dMap.MDC,
+            dMap.RC,
+            dMap.LOA
+        ]);
+    });
+
+    // Page 7 item 3: Add a total count here at the end of each column
+    riderRows.push([
+        "",
+        "TOTAL",
+        sumAssigned,
+        sumInvalids,
+        "100.0%",
+        sumID,
+        sumMDC,
+        sumRC,
+        sumLOA
+    ]);
+
+    const wsRiders = XLSX.utils.aoa_to_sheet(riderRows);
+    wsRiders['!cols'] = [
+        { wch: 8 },  // Rank (Page 6 item 1: "Make it just enough")
+        { wch: 30 }, // Rider Name
+        { wch: 22 }, // # of Waybills Assigned
+        { wch: 16 }, // Total Invalids
+        { wch: 12 }, // % Share
+        { wch: 14 }, // ID Defects
+        { wch: 15 }, // MDC Defects
+        { wch: 14 }, // RC Defects
+        { wch: 14 }  // LOA Defects
+    ];
+    XLSX.utils.book_append_sheet(wb, wsRiders, "Rider Defect Rankings");
+
+    const fileName = `Waybill_RTH_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
-    showNotification(`RTH Excel report downloaded: ${fileName} (${total.toLocaleString()} rows)`, "success");
+    showNotification(`1Life RTH Excel report downloaded: ${fileName} (${total.toLocaleString()} rows)`, "success");
 }
