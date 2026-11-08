@@ -45,6 +45,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- SheetJS (XLSX) CDN for in-browser Excel generation -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- html2pdf for direct PDF export -->
+    <script src="html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
@@ -901,20 +903,25 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <!-- Download pre-generated Excel with charts matching active filter -->
-                        <button id="btn-rth-download-visual" onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition" title="Download Excel with embedded charts matching filter">
+                        <!-- Option 1: Export as Excel (.xlsx) -->
+                        <button id="btn-rth-download-visual" onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition" title="Option 1: Export RTH Report as Excel spreadsheet (.xlsx) with embedded charts">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span id="btn-rth-download-visual-label">Download Excel with Charts (.xlsx)</span>
+                            <span id="btn-rth-download-visual-label">Export as Excel (.xlsx)</span>
                         </button>
-                        <!-- Download Overall Master Report -->
+                        <!-- Option 2: Export as PDF (.pdf) with spacious readable charts -->
+                        <button id="btn-rth-download-pdf" onclick="exportRTHPDF()" class="inline-flex items-center px-4 py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md transition" title="Option 2: Export RTH Report as PDF (.pdf) with readable high-res charts and full data">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <span id="btn-rth-download-pdf-label">Export as PDF (.pdf)</span>
+                        </button>
+                        <!-- Print / Vector PDF Preview -->
+                        <button onclick="previewRTHPrintableReport()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/15 hover:bg-white/25 text-white border border-white/25 shadow-xs transition" title="Open High-Resolution Printable / Vector Save as PDF Preview">
+                            <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            <span>Print / Vector PDF</span>
+                        </button>
+                        <!-- Download Overall Master Report (.xlsx) -->
                         <button onclick="downloadRTHOverallVisualExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Download Full Overall Master Report (All Dates)">
                             <svg class="w-4 h-4 mr-1.5 text-ice-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            <span>Download Overall Master</span>
-                        </button>
-                        <!-- Export Filtered Current View -->
-                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-xs transition" title="Download Report with Embedded Charts matching active filter">
-                            <svg class="w-4 h-4 mr-1.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span id="btn-rth-export-filtered-label">Download Filtered (.xlsx)</span>
+                            <span>Overall Master (.xlsx)</span>
                         </button>
                         <!-- Switch to Custom Builder -->
                         <button onclick="applyCustomReportPreset('rth_invalid_documents')" class="inline-flex items-center px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-teal-600 hover:bg-teal-700 text-white shadow-xs transition" title="Open in Custom Report Builder">
@@ -1141,9 +1148,20 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition" title="Download Excel with Embedded Charts matching current filter">
+                        <!-- Option 1: Export as Excel (.xlsx) -->
+                        <button onclick="downloadRTHVisualExcel()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition" title="Export as Excel spreadsheet (.xlsx)">
                             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Export Visual Excel (.xlsx)
+                            Export as Excel (.xlsx)
+                        </button>
+                        <!-- Option 2: Export as PDF (.pdf) -->
+                        <button onclick="exportRTHPDF()" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition" title="Export as readable PDF (.pdf) with spacious charts and full tables">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            Export as PDF (.pdf)
+                        </button>
+                        <!-- Print / Vector Preview -->
+                        <button onclick="previewRTHPrintableReport()" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition" title="Print / Vector Save as PDF Preview">
+                            <svg class="w-3.5 h-3.5 mr-1 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            Print / Preview
                         </button>
                     </div>
                 </div>

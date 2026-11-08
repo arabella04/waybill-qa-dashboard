@@ -3668,14 +3668,24 @@ function renderRTHReport() {
 
     // Dynamically update download button labels to match active filter
     const btnDownloadVisualLabel = document.getElementById('btn-rth-download-visual-label');
+    const btnDownloadPdfLabel = document.getElementById('btn-rth-download-pdf-label');
     const btnExportFilteredLabel = document.getElementById('btn-rth-export-filtered-label');
     if (btnDownloadVisualLabel) {
         if (rthFilters.mode === 'ALL' || (!rthFilters.selectedDates.length && !rthFilters.selectedWeeks.length)) {
-            btnDownloadVisualLabel.textContent = "Download Overall Excel (with Charts)";
+            btnDownloadVisualLabel.textContent = "Export as Excel (.xlsx)";
         } else if (rthFilters.mode === 'LATEST_WEEK') {
-            btnDownloadVisualLabel.textContent = "Download Latest Week Excel (with Charts)";
+            btnDownloadVisualLabel.textContent = "Export Latest Week (.xlsx)";
         } else {
-            btnDownloadVisualLabel.textContent = `Download Filtered Excel (${records.length.toLocaleString()} Invalids)`;
+            btnDownloadVisualLabel.textContent = `Export as Excel (${records.length.toLocaleString()})`;
+        }
+    }
+    if (btnDownloadPdfLabel) {
+        if (rthFilters.mode === 'ALL' || (!rthFilters.selectedDates.length && !rthFilters.selectedWeeks.length)) {
+            btnDownloadPdfLabel.textContent = "Export as PDF (.pdf)";
+        } else if (rthFilters.mode === 'LATEST_WEEK') {
+            btnDownloadPdfLabel.textContent = "Export Latest Week (.pdf)";
+        } else {
+            btnDownloadPdfLabel.textContent = `Export as PDF (${records.length.toLocaleString()})`;
         }
     }
     if (btnExportFilteredLabel) {
@@ -4308,4 +4318,830 @@ function downloadRTHOverallVisualExcel() {
 function exportRTHFilteredExcel() {
     // Page 2 & 4: Ensure all RTH downloads always deliver the official 1Life styled report with charts
     downloadRTHVisualExcel();
+}
+
+// =========================================================================
+// 1LIFE RTH REPORT - HIGH RESOLUTION READABLE PDF EXPORT & PRINT PREVIEW
+// Resolves Excel Chart Congestion by rendering spacious, vector-styled layout
+// =========================================================================
+
+function getRTHScopeMetadata() {
+    const records = (rthFilteredRecords && rthFilteredRecords.length > 0)
+        ? rthFilteredRecords
+        : allData.filter(r => r.qa_initial_status === 'Invalid');
+
+    let periodLabel = "All Dates (Full Master Dataset: October 2026)";
+    let periodSlug = "All_Dates";
+
+    if (rthFilters.mode === 'LATEST_WEEK') {
+        periodLabel = "Latest Weekly Cycle (Oct 24, 2026 – Oct 30, 2026)";
+        periodSlug = "Latest_Week_2026-10-24_to_2026-10-30";
+    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length === 1) {
+        periodLabel = `Validation Date: ${rthFilters.selectedDates[0]}`;
+        periodSlug = `Date_${rthFilters.selectedDates[0]}`;
+    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 1) {
+        const sorted = [...rthFilters.selectedDates].sort();
+        periodLabel = `Custom Multi-Date Scope (${sorted.length} Dates: ${sorted[0]} to ${sorted[sorted.length - 1]})`;
+        periodSlug = `Multi_${sorted.length}_Dates_${sorted[0]}_to_${sorted[sorted.length - 1]}`;
+    }
+
+    // Determine assigned waybill scope (all valid + invalid waybills in this date window)
+    let scopeRecords = allData;
+    if (rthFilters.mode === 'LATEST_WEEK') {
+        scopeRecords = allData.filter(r => (r.initial_val_date >= '2026-10-24' && r.initial_val_date <= '2026-10-30') ||
+                                           (r.final_val_date >= '2026-10-24' && r.final_val_date <= '2026-10-30'));
+    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0 && rthFilters.mode !== 'ALL') {
+        const dateSet = new Set(rthFilters.selectedDates);
+        scopeRecords = allData.filter(r => dateSet.has(r.initial_val_date) || dateSet.has(r.final_val_date));
+    }
+
+    const assignedCounts = {};
+    scopeRecords.forEach(r => {
+        const rider = (r.rider || '').trim();
+        if (rider) assignedCounts[rider] = (assignedCounts[rider] || 0) + 1;
+    });
+
+    return {
+        records,
+        scopeRecords,
+        periodLabel,
+        periodSlug,
+        totalInvalids: records.length,
+        totalAssigned: scopeRecords.length || records.length,
+        assignedCounts
+    };
+}
+
+function buildRTHReportPrintableHTML(includeToolbar = false) {
+    const meta = getRTHScopeMetadata();
+    const records = meta.records;
+    const totalInvalids = Math.max(meta.totalInvalids, 1);
+    const totalAssigned = Math.max(meta.totalAssigned, 1);
+    const defectRate = ((records.length / totalAssigned) * 100).toFixed(1);
+
+    // 1. Rider Breakdown Aggregation
+    const riderCounts = {};
+    const riderDocs = {};
+    records.forEach(r => {
+        const name = (r.rider || 'Unknown Rider').trim();
+        riderCounts[name] = (riderCounts[name] || 0) + 1;
+        if (!riderDocs[name]) {
+            riderDocs[name] = { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+        }
+        const d = r.document_involved || '';
+        if (d.includes('ID')) riderDocs[name].ID++;
+        if (d.includes('MDC')) riderDocs[name].MDC++;
+        if (d.includes('RC')) riderDocs[name].RC++;
+        if (d.includes('LOA')) riderDocs[name].LOA++;
+    });
+
+    const allRidersRanked = Object.entries(riderCounts).sort((a, b) => b[1] - a[1]);
+    const top10Riders = allRidersRanked.slice(0, 10);
+    const uniqueRidersCount = allRidersRanked.length;
+
+    // 2. Documents Involved Aggregation (Clarifying MDC = Medicine Consent Form)
+    const docCounts = {
+        'ID': { name: 'ID (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Improper ID, blurred ID, no ID file, inverted ID, expired ID' },
+        'MDC': { name: 'MDC (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Different signature in MDC, missing MDC, invalid MDC, signature discrepancy' },
+        'RC': { name: 'RC (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Blurred RC, no signature in RC, missing RC copy, unreadable receiver name' },
+        'LOA': { name: 'LOA (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Missing LOA, expired LOA, blurred LOA copy' },
+        'Other': { name: 'Other / Unspecified Defects', code: 'Other', count: 0, desc: 'System/delivery issue, unclassified remarks' }
+    };
+    records.forEach(r => {
+        const d = r.document_involved || '';
+        let matched = false;
+        if (d.includes('ID')) { docCounts['ID'].count++; matched = true; }
+        if (d.includes('MDC')) { docCounts['MDC'].count++; matched = true; }
+        if (d.includes('RC')) { docCounts['RC'].count++; matched = true; }
+        if (d.includes('LOA')) { docCounts['LOA'].count++; matched = true; }
+        if (!matched) { docCounts['Other'].count++; }
+    });
+
+    // 3. Issue Category Breakdown
+    const catCounts = {
+        'Missing Document': 0,
+        'Improper / Orientation': 0,
+        'Signature Discrepancy': 0,
+        'Other Defect': 0,
+        'Blurred / Low Quality': 0
+    };
+    records.forEach(r => {
+        const cat = r.defect_category || 'Other Defect';
+        if (catCounts[cat] !== undefined) catCounts[cat]++;
+        else catCounts['Other Defect']++;
+    });
+
+    // Primary metrics for KPI cards
+    const sortedDocs = Object.entries(docCounts).sort((a, b) => b[1].count - a[1].count);
+    const primaryDoc = sortedDocs[0];
+    const topRider = allRidersRanked[0] || ['N/A', 0];
+    const primaryCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0] || ['Missing Document', 0];
+
+    // High-resolution Chart Images (rendered from active Chart.js canvas with 2x retina scaling)
+    const chartDocImg = (typeof charts !== 'undefined' && charts.rthDocuments)
+        ? charts.rthDocuments.toBase64Image('image/png', 2)
+        : '';
+    const chartRiderImg = (typeof charts !== 'undefined' && charts.rthRiders)
+        ? charts.rthRiders.toBase64Image('image/png', 2)
+        : '';
+    const chartAllRidersImg = (typeof charts !== 'undefined' && charts.rthAllRiders)
+        ? charts.rthAllRiders.toBase64Image('image/png', 2)
+        : '';
+
+    const genTimestamp = new Date().toLocaleString('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+    });
+
+    // Compute Totals for Complete Rankings
+    let sumAssigned = 0;
+    let sumInvalids = 0;
+    let sumID = 0;
+    let sumMDC = 0;
+    let sumRC = 0;
+    let sumLOA = 0;
+
+    allRidersRanked.forEach(([rName, invCnt]) => {
+        sumAssigned += (meta.assignedCounts[rName] || invCnt);
+        sumInvalids += invCnt;
+        sumID += (riderDocs[rName]?.ID || 0);
+        sumMDC += (riderDocs[rName]?.MDC || 0);
+        sumRC += (riderDocs[rName]?.RC || 0);
+        sumLOA += (riderDocs[rName]?.LOA || 0);
+    });
+
+    // Detail Audit Records (first 400 for high performance, or full records)
+    const auditLimit = Math.min(records.length, 400);
+    const auditRecords = records.slice(0, auditLimit);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>1Life RTH Quality Assurance Defect Report - ${escapeHtml(meta.periodLabel)}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm 10mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.35;
+        }
+        .report-page-container {
+            max-width: 1140px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px 24px;
+        }
+        @media print {
+            body { background: #ffffff !important; }
+            .report-page-container { padding: 0 !important; max-width: 100% !important; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; break-before: page; }
+            .avoid-break { page-break-inside: avoid; break-inside: avoid; }
+        }
+        .top-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #0f766e;
+            color: #ffffff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+        .btn-print { background: #14b8a6; color: #ffffff; }
+        .btn-print:hover { background: #0d9488; }
+        .btn-pdf { background: #e11d48; color: #ffffff; }
+        .btn-pdf:hover { background: #be123c; }
+        .btn-close { background: rgba(255,255,255,0.2); color: #ffffff; }
+        .btn-close:hover { background: rgba(255,255,255,0.3); }
+
+        /* Corporate Header */
+        .corp-header {
+            background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .corp-badge {
+            display: inline-block;
+            background: #ccfbf1;
+            color: #0f766e;
+            font-weight: 700;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+        .corp-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+        .corp-sub {
+            font-size: 11px;
+            color: #ccfbf1;
+            margin-top: 3px;
+        }
+        .meta-box {
+            text-align: right;
+            font-size: 10.5px;
+            color: #e6fffa;
+            line-height: 1.4;
+        }
+
+        /* Executive KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-top: 3.5px solid #0d9488;
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .kpi-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .kpi-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 3px 0 1px 0;
+        }
+        .kpi-sub {
+            font-size: 10px;
+            color: #0d9488;
+            font-weight: 600;
+        }
+
+        /* Tables & Section Containers */
+        .section-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .section-header {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f766e;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-badge {
+            font-size: 9.5px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        /* Two-Column Grid */
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        /* Clean High-Density Table Styles */
+        table.report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        table.report-table th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1.5px solid #cbd5e1;
+            font-size: 9.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        table.report-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+        table.report-table tr:nth-child(even) td {
+            background-color: #fafbfc;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        .font-bold { font-weight: 700; }
+        
+        .pill-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .pill-id { background: #fef3c7; color: #92400e; }
+        .pill-mdc { background: #ccfbf1; color: #0f766e; }
+        .pill-rc { background: #f3e8ff; color: #6b21a8; }
+        .pill-loa { background: #ffe4e6; color: #9f1239; }
+
+        /* Total Highlight Row */
+        .total-row td {
+            background-color: #ccfbf1 !important;
+            color: #0f766e !important;
+            font-weight: 800 !important;
+            border-top: 2px solid #0f766e !important;
+            border-bottom: 2px solid #0f766e !important;
+            font-size: 10.5px;
+        }
+
+        /* Uncongested Chart Display */
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart-img-contain {
+            width: 100%;
+            height: auto;
+            max-height: 320px;
+            object-fit: contain;
+            display: block;
+        }
+        .chart-img-tall {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            display: block;
+        }
+        .chart-caption {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .report-footer {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+${includeToolbar ? `
+    <div class="top-toolbar no-print">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-weight:800; font-size:13px; letter-spacing:0.02em;">1Life RTH Quality Assurance Report</span>
+            <span style="background:rgba(255,255,255,0.2); font-size:11px; padding:2px 8px; border-radius:4px;">Printable High-Resolution View</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button class="btn-action btn-pdf" onclick="window.parent && window.parent.exportRTHPDF ? window.parent.exportRTHPDF() : window.print()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Download PDF (.pdf)
+            </button>
+            <button class="btn-action btn-print" onclick="window.print()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print / Vector PDF
+            </button>
+            <button class="btn-action btn-close" onclick="window.close()">Close</button>
+        </div>
+    </div>
+` : ''}
+
+<div class="report-page-container">
+
+    <!-- PAGE 1: EXECUTIVE OVERVIEW & PRIMARY DEFECT BREAKDOWN -->
+    <div class="corp-header">
+        <div>
+            <div class="corp-badge">1Life Task Monitoring & Quality Assurance</div>
+            <h1 class="corp-title">WAYBILL RTH DEFECT & DOCUMENT ANALYSIS REPORT</h1>
+            <div class="corp-sub">
+                Official QA Monitoring • Scope: <strong>${escapeHtml(meta.periodLabel)}</strong>
+            </div>
+            <div style="font-size:9.5px; color:#e6fffa; margin-top:4px;">
+                Report Generated by: <strong style="color:#ffffff;">QA – Data and Analytics Team</strong> • 1Life Inc. Philippines (hello@1life.ph)
+            </div>
+        </div>
+        <div class="meta-box">
+            <div><strong>Generated:</strong> ${escapeHtml(genTimestamp)}</div>
+            <div><strong>Total Waybills in Scope:</strong> ${totalAssigned.toLocaleString()}</div>
+            <div><strong>Total Invalids:</strong> ${records.length.toLocaleString()} (${defectRate}% defect rate)</div>
+            <div><strong>Unique Riders Impacted:</strong> ${uniqueRidersCount} riders</div>
+        </div>
+    </div>
+
+    <!-- Executive KPI Metric Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Invalid Waybills</div>
+            <div class="kpi-val">${records.length.toLocaleString()}</div>
+            <div class="kpi-sub">${defectRate}% of ${totalAssigned.toLocaleString()} total assigned</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Unique Riders Impacted</div>
+            <div class="kpi-val">${uniqueRidersCount}</div>
+            <div class="kpi-sub">Riders with &ge;1 invalid waybill</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Primary Defect Document</div>
+            <div class="kpi-val">${primaryDoc[0]} (${primaryDoc[1].count.toLocaleString()})</div>
+            <div class="kpi-sub">${((primaryDoc[1].count / totalInvalids) * 100).toFixed(1)}% of invalid waybills</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Top Defect Rider</div>
+            <div class="kpi-val" style="font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${escapeHtml(topRider[0])}
+            </div>
+            <div class="kpi-sub">${topRider[1].toLocaleString()} invalid cases (${((topRider[1] / totalInvalids) * 100).toFixed(1)}% share)</div>
+        </div>
+    </div>
+
+    <!-- SECTION 1: DOCUMENTS INVOLVED & CHART 1 (Spacious Side-by-Side) -->
+    <div class="two-col-grid avoid-break">
+        <!-- Documents Summary Table -->
+        <div class="section-box">
+            <div class="section-header">
+                <h3 class="section-title">1. Invalid Documents Distribution</h3>
+                <span class="section-badge">MDC = Medicine Consent Form</span>
+            </div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Document Involved</th>
+                        <th class="text-right">Invalid Count</th>
+                        <th class="text-right">% of Invalids</th>
+                        <th>Primary Detected Issues</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedDocs.map(([key, d]) => `
+                        <tr>
+                            <td class="font-bold">
+                                <span class="pill-badge pill-${key.toLowerCase()}">${d.code}</span>
+                                ${escapeHtml(d.name)}
+                            </td>
+                            <td class="text-right font-mono font-bold">${d.count.toLocaleString()}</td>
+                            <td class="text-right font-mono">${((d.count / totalInvalids) * 100).toFixed(1)}%</td>
+                            <td style="color:#64748b; font-size:9.5px;">${escapeHtml(d.desc)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <!-- Defect Category Breakdown -->
+            <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:6px 12px; font-size:9.5px;">
+                <strong style="color:#0f766e;">Defect Issues:</strong>
+                ${Object.entries(catCounts).map(([cat, cnt]) => `
+                    <span style="margin-right:10px; color:#334155;"><strong>${cat}:</strong> ${cnt.toLocaleString()} (${((cnt/totalInvalids)*100).toFixed(1)}%)</span>
+                `).join('')}
+            </div>
+        </div>
+
+        <!-- Chart 1: Document Invalids Distribution (High Resolution) -->
+        <div class="chart-card">
+            ${chartDocImg ? `
+                <img src="${chartDocImg}" class="chart-img-contain" alt="Document Invalids Distribution Chart" />
+                <div class="chart-caption">Figure 1.1: High-resolution breakdown of invalid waybills across document categories</div>
+            ` : `
+                <div style="padding:40px; color:#64748b; font-style:italic;">Chart rendering from dashboard live canvas</div>
+            `}
+        </div>
+    </div>
+
+    <!-- SECTION 2: TOP 10 RIDERS TABLE & STACKED CHART (Spacious Un-congested Layout) -->
+    <div class="two-col-grid avoid-break">
+        <!-- Top 10 Riders Table -->
+        <div class="section-box">
+            <div class="section-header">
+                <h3 class="section-title">2. Top 10 Riders with Highest Invalids</h3>
+                <span class="section-badge">Ranks #1 – #10</span>
+            </div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:28px;">Rank</th>
+                        <th>Rider Name</th>
+                        <th class="text-right"># Assigned</th>
+                        <th class="text-right">Total Invalids</th>
+                        <th class="text-right">% Share</th>
+                        <th class="text-right">Defect Breakdown (ID / MDC / RC / LOA)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${top10Riders.map(([rName, invCnt], idx) => {
+                        const rAssigned = meta.assignedCounts[rName] || invCnt;
+                        const rDoc = riderDocs[rName] || { ID:0, MDC:0, RC:0, LOA:0 };
+                        return `
+                            <tr>
+                                <td class="text-center font-bold" style="color:#0f766e;">${idx + 1}</td>
+                                <td class="font-bold">${escapeHtml(rName)}</td>
+                                <td class="text-right font-mono">${rAssigned.toLocaleString()}</td>
+                                <td class="text-right font-mono font-bold" style="color:#b91c1c;">${invCnt.toLocaleString()}</td>
+                                <td class="text-right font-mono">${((invCnt / totalInvalids) * 100).toFixed(1)}%</td>
+                                <td class="text-right font-mono" style="font-size:9px;">
+                                    <span class="pill-badge pill-id">ID: ${rDoc.ID}</span>
+                                    <span class="pill-badge pill-mdc">MDC: ${rDoc.MDC}</span>
+                                    <span class="pill-badge pill-rc">RC: ${rDoc.RC}</span>
+                                    <span class="pill-badge pill-loa">LOA: ${rDoc.LOA}</span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart 2: Top 10 Riders Horizontal Stacked Bar Chart -->
+        <div class="chart-card">
+            ${chartRiderImg ? `
+                <img src="${chartRiderImg}" class="chart-img-tall" alt="Top 10 Riders Defect Breakdown Chart" />
+                <div class="chart-caption">Figure 1.2: Stacked defect contribution by document type for Top 10 riders</div>
+            ` : `
+                <div style="padding:40px; color:#64748b; font-style:italic;">Top 10 Stacked Chart live rendering</div>
+            `}
+        </div>
+    </div>
+
+    <!-- PAGE BREAK FOR CLEAN PRINT PAGINATION -->
+    <div class="page-break"></div>
+
+    <!-- PAGE 2: COMPLETE 58 RIDERS VISUALIZATION & RANKING TABLE -->
+    <div class="corp-header" style="margin-top:16px;">
+        <div>
+            <div class="corp-badge">Section 3 & 4: Rider Distribution & Rankings</div>
+            <h2 class="corp-title" style="font-size:16px;">COMPLETE RIDER DEFECT DISTRIBUTION & AUDIT MATRIX</h2>
+            <div class="corp-sub">All ${uniqueRidersCount} Active Riders • Sorted Alphabetically by Surname (A to Z) & Volume</div>
+        </div>
+        <div class="meta-box">
+            <div><strong>Total Invalids:</strong> ${records.length.toLocaleString()}</div>
+            <div><strong>Assigned Waybills:</strong> ${totalAssigned.toLocaleString()}</div>
+        </div>
+    </div>
+
+    <!-- Chart 3: All 58 Riders Defect Distribution (Full Width Landscape - Uncongested!) -->
+    <div class="section-box avoid-break" style="margin-bottom:16px;">
+        <div class="section-header">
+            <h3 class="section-title">3. All Riders Invalid Waybills Distribution Count</h3>
+            <span class="section-badge">${uniqueRidersCount} Riders • Alphabetical by Surname</span>
+        </div>
+        <div style="padding:12px; background:#ffffff;">
+            ${chartAllRidersImg ? `
+                <img src="${chartAllRidersImg}" style="width:100%; height:auto; max-height:420px; object-fit:contain; display:block;" alt="All Riders Distribution Chart" />
+                <div class="chart-caption" style="margin-top:8px;">
+                    Figure 2.1: Full distribution of invalid waybills across all active riders (surnames arranged alphabetically A–Z for clean legibility)
+                </div>
+            ` : `
+                <div style="padding:50px; text-align:center; color:#64748b;">All Riders bar chart</div>
+            `}
+        </div>
+    </div>
+
+    <!-- Complete Rider Defect Summary & Rankings Table (All Riders with # Assigned & TOTAL row) -->
+    <div class="section-box avoid-break">
+        <div class="section-header">
+            <h3 class="section-title">4. Complete Rider Defect Summary & Rankings Table</h3>
+            <span class="section-badge">${uniqueRidersCount} Riders Total</span>
+        </div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:36px;">Rank</th>
+                    <th>Rider Name</th>
+                    <th class="text-right"># of Waybills Assigned</th>
+                    <th class="text-right">Total Invalids</th>
+                    <th class="text-right">% Share</th>
+                    <th class="text-right">ID Defects</th>
+                    <th class="text-right">MDC Defects</th>
+                    <th class="text-right">RC Defects</th>
+                    <th class="text-right">LOA Defects</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${allRidersRanked.map(([rName, invCnt], idx) => {
+                    const rAssigned = meta.assignedCounts[rName] || invCnt;
+                    const rDoc = riderDocs[rName] || { ID:0, MDC:0, RC:0, LOA:0 };
+                    return `
+                        <tr>
+                            <td class="text-center font-bold" style="color:#0f766e;">${idx + 1}</td>
+                            <td class="font-bold">${escapeHtml(rName)}</td>
+                            <td class="text-right font-mono">${rAssigned.toLocaleString()}</td>
+                            <td class="text-right font-mono font-bold" style="color:#0f766e;">${invCnt.toLocaleString()}</td>
+                            <td class="text-right font-mono">${((invCnt / totalInvalids) * 100).toFixed(1)}%</td>
+                            <td class="text-right font-mono">${rDoc.ID.toLocaleString()}</td>
+                            <td class="text-right font-mono">${rDoc.MDC.toLocaleString()}</td>
+                            <td class="text-right font-mono">${rDoc.RC.toLocaleString()}</td>
+                            <td class="text-right font-mono">${rDoc.LOA.toLocaleString()}</td>
+                        </tr>
+                    `;
+                }).join('')}
+                <!-- Prominent TOTAL Row (Page 7 item 4) -->
+                <tr class="total-row">
+                    <td class="text-center font-bold" colspan="2">TOTAL (All Riders)</td>
+                    <td class="text-right font-mono font-bold">${sumAssigned.toLocaleString()}</td>
+                    <td class="text-right font-mono font-bold">${sumInvalids.toLocaleString()}</td>
+                    <td class="text-right font-mono font-bold">100.0%</td>
+                    <td class="text-right font-mono font-bold">${sumID.toLocaleString()}</td>
+                    <td class="text-right font-mono font-bold">${sumMDC.toLocaleString()}</td>
+                    <td class="text-right font-mono font-bold">${sumRC.toLocaleString()}</td>
+                    <td class="text-right font-mono font-bold">${sumLOA.toLocaleString()}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGE BREAK FOR AUDIT RECORDS DETAIL -->
+    <div class="page-break"></div>
+
+    <!-- PAGE 3: FILTERED WAYBILL AUDIT RECORDS DETAIL TABLE -->
+    <div class="corp-header" style="margin-top:16px;">
+        <div>
+            <div class="corp-badge">Section 5: Operational Audit Trail</div>
+            <h2 class="corp-title" style="font-size:16px;">FILTERED WAYBILL AUDIT RECORDS</h2>
+            <div class="corp-sub">Displaying ${auditRecords.length.toLocaleString()} of ${records.length.toLocaleString()} Invalid Waybills (7 Columns Required Format)</div>
+        </div>
+        <div class="meta-box">
+            <div>Scope: <strong>${escapeHtml(meta.periodLabel)}</strong></div>
+            <div>Full Master Records Available in Excel (.xlsx)</div>
+        </div>
+    </div>
+
+    <div class="section-box avoid-break">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:32px;">#</th>
+                    <th style="color:#0f766e;">Waybill No.</th>
+                    <th>Document Involved</th>
+                    <th>Document Issue (Full Remarks)</th>
+                    <th>Rider Name</th>
+                    <th>Validation Date</th>
+                    <th>Initial Validated By</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${auditRecords.map((r, idx) => `
+                    <tr>
+                        <td class="text-center font-mono" style="color:#64748b;">${idx + 1}</td>
+                        <td class="font-bold font-mono" style="color:#0f766e;">${escapeHtml(r.waybill_no || '-')}</td>
+                        <td>
+                            <span class="pill-badge pill-mdc">${escapeHtml(r.document_involved || 'Unspecified')}</span>
+                        </td>
+                        <td style="color:#334155;">${escapeHtml(r.document_issue || '-')}</td>
+                        <td class="font-bold">${escapeHtml(r.rider || '-')}</td>
+                        <td class="font-mono">${escapeHtml(r.initial_val_date || '-')}</td>
+                        <td style="color:#64748b;">${escapeHtml(r.initial_validated_by || '-')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        ${records.length > auditLimit ? `
+            <div style="padding:8px 12px; background:#f8fafc; font-size:9.5px; color:#64748b; text-align:center; border-top:1px solid #e2e8f0;">
+                Showing first ${auditLimit.toLocaleString()} records in printable view. Download the <strong>Export as Excel (.xlsx)</strong> file to inspect all ${records.length.toLocaleString()} raw rows.
+            </div>
+        ` : ''}
+    </div>
+
+    <!-- Corporate Footer -->
+    <div class="report-footer">
+        <div>1Life Inc. Philippines • QA – Data and Analytics Team • Waybill Quality Management System</div>
+        <div>Confidential & Proprietary • Generated on ${escapeHtml(genTimestamp)}</div>
+    </div>
+
+</div>
+
+</body>
+</html>`;
+}
+
+function exportRTHPDF() {
+    showNotification("Generating high-resolution 1Life RTH PDF Report...", "info");
+
+    const meta = getRTHScopeMetadata();
+    const periodSlug = meta.periodSlug || 'Report';
+
+    // Verify html2pdf availability
+    if (typeof html2pdf === 'undefined') {
+        console.warn("html2pdf library not loaded, opening printable preview window instead.");
+        previewRTHPrintableReport();
+        return;
+    }
+
+    const container = document.createElement('div');
+    container.id = 'rth-pdf-export-container';
+    container.style.position = 'fixed';
+    container.style.left = '-99999px';
+    container.style.top = '0';
+    container.style.width = '1140px';
+    container.style.backgroundColor = '#ffffff';
+    container.innerHTML = buildRTHReportPrintableHTML(false);
+    document.body.appendChild(container);
+
+    const filename = `Waybill_RTH_Defect_Report_${periodSlug}.pdf`;
+
+    const opt = {
+        margin: [6, 8, 6, 8],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: 1140,
+            scrollY: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: ['css', 'legacy'], before: '.page-break' }
+    };
+
+    html2pdf().set(opt).from(container).save().then(() => {
+        if (container.parentNode) container.parentNode.removeChild(container);
+        showNotification(`Successfully exported ${filename}`, "success");
+    }).catch(err => {
+        console.error("PDF generation failed:", err);
+        if (container.parentNode) container.parentNode.removeChild(container);
+        showNotification("Direct PDF export had an issue; opening printable preview window.", "warning");
+        previewRTHPrintableReport();
+    });
+}
+
+function previewRTHPrintableReport() {
+    const html = buildRTHReportPrintableHTML(true);
+    const win = window.open('', '_blank');
+    if (!win) {
+        showNotification("Pop-up window was blocked. Please allow pop-ups to open the printable report.", "error");
+        return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
 }
