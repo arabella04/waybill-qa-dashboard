@@ -268,13 +268,21 @@ function renderDatePills() {
 
 function selectDate(dateVal) {
     if (dateVal === 'TODAY') {
-        const rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
+        let rawDates;
+        if (filters.dateField === 'initial_val_date') {
+            rawDates = [...new Set([
+                ...allData.map(r => r.initial_val_date),
+                ...allData.filter(r => r.final_val_status === 'Valid' || r.final_val_status === 'Invalid').map(r => r.final_val_date)
+            ].filter(Boolean))];
+        } else {
+            rawDates = [...new Set(allData.map(r => r[filters.dateField]).filter(Boolean))];
+        }
         const uniqueDates = typeof sortDateStrings === 'function'
             ? sortDateStrings(rawDates)
             : rawDates.sort();
         filters.date = uniqueDates.length > 0 ? uniqueDates[uniqueDates.length - 1] : 'ALL';
     } else {
-        filters.date = dateVal;
+        filters.date = normalizeDateStr(dateVal) || dateVal;
     }
     renderDateDropdown();
     applyFilters();
@@ -671,24 +679,42 @@ function renderOverviewCharts() {
         const wbMap = {};
 
         allData.forEach(r => {
-            const d = r[dateKey] || r.initial_val_date || r.date;
-            if (!d) return;
-            if (!dateMap[d]) {
-                dateMap[d] = { total: 0, initValid: 0, dispOverride: 0, finalValid: 0 };
-                wbMap[d] = new Set();
+            if (dateKey === 'initial_val_date') {
+                const id = r.initial_val_date;
+                if (id) {
+                    if (!dateMap[id]) {
+                        dateMap[id] = { total: 0, initValid: 0, dispOverride: 0, finalValid: 0 };
+                        wbMap[id] = new Set();
+                    }
+                    dateMap[id].total++;
+                    if (r.date) wbMap[id].add(r.date);
+                    if (r.qa_initial_status === 'Valid') dateMap[id].initValid++;
+                    if (r.dispatch_status === 'Override Done') dateMap[id].dispOverride++;
+                }
+                const fd = r.final_val_date;
+                if (fd && (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid')) {
+                    if (!dateMap[fd]) {
+                        dateMap[fd] = { total: 0, initValid: 0, dispOverride: 0, finalValid: 0 };
+                        wbMap[fd] = new Set();
+                    }
+                    if (r.final_val_status === 'Valid') dateMap[fd].finalValid++;
+                }
+            } else {
+                const d = r[dateKey] || r.initial_val_date || r.date;
+                if (!d) return;
+                if (!dateMap[d]) {
+                    dateMap[d] = { total: 0, initValid: 0, dispOverride: 0, finalValid: 0 };
+                    wbMap[d] = new Set();
+                }
+                dateMap[d].total++;
+                if (r.date) wbMap[d].add(r.date);
+                if (r.qa_initial_status === 'Valid') dateMap[d].initValid++;
+                if (r.dispatch_status === 'Override Done') dateMap[d].dispOverride++;
+                if (r.final_val_status === 'Valid') dateMap[d].finalValid++;
             }
-            dateMap[d].total++;
-            if (r.date) wbMap[d].add(r.date);
-            if (r.qa_initial_status === 'Valid') dateMap[d].initValid++;
-            if (r.dispatch_status === 'Override Done') dateMap[d].dispOverride++;
-            if (r.final_val_status === 'Valid') dateMap[d].finalValid++;
         });
 
-        const sortedDates = Object.keys(dateMap).sort((a, b) => {
-            const da = a.split('/').map(Number);
-            const db = b.split('/').map(Number);
-            return (da[0] * 100 + da[1]) - (db[0] * 100 + db[1]);
-        });
+        const sortedDates = sortDateStrings(Object.keys(dateMap));
 
         charts.dailyTrend = new Chart(ctxTrend, {
             type: 'bar',
@@ -2001,13 +2027,14 @@ function exportProgressReportExcel() {
 
     // 1. Executive Summary Sheet
     const total = filteredData.length;
-    const initValid = filteredData.filter(r => r.qa_initial_status === 'Valid').length;
-    const initInvalid = filteredData.filter(r => r.qa_initial_status === 'Invalid').length;
-    const initPending = filteredData.filter(r => r.qa_initial_status === 'For Validation').length;
+    const isValDateFilter = filters.date !== 'ALL' && filters.dateField === 'initial_val_date';
+    const initValid = filteredData.filter(r => (!isValDateFilter || r.initial_val_date === filters.date) && r.qa_initial_status === 'Valid').length;
+    const initInvalid = filteredData.filter(r => (!isValDateFilter || r.initial_val_date === filters.date) && r.qa_initial_status === 'Invalid').length;
+    const initPending = filteredData.filter(r => (!isValDateFilter || r.initial_val_date === filters.date) && r.qa_initial_status === 'For Validation').length;
     const dispOverride = filteredData.filter(r => r.dispatch_status === 'Override Done').length;
     const dispPending = filteredData.filter(r => r.dispatch_status === 'Pending').length;
-    const finalValid = filteredData.filter(r => r.final_val_status === 'Valid').length;
-    const finalInvalid = filteredData.filter(r => r.final_val_status === 'Invalid').length;
+    const finalValid = filteredData.filter(r => (!isValDateFilter || r.final_val_date === filters.date) && r.final_val_status === 'Valid').length;
+    const finalInvalid = filteredData.filter(r => (!isValDateFilter || r.final_val_date === filters.date) && r.final_val_status === 'Invalid').length;
     const finalDone = finalValid + finalInvalid;
 
     const summaryData = [
@@ -2053,8 +2080,14 @@ function exportProgressReportExcel() {
 
         if (r.dispatch_status === 'Override Done') st.dispOverride++;
 
-        if (r.final_val_status === 'Valid') st.finalValid++;
-        else if (r.final_val_status === 'Invalid') st.finalInvalid++;
+        const fvd = r.final_val_date || vd;
+        if (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid') {
+            if (!valDateMap[fvd]) {
+                valDateMap[fvd] = { total: 0, initValid: 0, initInvalid: 0, initPending: 0, dispOverride: 0, finalValid: 0, finalInvalid: 0, wbDates: new Set() };
+            }
+            if (r.final_val_status === 'Valid') valDateMap[fvd].finalValid++;
+            else if (r.final_val_status === 'Invalid') valDateMap[fvd].finalInvalid++;
+        }
     });
 
     const sortedValDates = Object.keys(valDateMap).sort((a, b) => {
@@ -3405,10 +3438,58 @@ function classifyIssueCategory(remarks) {
     }
 }
 
+// Normalize date strings (e.g., '11/09/2026' or '2026-11-09' -> '11/9/2026') so leading zeros never break date matching
+function normalizeDateStr(str) {
+    if (!str) return '';
+    const s = String(str).trim();
+    if (!s) return '';
+    if (s.includes('/')) {
+        const parts = s.split('/');
+        if (parts.length === 3) {
+            const m = parseInt(parts[0], 10);
+            const d = parseInt(parts[1], 10);
+            let y = parseInt(parts[2], 10);
+            if (!isNaN(m) && !isNaN(d) && !isNaN(y)) {
+                if (y < 100) y += 2000;
+                return `${m}/${d}/${y}`;
+            }
+        }
+    } else if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) {
+        const parts = s.split('-');
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        if (!isNaN(m) && !isNaN(d) && !isNaN(y)) {
+            return `${m}/${d}/${y}`;
+        }
+    }
+    return s;
+}
+
+function normalizeQAStatus(str) {
+    if (!str) return '';
+    const s = String(str).trim();
+    const low = s.toLowerCase();
+    if (low === 'valid') return 'Valid';
+    if (low === 'invalid') return 'Invalid';
+    if (low === 'for validation') return 'For Validation';
+    return s;
+}
+
 function enrichRecords(records) {
     if (!Array.isArray(records)) return [];
     for (let i = 0; i < records.length; i++) {
         const r = records[i];
+        r.date = normalizeDateStr(r.date);
+        r.initial_val_date = normalizeDateStr(r.initial_val_date);
+        r.dispatch_date = normalizeDateStr(r.dispatch_date);
+        r.final_val_date = normalizeDateStr(r.final_val_date);
+        r.qa_initial_status = normalizeQAStatus(r.qa_initial_status);
+        r.final_val_status = normalizeQAStatus(r.final_val_status);
+        if (r.initial_validated_by) r.initial_validated_by = String(r.initial_validated_by).trim();
+        if (r.final_validated_by) r.final_validated_by = String(r.final_validated_by).trim();
+        if (r.overridden_by) r.overridden_by = String(r.overridden_by).trim();
+
         const rem = (r.qa_initial_remarks || '').trim();
         r.document_involved = classifyDocumentInvolved(rem);
         r.document_issue = rem;

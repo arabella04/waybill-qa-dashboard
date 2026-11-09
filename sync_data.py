@@ -11,6 +11,24 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "data.csv")
 JSON_PATH = os.path.join(BASE_DIR, "data.json")
 
+def normalize_date_str(s):
+    s = (s or "").strip()
+    if not s:
+        return ""
+    if "/" in s:
+        parts = s.split("/")
+        if len(parts) == 3:
+            try:
+                m = int(parts[0])
+                d = int(parts[1])
+                y = int(parts[2])
+                if y < 100:
+                    y += 2000
+                return f"{m}/{d}/{y}"
+            except Exception:
+                return s
+    return s
+
 def sync():
     print("Fetching latest data from Google Sheets...")
     req = urllib.request.Request(
@@ -37,6 +55,8 @@ def sync():
         if len(row) < 16:
             row = row + [''] * (16 - len(row))
         rec = {headers[i]: row[i].strip() for i in range(16)}
+        for d_key in ("date", "initial_val_date", "dispatch_date", "final_val_date"):
+            rec[d_key] = normalize_date_str(rec.get(d_key, ""))
         if any(rec.values()):
             wb = rec.get('waybill_no', '').strip()
             # Require minimum 8 digits valid waybill format, exactly matching dashboard filter
