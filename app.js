@@ -4330,29 +4330,35 @@ function getRTHScopeMetadata() {
         ? rthFilteredRecords
         : allData.filter(r => r.qa_initial_status === 'Invalid');
 
-    let periodLabel = "All Dates (Full Master Dataset: October 2026)";
+    let periodLabel = "All Dates (Full Master Dataset)";
     let periodSlug = "All_Dates";
 
     if (rthFilters.mode === 'LATEST_WEEK') {
-        periodLabel = "Latest Weekly Cycle (Oct 24, 2026 – Oct 30, 2026)";
-        periodSlug = "Latest_Week_2026-10-24_to_2026-10-30";
+        const latestWeekLabel = (typeof rthAvailableWeeks !== 'undefined' && rthAvailableWeeks.length > 0)
+            ? rthAvailableWeeks[0].label
+            : "Latest Weekly Cycle";
+        periodLabel = `Latest Weekly Cycle (${latestWeekLabel})`;
+        periodSlug = "Latest_Week";
     } else if (rthFilters.selectedDates && rthFilters.selectedDates.length === 1) {
-        periodLabel = `Validation Date: ${rthFilters.selectedDates[0]}`;
-        periodSlug = `Date_${rthFilters.selectedDates[0]}`;
+        const dStr = String(rthFilters.selectedDates[0]);
+        periodLabel = `Validation Date: ${dStr}`;
+        periodSlug = `Date_${dStr.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
     } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 1) {
-        const sorted = [...rthFilters.selectedDates].sort();
-        periodLabel = `Custom Multi-Date Scope (${sorted.length} Dates: ${sorted[0]} to ${sorted[sorted.length - 1]})`;
-        periodSlug = `Multi_${sorted.length}_Dates_${sorted[0]}_to_${sorted[sorted.length - 1]}`;
+        const sorted = [...rthFilters.selectedDates].sort((a, b) => new Date(a) - new Date(b));
+        const first = String(sorted[0]);
+        const last = String(sorted[sorted.length - 1]);
+        periodLabel = `Custom Multi-Date Scope (${sorted.length} Dates: ${first} to ${last})`;
+        periodSlug = `Multi_${sorted.length}_Dates_${first.replace(/[^a-zA-Z0-9_-]/g, '-')}_to_${last.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
     }
 
     // Determine assigned waybill scope (all valid + invalid waybills in this date window)
     let scopeRecords = allData;
-    if (rthFilters.mode === 'LATEST_WEEK') {
-        scopeRecords = allData.filter(r => (r.initial_val_date >= '2026-10-24' && r.initial_val_date <= '2026-10-30') ||
-                                           (r.final_val_date >= '2026-10-24' && r.final_val_date <= '2026-10-30'));
-    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0 && rthFilters.mode !== 'ALL') {
-        const dateSet = new Set(rthFilters.selectedDates);
-        scopeRecords = allData.filter(r => dateSet.has(r.initial_val_date) || dateSet.has(r.final_val_date));
+    if (rthFilters.mode !== 'ALL' && rthFilters.selectedDates && rthFilters.selectedDates.length > 0) {
+        const allowedDates = new Set(rthFilters.selectedDates);
+        scopeRecords = allData.filter(r => {
+            const d = r.initial_val_date || r.date;
+            return allowedDates.has(d);
+        });
     }
 
     const assignedCounts = {};
@@ -4370,6 +4376,348 @@ function getRTHScopeMetadata() {
         totalAssigned: scopeRecords.length || records.length,
         assignedCounts
     };
+}
+
+function classifyRTHDefectIssue(issueText) {
+    const s = (issueText || '').toLowerCase();
+    if (s.includes('no ') || s.includes('missing') || s.includes('without')) return 'Missing Document';
+    if (s.includes('diff sign') || s.includes('signature') || s.includes('sign')) return 'Signature Discrepancy';
+    if (s.includes('improper') || s.includes('inverted') || s.includes('crop') || s.includes('orientation')) return 'Improper / Orientation';
+    if (s.includes('blur') || s.includes('unreadable') || s.includes('not clear') || s.includes('dark')) return 'Blurred / Low Quality';
+    return 'Other Defect';
+}
+
+// Dedicated 2x High-DPI Canvas Renderer for Figure 1.1: Invalid Documents Distribution
+function renderPDFChart1Canvas(sortedDocs, totalInvalids) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 520;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Header
+    ctx.fillStyle = '#0f766e';
+    ctx.font = 'bold 22px "Segoe UI", Arial, sans-serif';
+    ctx.fillText('Figure 1.1: Invalid Documents Distribution (Count & % Share)', 32, 38);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 14px "Segoe UI", Arial, sans-serif';
+    ctx.fillText('Clarification: MDC = Medicine Consent Form | RC = Received Copy | LOA = Letter of Authorization | ID = Valid ID', 32, 62);
+
+    const chartLeft = 88;
+    const chartRight = canvas.width - 36;
+    const chartTop = 105;
+    const chartBottom = 415;
+    const chartW = chartRight - chartLeft;
+    const chartH = chartBottom - chartTop;
+
+    const maxVal = Math.max(...sortedDocs.map(d => d[1].count), 10);
+    const niceMax = Math.ceil(maxVal / 50) * 50 || 10;
+
+    // Horizontal grid lines
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1.5;
+    ctx.fillStyle = '#475569';
+    ctx.font = '600 14px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+        const val = Math.round((niceMax / 5) * i);
+        const y = chartBottom - (val / niceMax) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(chartLeft, y);
+        ctx.lineTo(chartRight, y);
+        ctx.stroke();
+        ctx.fillText(val.toLocaleString(), chartLeft - 12, y + 5);
+    }
+
+    const colors = {
+        ID: '#f59e0b',
+        MDC: '#0d9488',
+        RC: '#8b5cf6',
+        LOA: '#ec4899',
+        Other: '#64748b'
+    };
+    const shortLabels = {
+        ID: ['ID', '(Valid ID / Identification)'],
+        MDC: ['MDC', '(Medicine Consent Form)'],
+        RC: ['RC', '(Received / Receiving Copy)'],
+        LOA: ['LOA', '(Letter of Authorization)'],
+        Other: ['Other', '(Unspecified)']
+    };
+
+    const slotW = chartW / sortedDocs.length;
+    const barW = Math.min(96, slotW * 0.56);
+
+    sortedDocs.forEach(([key, d], idx) => {
+        const centerX = chartLeft + slotW * idx + slotW / 2;
+        const barH = Math.max((d.count / niceMax) * chartH, d.count > 0 ? 6 : 2);
+        const x = centerX - barW / 2;
+        const y = chartBottom - barH;
+
+        // Bar fill
+        ctx.fillStyle = colors[key] || '#0d9488';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(x, y, barW, barH, [8, 8, 0, 0]);
+        } else {
+            ctx.rect(x, y, barW, barH);
+        }
+        ctx.fill();
+
+        // Direct count & percentage label above bar
+        const pct = ((d.count / Math.max(totalInvalids, 1)) * 100).toFixed(1);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 17px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.count.toLocaleString(), centerX, y - 22);
+        ctx.fillStyle = '#0f766e';
+        ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+        ctx.fillText(`(${pct}%)`, centerX, y - 6);
+
+        // Two-line clear label below bar
+        const lbl = shortLabels[key] || [key, ''];
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 15px "Segoe UI", Arial, sans-serif';
+        ctx.fillText(lbl[0], centerX, chartBottom + 26);
+        ctx.fillStyle = '#475569';
+        ctx.font = '600 13px "Segoe UI", Arial, sans-serif';
+        ctx.fillText(lbl[1], centerX, chartBottom + 46);
+    });
+
+    // Baseline
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(chartLeft, chartBottom);
+    ctx.lineTo(chartRight, chartBottom);
+    ctx.stroke();
+
+    return canvas.toDataURL('image/jpeg', 0.96);
+}
+
+// Dedicated 2x High-DPI Canvas Renderer for Figure 1.2: Top 10 Riders Stacked Bar Chart
+function renderPDFChart2Canvas(top10Riders, riderDocs, assignedCounts, totalInvalids) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1140;
+    canvas.height = 680;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Title
+    ctx.fillStyle = '#0f766e';
+    ctx.font = 'bold 22px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Figure 1.2: Top 10 Riders Defect Breakdown by Document', 28, 36);
+
+    // Legend
+    const legendItems = [
+        { label: 'ID Defects', color: '#f59e0b' },
+        { label: 'MDC (Medicine Consent)', color: '#0d9488' },
+        { label: 'RC Defects', color: '#8b5cf6' },
+        { label: 'LOA Defects', color: '#ec4899' }
+    ];
+    let legX = 28;
+    const legY = 64;
+    legendItems.forEach(item => {
+        ctx.fillStyle = item.color;
+        ctx.fillRect(legX, legY - 13, 18, 14);
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
+        ctx.fillText(item.label, legX + 24, legY - 1);
+        legX += ctx.measureText(item.label).width + 52;
+    });
+
+    const chartLeft = 330; // Generous 330px space so full rider names are never cut off or congested!
+    const chartRight = canvas.width - 175;
+    const chartTop = 92;
+    const chartBottom = canvas.height - 48;
+    const chartW = chartRight - chartLeft;
+    const chartH = chartBottom - chartTop;
+
+    const maxTotal = Math.max(...top10Riders.map(([rName, invCnt]) => {
+        const d = riderDocs[rName] || { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+        return Math.max(invCnt, d.ID + d.MDC + d.RC + d.LOA);
+    }), 10);
+    const niceMax = Math.ceil(maxTotal / 20) * 20 || 10;
+
+    // Vertical grid lines
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1.5;
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 13px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= 5; i++) {
+        const val = Math.round((niceMax / 5) * i);
+        const x = chartLeft + (val / niceMax) * chartW;
+        ctx.beginPath();
+        ctx.moveTo(x, chartTop);
+        ctx.lineTo(x, chartBottom);
+        ctx.stroke();
+        ctx.fillText(val.toLocaleString(), x, chartBottom + 24);
+    }
+
+    const rowCount = Math.max(top10Riders.length, 1);
+    const rowH = chartH / Math.max(rowCount, 10);
+    const barH = Math.min(34, rowH * 0.66);
+
+    top10Riders.forEach(([rName, invCnt], idx) => {
+        const centerY = chartTop + idx * rowH + rowH / 2;
+        const y = centerY - barH / 2;
+
+        // Full Rider Name on the left
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 15px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'right';
+        const displayRider = rName.length > 32 ? rName.substring(0, 30) + '...' : rName;
+        ctx.fillText(`#${idx + 1}  ${displayRider}`, chartLeft - 14, centerY + 5);
+
+        const d = riderDocs[rName] || { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+        const segments = [
+            { key: 'ID', val: d.ID, color: '#f59e0b' },
+            { key: 'MDC', val: d.MDC, color: '#0d9488' },
+            { key: 'RC', val: d.RC, color: '#8b5cf6' },
+            { key: 'LOA', val: d.LOA, color: '#ec4899' }
+        ];
+
+        let curX = chartLeft;
+        segments.forEach(seg => {
+            if (seg.val <= 0) return;
+            const segW = (seg.val / niceMax) * chartW;
+            ctx.fillStyle = seg.color;
+            ctx.fillRect(curX, y, segW, barH);
+
+            // Print count inside segment if wide enough
+            if (segW >= 32) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(String(seg.val), curX + segW / 2, centerY + 5);
+            }
+            curX += segW;
+        });
+
+        // Print total invalids & share at right end of bar
+        const pct = ((invCnt / Math.max(totalInvalids, 1)) * 100).toFixed(1);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${invCnt.toLocaleString()} inv (${pct}%)`, curX + 10, centerY + 5);
+    });
+
+    // Left axis line
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(chartLeft, chartTop);
+    ctx.lineTo(chartLeft, chartBottom);
+    ctx.stroke();
+
+    return canvas.toDataURL('image/jpeg', 0.96);
+}
+
+// Dedicated 2x High-DPI Canvas Renderer for Figure 2.1: All Riders Distribution (Full Width Landscape)
+function renderPDFChart3Canvas(allRidersRanked) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2200;
+    canvas.height = 680;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Sort alphabetically by surname A to Z
+    const sortedBySurname = [...allRidersRanked].sort((a, b) => {
+        const sA = typeof getRiderSurname === 'function' ? getRiderSurname(a[0]) : a[0];
+        const sB = typeof getRiderSurname === 'function' ? getRiderSurname(b[0]) : b[0];
+        return sA.localeCompare(sB);
+    });
+
+    ctx.fillStyle = '#0f766e';
+    ctx.font = 'bold 26px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Figure 2.1: All Riders Invalid Waybills Distribution Count (${sortedBySurname.length} Riders • Sorted Alphabetically by Surname A–Z)`, 36, 42);
+
+    const chartLeft = 86;
+    const chartRight = canvas.width - 36;
+    const chartTop = 84;
+    const chartBottom = 500;
+    const chartW = chartRight - chartLeft;
+    const chartH = chartBottom - chartTop;
+
+    const maxVal = Math.max(...sortedBySurname.map(r => r[1]), 10);
+    const niceMax = Math.ceil(maxVal / 25) * 25 || 10;
+
+    // Horizontal grid lines
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1.5;
+    ctx.fillStyle = '#475569';
+    ctx.font = '600 16px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+        const val = Math.round((niceMax / 5) * i);
+        const y = chartBottom - (val / niceMax) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(chartLeft, y);
+        ctx.lineTo(chartRight, y);
+        ctx.stroke();
+        ctx.fillText(val.toLocaleString(), chartLeft - 12, y + 6);
+    }
+
+    const n = Math.max(sortedBySurname.length, 1);
+    const slotW = chartW / n;
+    const barW = Math.min(36, Math.max(10, slotW * 0.64));
+
+    sortedBySurname.forEach(([rName, invCnt], idx) => {
+        const centerX = chartLeft + slotW * idx + slotW / 2;
+        const barH = Math.max((invCnt / niceMax) * chartH, invCnt > 0 ? 4 : 1);
+        const x = centerX - barW / 2;
+        const y = chartBottom - barH;
+
+        ctx.fillStyle = '#0d9488';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
+        } else {
+            ctx.rect(x, y, barW, barH);
+        }
+        ctx.fill();
+
+        // Count above bar
+        ctx.fillStyle = '#0f766e';
+        ctx.font = 'bold 13px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(invCnt), centerX, y - 6);
+
+        // Angled surname label below axis
+        const surname = typeof getRiderSurname === 'function' ? getRiderSurname(rName) : rName.split(',')[0];
+        ctx.save();
+        ctx.translate(centerX + 4, chartBottom + 14);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(surname.length > 18 ? surname.substring(0, 17) + '.' : surname, 0, 0);
+        ctx.restore();
+    });
+
+    // Baseline
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(chartLeft, chartBottom);
+    ctx.lineTo(chartRight, chartBottom);
+    ctx.stroke();
+
+    // Axis title
+    ctx.fillStyle = '#0f766e';
+    ctx.font = 'bold 18px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Rider Surname (Alphabetical A to Z)', chartLeft + chartW / 2, canvas.height - 16);
+
+    return canvas.toDataURL('image/jpeg', 0.96);
 }
 
 function buildRTHReportPrintableHTML(includeToolbar = false) {
@@ -4422,11 +4770,11 @@ function buildRTHReportPrintableHTML(includeToolbar = false) {
         'Missing Document': 0,
         'Improper / Orientation': 0,
         'Signature Discrepancy': 0,
-        'Other Defect': 0,
-        'Blurred / Low Quality': 0
+        'Blurred / Low Quality': 0,
+        'Other Defect': 0
     };
     records.forEach(r => {
-        const cat = r.defect_category || 'Other Defect';
+        const cat = classifyRTHDefectIssue(r.document_issue);
         if (catCounts[cat] !== undefined) catCounts[cat]++;
         else catCounts['Other Defect']++;
     });
@@ -4437,16 +4785,10 @@ function buildRTHReportPrintableHTML(includeToolbar = false) {
     const topRider = allRidersRanked[0] || ['N/A', 0];
     const primaryCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0] || ['Missing Document', 0];
 
-    // High-resolution Chart Images (rendered from active Chart.js canvas with 2x retina scaling)
-    const chartDocImg = (typeof charts !== 'undefined' && charts.rthDocuments)
-        ? charts.rthDocuments.toBase64Image('image/png', 2)
-        : '';
-    const chartRiderImg = (typeof charts !== 'undefined' && charts.rthRiders)
-        ? charts.rthRiders.toBase64Image('image/png', 2)
-        : '';
-    const chartAllRidersImg = (typeof charts !== 'undefined' && charts.rthAllRiders)
-        ? charts.rthAllRiders.toBase64Image('image/png', 2)
-        : '';
+    // High-resolution Chart Images (Dedicated 2x High-DPI Uncongested Renderers)
+    const chartDocImg = renderPDFChart1Canvas(sortedDocs, totalInvalids);
+    const chartRiderImg = renderPDFChart2Canvas(top10Riders, riderDocs, meta.assignedCounts, totalInvalids);
+    const chartAllRidersImg = renderPDFChart3Canvas(allRidersRanked);
 
     const genTimestamp = new Date().toLocaleString('en-US', {
         dateStyle: 'medium',
@@ -4766,7 +5108,7 @@ ${includeToolbar ? `
             <span style="background:rgba(255,255,255,0.2); font-size:11px; padding:2px 8px; border-radius:4px;">Printable High-Resolution View</span>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <button class="btn-action btn-pdf" onclick="window.parent && window.parent.exportRTHPDF ? window.parent.exportRTHPDF() : window.print()">
+            <button class="btn-action btn-pdf" onclick="(window.opener && window.opener.exportRTHPDF) ? window.opener.exportRTHPDF() : window.print()">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Download PDF (.pdf)
             </button>
@@ -5083,55 +5425,575 @@ ${includeToolbar ? `
 </html>`;
 }
 
-function exportRTHPDF() {
+async function exportRTHPDF() {
     showNotification("Generating high-resolution 1Life RTH PDF Report...", "info");
 
-    const meta = getRTHScopeMetadata();
-    const periodSlug = meta.periodSlug || 'Report';
+    try {
+        const meta = getRTHScopeMetadata();
+        const records = meta.records;
+        const totalInvalids = Math.max(meta.totalInvalids, 1);
+        const totalAssigned = Math.max(meta.totalAssigned, 1);
+        const defectRate = ((records.length / totalAssigned) * 100).toFixed(1);
+        const periodSlug = meta.periodSlug || 'Report';
+        const filename = `Waybill_RTH_Defect_Report_${periodSlug}.pdf`;
 
-    // Verify html2pdf availability
-    if (typeof html2pdf === 'undefined') {
-        console.warn("html2pdf library not loaded, opening printable preview window instead.");
-        previewRTHPrintableReport();
-        return;
-    }
+        if (typeof html2pdf === 'undefined') {
+            previewRTHPrintableReport();
+            return;
+        }
 
-    const container = document.createElement('div');
-    container.id = 'rth-pdf-export-container';
-    container.style.position = 'fixed';
-    container.style.left = '-99999px';
-    container.style.top = '0';
-    container.style.width = '1140px';
-    container.style.backgroundColor = '#ffffff';
-    container.innerHTML = buildRTHReportPrintableHTML(false);
-    document.body.appendChild(container);
+        // Obtain native jsPDF instance from html2pdf bundle
+        const worker = html2pdf().set({
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        });
+        const doc = await new Promise((resolve, reject) => {
+            worker.from(document.createElement('span')).toPdf().get('pdf').then(resolve).catch(reject);
+        });
 
-    const filename = `Waybill_RTH_Defect_Report_${periodSlug}.pdf`;
+        // 1. Aggregate Rider Breakdown
+        const riderCounts = {};
+        const riderDocs = {};
+        records.forEach(r => {
+            const name = (r.rider || 'Unknown Rider').trim();
+            riderCounts[name] = (riderCounts[name] || 0) + 1;
+            if (!riderDocs[name]) {
+                riderDocs[name] = { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+            }
+            const d = r.document_involved || '';
+            if (d.includes('ID')) riderDocs[name].ID++;
+            if (d.includes('MDC')) riderDocs[name].MDC++;
+            if (d.includes('RC')) riderDocs[name].RC++;
+            if (d.includes('LOA')) riderDocs[name].LOA++;
+        });
 
-    const opt = {
-        margin: [6, 8, 6, 8],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: 1140,
-            scrollY: 0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak: { mode: ['css', 'legacy'], before: '.page-break' }
-    };
+        const allRidersRanked = Object.entries(riderCounts).sort((a, b) => b[1] - a[1]);
+        const top10Riders = allRidersRanked.slice(0, 10);
+        const uniqueRidersCount = allRidersRanked.length;
 
-    html2pdf().set(opt).from(container).save().then(() => {
-        if (container.parentNode) container.parentNode.removeChild(container);
-        showNotification(`Successfully exported ${filename}`, "success");
-    }).catch(err => {
+        // 2. Aggregate Documents Involved (MDC = Medicine Consent Form)
+        const docCounts = {
+            'ID': { name: 'ID (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Improper ID, blurred ID, no ID file, inverted ID' },
+            'MDC': { name: 'MDC (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Diff signature in MDC, missing MDC, invalid MDC' },
+            'RC': { name: 'RC (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Blurred RC, no signature in RC, missing RC copy' },
+            'LOA': { name: 'LOA (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Missing LOA, expired LOA, blurred LOA copy' },
+            'Other': { name: 'Other / Unspecified Defects', code: 'Other', count: 0, desc: 'System/delivery issue, unclassified remarks' }
+        };
+        records.forEach(r => {
+            const d = r.document_involved || '';
+            let matched = false;
+            if (d.includes('ID')) { docCounts['ID'].count++; matched = true; }
+            if (d.includes('MDC')) { docCounts['MDC'].count++; matched = true; }
+            if (d.includes('RC')) { docCounts['RC'].count++; matched = true; }
+            if (d.includes('LOA')) { docCounts['LOA'].count++; matched = true; }
+            if (!matched) { docCounts['Other'].count++; }
+        });
+
+        // 3. Defect Issue Categories
+        const catCounts = {
+            'Missing Document': 0,
+            'Signature Discrepancy': 0,
+            'Improper / Orientation': 0,
+            'Blurred / Low Quality': 0,
+            'Other Defect': 0
+        };
+        records.forEach(r => {
+            const cat = classifyRTHDefectIssue(r.document_issue);
+            if (catCounts[cat] !== undefined) catCounts[cat]++;
+            else catCounts['Other Defect']++;
+        });
+
+        const sortedDocs = Object.entries(docCounts).sort((a, b) => b[1].count - a[1].count);
+        const primaryDoc = sortedDocs[0];
+        const topRider = allRidersRanked[0] || ['N/A', 0];
+
+        // 4. Render Dedicated 2x High-DPI Uncongested Charts
+        const chartDocImg = renderPDFChart1Canvas(sortedDocs, totalInvalids);
+        const chartRiderImg = renderPDFChart2Canvas(top10Riders, riderDocs, meta.assignedCounts, totalInvalids);
+        const chartAllRidersImg = renderPDFChart3Canvas(allRidersRanked);
+
+        const genTimestamp = new Date().toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        });
+
+        // =====================================================================
+        // PAGE 1: EXECUTIVE OVERVIEW, KPI CARDS, DOCS & TOP 10 RIDERS
+        // =====================================================================
+        // Corporate Header Banner
+        doc.setFillColor(15, 118, 110); // #0F766E Deep Teal
+        doc.roundedRect(8, 7, 281, 22, 2.5, 2.5, 'F');
+
+        // Mint Badge
+        doc.setFillColor(204, 251, 241); // #CCFBF1
+        doc.roundedRect(12, 9.2, 74, 4.5, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(15, 118, 110);
+        doc.text('1LIFE TASK MONITORING & QUALITY ASSURANCE', 14, 12.4);
+
+        // Main Title & Scope
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text('WAYBILL RTH DEFECT & DOCUMENT ANALYSIS REPORT', 12, 19.2);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.8);
+        doc.setTextColor(204, 251, 241);
+        doc.text(`Official QA Monitoring  •  Scope: ${meta.periodLabel}`, 12, 23.6);
+        doc.setFontSize(7.2);
+        doc.text('Report Generated by: QA – Data and Analytics Team  •  1Life Inc. Philippines (hello@1life.ph)', 12, 27.3);
+
+        // Right-aligned Metadata
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.8);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`Generated: ${genTimestamp}`, 285, 12.5, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Total Waybills in Scope: ${totalAssigned.toLocaleString()}`, 285, 17, { align: 'right' });
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(204, 251, 241);
+        doc.text(`Total Invalids: ${records.length.toLocaleString()} (${defectRate}% defect rate)`, 285, 21.5, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(255, 255, 255);
+        doc.text(`Unique Riders Impacted: ${uniqueRidersCount} riders`, 285, 26, { align: 'right' });
+
+        // 4 Executive KPI Cards (y=31.5, h=18)
+        const kpiCards = [
+            {
+                label: 'TOTAL INVALID WAYBILLS',
+                val: records.length.toLocaleString(),
+                sub: `${defectRate}% of ${totalAssigned.toLocaleString()} total assigned`
+            },
+            {
+                label: 'UNIQUE RIDERS IMPACTED',
+                val: String(uniqueRidersCount),
+                sub: 'Riders with >= 1 invalid waybill'
+            },
+            {
+                label: 'PRIMARY DEFECT DOCUMENT',
+                val: `${primaryDoc[0]} (${primaryDoc[1].count.toLocaleString()})`,
+                sub: `${((primaryDoc[1].count / totalInvalids) * 100).toFixed(1)}% of invalid waybills`
+            },
+            {
+                label: 'TOP DEFECT RIDER',
+                val: topRider[0].length > 22 ? topRider[0].substring(0, 21) + '...' : topRider[0],
+                sub: `${topRider[1].toLocaleString()} invalid cases (${((topRider[1] / totalInvalids) * 100).toFixed(1)}% share)`
+            }
+        ];
+
+        kpiCards.forEach((c, idx) => {
+            const cx = 8 + idx * 71;
+            const cy = 31.5;
+            const cw = 68;
+            const ch = 18;
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(cx, cy, cw, ch, 2, 2, 'FD');
+            // Top accent bar
+            doc.setFillColor(13, 148, 136);
+            doc.rect(cx, cy, cw, 1.5, 'F');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.8);
+            doc.setTextColor(100, 116, 139);
+            doc.text(c.label, cx + 3.5, cy + 5.2);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12.5);
+            doc.setTextColor(15, 23, 42);
+            doc.text(c.val, cx + 3.5, cy + 11.8);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(13, 148, 136);
+            doc.text(c.sub, cx + 3.5, cy + 16);
+        });
+
+        // SECTION 1: Invalid Documents Distribution Table (Left) + Chart 1 (Right)
+        const s1Y = 52;
+        const s1H = 56;
+        // Left Container
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(8, s1Y, 140, s1H, 2, 2, 'FD');
+        doc.setFillColor(248, 250, 252);
+        doc.rect(8.2, s1Y + 0.2, 139.6, 6.8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(15, 118, 110);
+        doc.text('1. Invalid Documents Distribution', 11, s1Y + 4.8);
+
+        // Badge: MDC = Medicine Consent Form
+        doc.setFillColor(204, 251, 241);
+        doc.roundedRect(102, s1Y + 1.2, 43, 4.6, 1, 1, 'F');
+        doc.setFontSize(6.5);
+        doc.text('MDC = Medicine Consent Form', 123.5, s1Y + 4.3, { align: 'center' });
+
+        // Table 1 Header
+        const t1HeadY = s1Y + 7;
+        doc.setFillColor(241, 245, 249);
+        doc.rect(8.2, t1HeadY, 139.6, 5.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(51, 65, 85);
+        doc.text('DOCUMENT INVOLVED', 10.5, t1HeadY + 3.8);
+        doc.text('COUNT', 74, t1HeadY + 3.8, { align: 'right' });
+        doc.text('% SHARE', 90, t1HeadY + 3.8, { align: 'right' });
+        doc.text('PRIMARY DETECTED ISSUES', 93, t1HeadY + 3.8);
+
+        sortedDocs.forEach(([key, d], idx) => {
+            const ry = t1HeadY + 5.5 + idx * 6.8;
+            if (idx % 2 === 1) {
+                doc.setFillColor(250, 251, 252);
+                doc.rect(8.2, ry, 139.6, 6.8, 'F');
+            }
+            doc.setDrawColor(241, 245, 249);
+            doc.line(8.2, ry + 6.8, 147.8, ry + 6.8);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.2);
+            doc.setTextColor(15, 23, 42);
+            doc.text(d.name, 10.5, ry + 4.5);
+
+            doc.text(d.count.toLocaleString(), 74, ry + 4.5, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${((d.count / totalInvalids) * 100).toFixed(1)}%`, 90, ry + 4.5, { align: 'right' });
+
+            doc.setFontSize(6.3);
+            doc.setTextColor(100, 116, 139);
+            doc.text(d.desc, 93, ry + 4.5);
+        });
+
+        // Defect Issue Summary Footer inside Box 1
+        const catBarY = s1Y + s1H - 9;
+        doc.setFillColor(240, 253, 250);
+        doc.rect(8.2, catBarY, 139.6, 8.8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.9);
+        doc.setTextColor(15, 118, 110);
+        const catEntries = Object.entries(catCounts).map(
+            ([k, v]) => `${k}: ${v.toLocaleString()} (${((v / totalInvalids) * 100).toFixed(1)}%)`
+        );
+        doc.text(`Defect Issues:  ${catEntries.slice(0, 3).join('   |   ')}`, 10.5, catBarY + 3.8);
+        doc.text(`                        ${catEntries.slice(3).join('   |   ')}`, 10.5, catBarY + 7.2);
+
+        // Right Container: Chart 1 Image
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(151, s1Y, 138, s1H, 2, 2, 'FD');
+        doc.addImage(chartDocImg, 'JPEG', 152, s1Y + 1, 136, s1H - 2);
+
+        // SECTION 2: Top 10 Riders Table (Left) + Chart 2 (Right)
+        const s2Y = 110.5;
+        const s2H = 88.5;
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(8, s2Y, 140, s2H, 2, 2, 'FD');
+        doc.setFillColor(248, 250, 252);
+        doc.rect(8.2, s2Y + 0.2, 139.6, 6.8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(15, 118, 110);
+        doc.text('2. Top 10 Riders with Highest Invalids', 11, s2Y + 4.8);
+
+        doc.setFillColor(204, 251, 241);
+        doc.roundedRect(120, s2Y + 1.2, 25, 4.6, 1, 1, 'F');
+        doc.setFontSize(6.5);
+        doc.text('Ranks #1 – #10', 132.5, s2Y + 4.3, { align: 'center' });
+
+        const t2HeadY = s2Y + 7;
+        doc.setFillColor(241, 245, 249);
+        doc.rect(8.2, t2HeadY, 139.6, 5.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.4);
+        doc.setTextColor(51, 65, 85);
+        doc.text('RANK', 10, t2HeadY + 3.8);
+        doc.text('RIDER NAME', 18, t2HeadY + 3.8);
+        doc.text('ASSIGNED', 77, t2HeadY + 3.8, { align: 'right' });
+        doc.text('INVALIDS', 92, t2HeadY + 3.8, { align: 'right' });
+        doc.text('SHARE', 105, t2HeadY + 3.8, { align: 'right' });
+        doc.text('ID / MDC / RC / LOA', 146, t2HeadY + 3.8, { align: 'right' });
+
+        top10Riders.forEach(([rName, invCnt], idx) => {
+            const ry = t2HeadY + 5.5 + idx * 7.4;
+            if (idx % 2 === 1) {
+                doc.setFillColor(250, 251, 252);
+                doc.rect(8.2, ry, 139.6, 7.4, 'F');
+            }
+            doc.setDrawColor(241, 245, 249);
+            doc.line(8.2, ry + 7.4, 147.8, ry + 7.4);
+
+            const rAssigned = meta.assignedCounts[rName] || invCnt;
+            const rDoc = riderDocs[rName] || { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(15, 118, 110);
+            doc.text(String(idx + 1), 12.5, ry + 4.8, { align: 'center' });
+
+            doc.setTextColor(15, 23, 42);
+            const dispName = rName.length > 27 ? rName.substring(0, 26) + '...' : rName;
+            doc.text(dispName, 18, ry + 4.8);
+
+            doc.setFont('helvetica', 'normal');
+            doc.text(rAssigned.toLocaleString(), 77, ry + 4.8, { align: 'right' });
+
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(185, 28, 28);
+            doc.text(invCnt.toLocaleString(), 92, ry + 4.8, { align: 'right' });
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(51, 65, 85);
+            doc.text(`${((invCnt / totalInvalids) * 100).toFixed(1)}%`, 105, ry + 4.8, { align: 'right' });
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.3);
+            doc.setTextColor(15, 118, 110);
+            doc.text(`ID:${rDoc.ID}  MDC:${rDoc.MDC}  RC:${rDoc.RC}  LOA:${rDoc.LOA}`, 146, ry + 4.8, { align: 'right' });
+        });
+
+        // Right Container: Chart 2 Image
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(151, s2Y, 138, s2H, 2, 2, 'FD');
+        doc.addImage(chartRiderImg, 'JPEG', 152, s2Y + 1, 136, s2H - 2);
+
+        // =====================================================================
+        // PAGE 2: ALL RIDERS DISTRIBUTION CHART (FULL WIDTH) & COMPLETE RANKINGS
+        // =====================================================================
+        doc.addPage();
+
+        const drawSection3And4Banner = (isContinuation = false) => {
+            doc.setFillColor(15, 118, 110);
+            doc.roundedRect(8, 7, 281, 13, 2, 2, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10.5);
+            doc.setTextColor(255, 255, 255);
+            doc.text(
+                isContinuation
+                    ? `SECTION 4 (CONTINUED): COMPLETE RIDER DEFECT SUMMARY & RANKINGS TABLE (${uniqueRidersCount} Riders)`
+                    : `SECTION 3 & 4: COMPLETE RIDER DEFECT DISTRIBUTION & RANKINGS MATRIX (${uniqueRidersCount} Active Riders)`,
+                12, 14.8
+            );
+            doc.setFontSize(7.8);
+            doc.setTextColor(204, 251, 241);
+            doc.text(`Total Invalids: ${records.length.toLocaleString()}  |  Assigned Waybills: ${totalAssigned.toLocaleString()}`, 285, 14.8, { align: 'right' });
+        };
+
+        drawSection3And4Banner(false);
+
+        // Full-width Chart 3 Box (x=8, y=22, w=281, h=86)
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(8, 22, 281, 86, 2, 2, 'FD');
+        doc.addImage(chartAllRidersImg, 'JPEG', 9, 23, 279, 84);
+
+        // Section 4 Table Header Helper
+        const drawRiderTableHeaders = (startY) => {
+            doc.setFillColor(15, 118, 110);
+            doc.rect(8, startY, 281, 6.5, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(255, 255, 255);
+            doc.text('RANK', 14, startY + 4.5, { align: 'center' });
+            doc.text('RIDER NAME', 24, startY + 4.5);
+            doc.text('# OF WAYBILLS ASSIGNED', 132, startY + 4.5, { align: 'right' });
+            doc.text('TOTAL INVALIDS', 162, startY + 4.5, { align: 'right' });
+            doc.text('% SHARE', 186, startY + 4.5, { align: 'right' });
+            doc.text('ID DEFECTS', 212, startY + 4.5, { align: 'right' });
+            doc.text('MDC DEFECTS', 238, startY + 4.5, { align: 'right' });
+            doc.text('RC DEFECTS', 262, startY + 4.5, { align: 'right' });
+            doc.text('LOA DEFECTS', 286, startY + 4.5, { align: 'right' });
+            return startY + 6.5;
+        };
+
+        let curY = drawRiderTableHeaders(111);
+        let sumAssigned = 0, sumInvalids = 0, sumID = 0, sumMDC = 0, sumRC = 0, sumLOA = 0;
+
+        allRidersRanked.forEach(([rName, invCnt], idx) => {
+            if (curY + 6 > 196) {
+                doc.addPage();
+                drawSection3And4Banner(true);
+                curY = drawRiderTableHeaders(22);
+            }
+
+            const rAssigned = meta.assignedCounts[rName] || invCnt;
+            const rDoc = riderDocs[rName] || { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+            sumAssigned += rAssigned;
+            sumInvalids += invCnt;
+            sumID += rDoc.ID;
+            sumMDC += rDoc.MDC;
+            sumRC += rDoc.RC;
+            sumLOA += rDoc.LOA;
+
+            if (idx % 2 === 1) {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(8, curY, 281, 5.8, 'F');
+            }
+            doc.setDrawColor(226, 232, 240);
+            doc.line(8, curY + 5.8, 289, curY + 5.8);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.2);
+            doc.setTextColor(15, 118, 110);
+            doc.text(String(idx + 1), 14, curY + 4.1, { align: 'center' });
+
+            doc.setTextColor(15, 23, 42);
+            doc.text(rName, 24, curY + 4.1);
+
+            doc.setFont('helvetica', 'normal');
+            doc.text(rAssigned.toLocaleString(), 132, curY + 4.1, { align: 'right' });
+
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 118, 110);
+            doc.text(invCnt.toLocaleString(), 162, curY + 4.1, { align: 'right' });
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(51, 65, 85);
+            doc.text(`${((invCnt / totalInvalids) * 100).toFixed(1)}%`, 186, curY + 4.1, { align: 'right' });
+
+            doc.text(rDoc.ID.toLocaleString(), 212, curY + 4.1, { align: 'right' });
+            doc.text(rDoc.MDC.toLocaleString(), 238, curY + 4.1, { align: 'right' });
+            doc.text(rDoc.RC.toLocaleString(), 262, curY + 4.1, { align: 'right' });
+            doc.text(rDoc.LOA.toLocaleString(), 286, curY + 4.1, { align: 'right' });
+
+            curY += 5.8;
+        });
+
+        // Prominent TOTAL Row (Page 7 item 4)
+        if (curY + 7.5 > 198) {
+            doc.addPage();
+            drawSection3And4Banner(true);
+            curY = drawRiderTableHeaders(22);
+        }
+        doc.setFillColor(204, 251, 241); // Mint highlight #CCFBF1
+        doc.rect(8, curY, 281, 7, 'F');
+        doc.setDrawColor(15, 118, 110);
+        doc.line(8, curY, 289, curY);
+        doc.line(8, curY + 7, 289, curY + 7);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(15, 118, 110);
+        doc.text('TOTAL (All Riders)', 24, curY + 4.8);
+        doc.text(sumAssigned.toLocaleString(), 132, curY + 4.8, { align: 'right' });
+        doc.text(sumInvalids.toLocaleString(), 162, curY + 4.8, { align: 'right' });
+        doc.text('100.0%', 186, curY + 4.8, { align: 'right' });
+        doc.text(sumID.toLocaleString(), 212, curY + 4.8, { align: 'right' });
+        doc.text(sumMDC.toLocaleString(), 238, curY + 4.8, { align: 'right' });
+        doc.text(sumRC.toLocaleString(), 262, curY + 4.8, { align: 'right' });
+        doc.text(sumLOA.toLocaleString(), 286, curY + 4.8, { align: 'right' });
+
+        // =====================================================================
+        // SECTION 5: FILTERED WAYBILL AUDIT RECORDS DETAIL TABLE
+        // =====================================================================
+        doc.addPage();
+
+        const auditLimit = Math.min(records.length, 500);
+        const auditRecords = records.slice(0, auditLimit);
+
+        const drawAuditBannerAndHeaders = (isCont = false) => {
+            doc.setFillColor(15, 118, 110);
+            doc.roundedRect(8, 7, 281, 13, 2, 2, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10.5);
+            doc.setTextColor(255, 255, 255);
+            doc.text(
+                isCont
+                    ? `SECTION 5 (CONTINUED): FILTERED WAYBILL AUDIT RECORDS`
+                    : `SECTION 5: FILTERED WAYBILL AUDIT RECORDS (${auditRecords.length.toLocaleString()} of ${records.length.toLocaleString()} Invalid Waybills)`,
+                12, 14.8
+            );
+            doc.setFontSize(7.8);
+            doc.setTextColor(204, 251, 241);
+            doc.text(`Scope: ${meta.periodLabel}`, 285, 14.8, { align: 'right' });
+
+            const hy = 22;
+            doc.setFillColor(15, 118, 110);
+            doc.rect(8, hy, 281, 6.5, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.8);
+            doc.setTextColor(255, 255, 255);
+            doc.text('#', 13, hy + 4.5, { align: 'center' });
+            doc.text('WAYBILL NO.', 20, hy + 4.5);
+            doc.text('DOCUMENT INVOLVED', 54, hy + 4.5);
+            doc.text('DOCUMENT ISSUE (FULL REMARKS)', 88, hy + 4.5);
+            doc.text('RIDER NAME', 180, hy + 4.5);
+            doc.text('VAL. DATE', 238, hy + 4.5);
+            doc.text('INITIAL VALIDATED BY', 258, hy + 4.5);
+            return hy + 6.5;
+        };
+
+        let auditY = drawAuditBannerAndHeaders(false);
+
+        auditRecords.forEach((r, idx) => {
+            if (auditY + 5.6 > 196) {
+                doc.addPage();
+                auditY = drawAuditBannerAndHeaders(true);
+            }
+
+            if (idx % 2 === 1) {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(8, auditY, 281, 5.5, 'F');
+            }
+            doc.setDrawColor(235, 240, 245);
+            doc.line(8, auditY + 5.5, 289, auditY + 5.5);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6.7);
+            doc.setTextColor(100, 116, 139);
+            doc.text(String(idx + 1), 13, auditY + 3.9, { align: 'center' });
+
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 118, 110);
+            doc.text(String(r.waybill_no || '-').substring(0, 18), 20, auditY + 3.9);
+
+            doc.setTextColor(15, 23, 42);
+            doc.text(String(r.document_involved || 'Unspecified').substring(0, 18), 54, auditY + 3.9);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(51, 65, 85);
+            const issueStr = String(r.document_issue || '-');
+            doc.text(issueStr.length > 56 ? issueStr.substring(0, 55) + '...' : issueStr, 88, auditY + 3.9);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 23, 42);
+            const riderStr = String(r.rider || '-');
+            doc.text(riderStr.length > 32 ? riderStr.substring(0, 31) + '...' : riderStr, 180, auditY + 3.9);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            doc.text(String(r.initial_val_date || r.date || '-'), 238, auditY + 3.9);
+
+            const qaStr = String(r.initial_validated_by || '-');
+            doc.text(qaStr.length > 18 ? qaStr.substring(0, 17) + '...' : qaStr, 258, auditY + 3.9);
+
+            auditY += 5.5;
+        });
+
+        // Add Corporate Footer & Page Numbers to ALL Pages
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            doc.setDrawColor(203, 213, 225);
+            doc.line(8, 201.5, 289, 201.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(100, 116, 139);
+            doc.text('1Life Inc. Philippines  •  QA – Data and Analytics Team (hello@1life.ph)  •  Waybill RTH Defect & Document Analysis Report', 8, 205.5);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(15, 118, 110);
+            doc.text(`Page ${p} of ${totalPages}`, 289, 205.5, { align: 'right' });
+        }
+
+        doc.save(filename);
+        showNotification(`Successfully exported ${filename} (${totalPages} pages)`, "success");
+    } catch (err) {
         console.error("PDF generation failed:", err);
-        if (container.parentNode) container.parentNode.removeChild(container);
-        showNotification("Direct PDF export had an issue; opening printable preview window.", "warning");
+        showNotification("Direct PDF export encountered an issue; opening printable preview window.", "warning");
         previewRTHPrintableReport();
-    });
+    }
 }
 
 function previewRTHPrintableReport() {
