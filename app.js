@@ -3888,22 +3888,22 @@ function updateRTHKpis(records) {
         return;
     }
 
-    // Top Document
-    const docCounts = { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+    // Mutually exclusive document classification:
+    // 1 remark/doc -> counted once under that doc; >1 remarks/docs -> counted once under Multi-Document Defects (MULTI).
+    const docCounts = { ID: 0, MDC: 0, RC: 0, LOA: 0, MULTI: 0, Other: 0 };
     records.forEach(r => {
-        const d = r.document_involved || '';
-        if (d.includes('ID')) docCounts.ID++;
-        if (d.includes('MDC')) docCounts.MDC++;
-        if (d.includes('RC')) docCounts.RC++;
-        if (d.includes('LOA')) docCounts.LOA++;
+        const key = classifyInvalidDocCategory(r.document_involved);
+        docCounts[key] = (docCounts[key] || 0) + 1;
     });
 
-    const topDocEntry = Object.entries(docCounts).sort((a, b) => b[1] - a[1])[0];
+    const topDocEntry = Object.entries(docCounts).filter(([k]) => k !== 'Other').sort((a, b) => b[1] - a[1])[0];
     if (docEl && topDocEntry) {
-        docEl.textContent = `${topDocEntry[0]} (${topDocEntry[1].toLocaleString()})`;
+        const label = topDocEntry[0] === 'MULTI' ? 'Multi-Doc' : topDocEntry[0];
+        docEl.textContent = `${label} (${topDocEntry[1].toLocaleString()})`;
     }
     if (docSub && topDocEntry) {
-        docSub.textContent = `${((topDocEntry[1] / totalCount) * 100).toFixed(1)}% of invalids involve ${topDocEntry[0]}`;
+        const label = topDocEntry[0] === 'MULTI' ? 'Multi-Document Defects' : topDocEntry[0];
+        docSub.textContent = `${((topDocEntry[1] / totalCount) * 100).toFixed(1)}% of invalid waybills (${label})`;
     }
 
     // Top Rider
@@ -3937,30 +3937,46 @@ function updateRTHKpis(records) {
     }
 }
 
+function classifyInvalidDocCategory(docStr) {
+    const d = String(docStr || '').toUpperCase();
+    const matched = [];
+    if (d.includes('ID')) matched.push('ID');
+    if (d.includes('MDC')) matched.push('MDC');
+    if (d.includes('RC')) matched.push('RC');
+    if (d.includes('LOA')) matched.push('LOA');
+    if (matched.length > 1) return 'MULTI';
+    if (matched.length === 1) return matched[0];
+    return 'Other';
+}
+
 function renderRTHCharts(records) {
     if (typeof Chart === 'undefined') return;
 
-    // 1. Chart: Invalid Documents Distribution (Page 2 item 3: MDC = Medicine Consent Form)
+    // 1. Chart: Invalid Documents Distribution (1 waybill = 1 count; >1 defects -> Multi-Document Defects)
     const ctxDoc = document.getElementById('chart-rth-documents');
     if (ctxDoc) {
         if (charts.rthDocuments) charts.rthDocuments.destroy();
 
         const docCounts = {
-            'ID (Identification)': 0,
-            'MDC (Medicine Consent Form)': 0,
-            'RC (Received Copy)': 0,
-            'LOA (Auth Letter)': 0,
+            'ID Only (Identification)': 0,
+            'MDC Only (Medicine Consent Form)': 0,
+            'RC Only (Received Copy)': 0,
+            'LOA Only (Auth Letter)': 0,
+            'Multi-Document Defects': 0,
             'Other': 0
+        };
+        const keyMap = {
+            ID: 'ID Only (Identification)',
+            MDC: 'MDC Only (Medicine Consent Form)',
+            RC: 'RC Only (Received Copy)',
+            LOA: 'LOA Only (Auth Letter)',
+            MULTI: 'Multi-Document Defects',
+            Other: 'Other'
         };
 
         records.forEach(r => {
-            const d = r.document_involved || '';
-            let matched = false;
-            if (d.includes('ID')) { docCounts['ID (Identification)']++; matched = true; }
-            if (d.includes('MDC')) { docCounts['MDC (Medicine Consent Form)']++; matched = true; }
-            if (d.includes('RC')) { docCounts['RC (Received Copy)']++; matched = true; }
-            if (d.includes('LOA')) { docCounts['LOA (Auth Letter)']++; matched = true; }
-            if (!matched) { docCounts['Other']++; }
+            const k = classifyInvalidDocCategory(r.document_involved);
+            docCounts[keyMap[k]]++;
         });
 
         const totalDocMentions = Object.values(docCounts).reduce((a, b) => a + b, 0) || 1;
@@ -4259,55 +4275,75 @@ function renderRTHMatrixTable(records) {
     if (!tbody) return;
 
     const total = Math.max(records.length, 1);
+    const counts = { ID: 0, MDC: 0, RC: 0, LOA: 0, MULTI: 0, Other: 0 };
+    records.forEach(r => {
+        const k = classifyInvalidDocCategory(r.document_involved);
+        counts[k] = (counts[k] || 0) + 1;
+    });
+
     const docData = [
         {
-            name: "ID (Valid ID / Identification)",
+            name: "ID Only (Valid ID / Identification)",
             code: "ID",
             badge: "bg-amber-100 text-amber-800 border-amber-200",
-            count: records.filter(r => (r.document_involved || '').includes('ID')).length,
-            issues: "Improper ID, blurred ID, no ID file, inverted ID, expired ID"
+            count: counts.ID,
+            issues: "Single defect: Improper ID, blurred ID, no ID file, inverted ID, expired ID"
         },
         {
-            name: "MDC (Medicine Consent Form)",
+            name: "MDC Only (Medicine Consent Form)",
             code: "MDC",
-            badge: "bg-teal-100 text-teal-800 border-teal-200",
-            count: records.filter(r => (r.document_involved || '').includes('MDC')).length,
-            issues: "Different signature in MDC, no MDC, invalid MDC, signature discrepancy"
+            badge: "bg-blue-100 text-blue-800 border-blue-200",
+            count: counts.MDC,
+            issues: "Single defect: Different signature in MDC, no MDC, invalid MDC, signature discrepancy"
         },
         {
-            name: "RC (Received / Receiving Copy)",
+            name: "RC Only (Received / Receiving Copy)",
             code: "RC",
-            badge: "bg-purple-100 text-purple-800 border-purple-200",
-            count: records.filter(r => (r.document_involved || '').includes('RC')).length,
-            issues: "Blurred RC, no signature in RC, missing RC copy, unreadable receiver name"
+            badge: "bg-indigo-100 text-indigo-800 border-indigo-200",
+            count: counts.RC,
+            issues: "Single defect: Blurred RC, no signature in RC, missing RC copy, unreadable receiver name"
         },
         {
-            name: "LOA (Letter of Authorization)",
+            name: "LOA Only (Letter of Authorization)",
             code: "LOA",
             badge: "bg-rose-100 text-rose-800 border-rose-200",
-            count: records.filter(r => (r.document_involved || '').includes('LOA')).length,
-            issues: "Missing LOA, expired LOA, blurred LOA copy"
+            count: counts.LOA,
+            issues: "Single defect: Missing LOA, expired LOA, blurred LOA copy"
         },
         {
-            name: "Multi-Document Defects",
+            name: "Multi-Document Defects (Counted as 1 Waybill Each)",
             code: "MULTI",
             badge: "bg-slate-100 text-slate-800 border-slate-200",
-            count: records.filter(r => (r.document_involved || '').includes(',')).length,
-            issues: "Simultaneous defects across 2 or more documents (e.g. MDC & ID, RC & ID)"
+            count: counts.MULTI,
+            issues: "Waybills with 2 or more remarks/documents (e.g. MDC & ID, RC & ID) — each counted once"
+        },
+        {
+            name: "Other / Unspecified Defects",
+            code: "OTHER",
+            badge: "bg-slate-100 text-slate-600 border-slate-200",
+            count: counts.Other,
+            issues: "System / delivery remarks without specific ID, MDC, RC, or LOA tag"
         }
     ];
 
     tbody.innerHTML = docData.map(d => `
-        <tr class="hover:bg-teal-50/30 transition-colors">
+        <tr class="hover:bg-blue-50/40 transition-colors">
             <td class="px-3 py-2.5 font-bold text-slate-800 flex items-center gap-1.5">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${d.badge}">${d.code}</span>
                 <span class="text-xs text-slate-800">${escapeHtml(d.name)}</span>
             </td>
-            <td class="px-3 py-2.5 text-right font-mono font-bold text-teal-900">${d.count.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-right font-mono font-bold text-blue-900">${d.count.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-right font-medium text-slate-600">${((d.count / total) * 100).toFixed(1)}%</td>
             <td class="px-3 py-2.5 text-slate-500 text-[11px]">${escapeHtml(d.issues)}</td>
         </tr>
-    `).join('');
+    `).join('') + `
+        <tr class="bg-blue-50/70 font-bold text-slate-900 border-t-2 border-blue-200">
+            <td class="px-3 py-2.5">TOTAL INVALID WAYBILLS (Exact Unique Waybill Count)</td>
+            <td class="px-3 py-2.5 text-right font-mono text-blue-800">${records.length.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-right font-mono text-blue-800">100.0%</td>
+            <td class="px-3 py-2.5 text-[11px] text-slate-600">Sum of single-defect + multi-defect waybills equals exact total</td>
+        </tr>
+    `;
 }
 
 // 7-Column Master Table (NO Issue Category per Page 1 item 2 & Page 5 item 2)
@@ -4914,22 +4950,18 @@ function buildRTHReportPrintableHTML(includeToolbar = false) {
     const top10Riders = allRidersRanked.slice(0, 10);
     const uniqueRidersCount = allRidersRanked.length;
 
-    // 2. Documents Involved Aggregation (Clarifying MDC = Medicine Consent Form)
+    // 2. Documents Involved Aggregation (1 waybill = 1 count; >1 remarks -> Multi-Document Defects)
     const docCounts = {
-        'ID': { name: 'ID (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Improper ID, blurred ID, no ID file, inverted ID, expired ID' },
-        'MDC': { name: 'MDC (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Different signature in MDC, missing MDC, invalid MDC, signature discrepancy' },
-        'RC': { name: 'RC (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Blurred RC, no signature in RC, missing RC copy, unreadable receiver name' },
-        'LOA': { name: 'LOA (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Missing LOA, expired LOA, blurred LOA copy' },
+        'ID': { name: 'ID Only (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Single defect: Improper ID, blurred ID, no ID file, inverted ID, expired ID' },
+        'MDC': { name: 'MDC Only (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Single defect: Different signature in MDC, missing MDC, invalid MDC' },
+        'RC': { name: 'RC Only (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Single defect: Blurred RC, no signature in RC, missing RC copy' },
+        'LOA': { name: 'LOA Only (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Single defect: Missing LOA, expired LOA, blurred LOA copy' },
+        'MULTI': { name: 'Multi-Document Defects', code: 'MULTI', count: 0, desc: '2+ remarks/documents on same waybill (counted as 1 waybill)' },
         'Other': { name: 'Other / Unspecified Defects', code: 'Other', count: 0, desc: 'System/delivery issue, unclassified remarks' }
     };
     records.forEach(r => {
-        const d = r.document_involved || '';
-        let matched = false;
-        if (d.includes('ID')) { docCounts['ID'].count++; matched = true; }
-        if (d.includes('MDC')) { docCounts['MDC'].count++; matched = true; }
-        if (d.includes('RC')) { docCounts['RC'].count++; matched = true; }
-        if (d.includes('LOA')) { docCounts['LOA'].count++; matched = true; }
-        if (!matched) { docCounts['Other'].count++; }
+        const k = classifyInvalidDocCategory(r.document_involved);
+        docCounts[k].count++;
     });
 
     // 3. Issue Category Breakdown
@@ -5637,22 +5669,18 @@ async function exportRTHPDF() {
         const top10Riders = allRidersRanked.slice(0, 10);
         const uniqueRidersCount = allRidersRanked.length;
 
-        // 2. Aggregate Documents Involved (MDC = Medicine Consent Form)
+        // 2. Aggregate Documents Involved (1 waybill = 1 count; >1 remarks -> Multi-Document Defects)
         const docCounts = {
-            'ID': { name: 'ID (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Improper ID, blurred ID, no ID file, inverted ID' },
-            'MDC': { name: 'MDC (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Diff signature in MDC, missing MDC, invalid MDC' },
-            'RC': { name: 'RC (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Blurred RC, no signature in RC, missing RC copy' },
-            'LOA': { name: 'LOA (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Missing LOA, expired LOA, blurred LOA copy' },
+            'ID': { name: 'ID Only (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Single defect: Improper ID, blurred ID, no ID file, inverted ID' },
+            'MDC': { name: 'MDC Only (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Single defect: Diff signature in MDC, missing MDC, invalid MDC' },
+            'RC': { name: 'RC Only (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Single defect: Blurred RC, no signature in RC, missing RC copy' },
+            'LOA': { name: 'LOA Only (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Single defect: Missing LOA, expired LOA, blurred LOA copy' },
+            'MULTI': { name: 'Multi-Document Defects', code: 'MULTI', count: 0, desc: '2+ remarks/documents on same waybill (counted as 1 waybill)' },
             'Other': { name: 'Other / Unspecified Defects', code: 'Other', count: 0, desc: 'System/delivery issue, unclassified remarks' }
         };
         records.forEach(r => {
-            const d = r.document_involved || '';
-            let matched = false;
-            if (d.includes('ID')) { docCounts['ID'].count++; matched = true; }
-            if (d.includes('MDC')) { docCounts['MDC'].count++; matched = true; }
-            if (d.includes('RC')) { docCounts['RC'].count++; matched = true; }
-            if (d.includes('LOA')) { docCounts['LOA'].count++; matched = true; }
-            if (!matched) { docCounts['Other'].count++; }
+            const k = classifyInvalidDocCategory(r.document_involved);
+            docCounts[k].count++;
         });
 
         // 3. Defect Issue Categories
@@ -6704,8 +6732,8 @@ function switchTaskDashboard(taskKey, subTab = null) {
 function highlightSidebarTaskButton(activeId) {
     const allIds = [
         'side-nav-home', 'side-nav-my-shift', 'side-nav-notes', 'side-nav-feedback',
-        'side-nav-task-waybill', 'side-nav-waybill-log', 'side-nav-invalid-waybills',
-        'side-nav-task-dispatch', 'side-nav-task-merging', 'side-nav-task-output-qa', 'side-nav-task-it-schedule'
+        'side-nav-task-waybill', 'side-nav-task-dispatch', 'side-nav-task-merging',
+        'side-nav-task-output-qa', 'side-nav-task-it-schedule', 'side-nav-documentation'
     ];
     allIds.forEach(id => {
         const el = document.getElementById(id);
@@ -6722,81 +6750,65 @@ function highlightSidebarTaskButton(activeId) {
 
 function switchWorkspaceNav(target) {
     const homeSec = document.getElementById('workspace-home-section');
-    if (target === 'home') {
-        switchTaskDashboard('home');
-    } else if (target === 'my-shift') {
-        if (homeSec) homeSec.classList.remove('hidden');
+    const hideChrome = () => {
+        if (homeSec) homeSec.classList.add('hidden');
         document.getElementById('waybill-filter-bar')?.classList.add('hidden');
         document.getElementById('waybill-kpi-cards-section')?.classList.add('hidden');
         document.getElementById('waybill-pipeline-section')?.classList.add('hidden');
         document.getElementById('waybill-nav-tabs-bar')?.classList.add('hidden');
+    };
+    const headerTitle = document.getElementById('main-header-dashboard-title');
+
+    if (target === 'home') {
+        switchTaskDashboard('home');
+    } else if (target === 'my-shift') {
+        hideChrome();
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — Task Log (Time In / Time Out & Daily Logs)';
         switchTab('my-shift');
         highlightSidebarTaskButton('side-nav-my-shift');
-        document.getElementById('tab-my-shift')?.scrollIntoView({ behavior: 'smooth' });
+        renderQATasksTable();
+        renderPharmacyAndDailyLogTables();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (target === 'records') {
         switchTaskDashboard('waybill', 'overview');
     } else if (target === 'waybill-log') {
-        switchTaskDashboard('waybill', 'pharmacy-log');
+        switchWorkspaceNav('my-shift');
     } else if (target === 'invalid-waybills' || target === 'notes') {
-        switchTaskDashboard('waybill', 'rth-report');
+        // Dedicated standalone RTH Notes section (no Waybill duplication)
+        hideChrome();
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — RTH Notes & Invalid Documents';
+        switchTab('rth-report');
+        highlightSidebarTaskButton('side-nav-notes');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (target === 'qa-checks') {
         switchTaskDashboard('output-qa');
     } else if (target === 'feedback') {
         switchTaskDashboard('waybill', 'progress-report');
         highlightSidebarTaskButton('side-nav-feedback');
     } else if (target === 'documentation') {
-        triggerFileDownload('Waybill_QA_Dashboard_Comprehensive_Documentation.docx', '1Life_QA_Task_Monitoring_Documentation.docx');
-        showNotification('Downloading 1Life QA Task Monitoring Documentation (.docx)...', 'success');
+        hideChrome();
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — Website Documentation & Guide';
+        switchTab('documentation');
+        highlightSidebarTaskButton('side-nav-documentation');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (target === 'automation') {
-        const chk = document.getElementById('toggle-auto-sync');
-        if (chk) {
-            chk.checked = !chk.checked;
-            toggleAutoSync(chk.checked);
-        }
+        showNotification('Automations module is currently closed (under planning).', 'info');
     }
 }
 
 function updateSidebarActiveState(tabId) {
     const map = {
         'my-shift': 'side-nav-my-shift',
-        'pharmacy-log': 'side-nav-waybill-log',
-        'rth-report': 'side-nav-invalid-waybills',
+        'rth-report': 'side-nav-notes',
         'dispatch-report': 'side-nav-task-dispatch',
         'account-merging': 'side-nav-task-merging',
         'output-qa': 'side-nav-task-output-qa',
         'it-schedule': 'side-nav-task-it-schedule',
-        'progress-report': 'side-nav-feedback'
+        'progress-report': 'side-nav-feedback',
+        'documentation': 'side-nav-documentation'
     };
     if (map[tabId]) {
         highlightSidebarTaskButton(map[tabId]);
-    }
-}
-
-function toggleClockShift() {
-    const labelEl = document.getElementById('shift-clock-label');
-    const dotEl = document.getElementById('shift-clock-dot');
-    const statusEl = document.getElementById('workspace-track-status');
-
-    if (!shiftClockActive) {
-        shiftClockActive = true;
-        shiftClockStartMs = Date.now();
-        if (labelEl) labelEl.textContent = 'Clocked In • End Shift';
-        if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-rose-400 animate-ping';
-        if (statusEl) statusEl.textContent = 'Shift Active • Clocked In';
-        showNotification(`Shift Clock-In started for ${current1LifeUser.name}`, 'success');
-
-        shiftClockTimerId = setInterval(() => {
-            renderWorkspaceHome();
-        }, 15000);
-        renderWorkspaceHome();
-    } else {
-        shiftClockActive = false;
-        if (shiftClockTimerId) clearInterval(shiftClockTimerId);
-        if (labelEl) labelEl.textContent = 'Clock in on My shift';
-        if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-blue-600';
-        if (statusEl) statusEl.textContent = 'All on track';
-        showNotification(`Shift completed & logged for ${current1LifeUser.name}`, 'info');
-        renderWorkspaceHome();
     }
 }
 
@@ -6812,12 +6824,12 @@ function normalize1LifeQAName(raw) {
     return s || '1Life QA Specialist';
 }
 
-// Build comprehensive QA Task Monitoring rows from 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (all tabs) + Waybill records
+// Build comprehensive QA Task Monitoring rows from 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (all tabs) with Time In / Time Out
 function buildQATasksDataset() {
     const sheetData = getQASheetData();
     const sheetTaskStreams = [];
 
-    // 1. Pharmacy QA Sessions (216 rows)
+    // 1. Pharmacy QA Sessions
     (sheetData.pharmacy || []).forEach(r => {
         const hrs = Math.max(0.25, Number(r.hours) || 1.0);
         const items = Number(r.validated_count) || 0;
@@ -6825,6 +6837,8 @@ function buildQATasksDataset() {
             date: normalizeDateStr(r.date) || r.date,
             specialist: normalize1LifeQAName(r.qa),
             category: 'Waybill / Pharmacy QA',
+            time_started: r.time_started || '-',
+            time_ended: r.time_ended || '-',
             description: `${r.monitoring_id}: Pharmacy Waybill Validation (${r.scope || 'All'}) — ${r.issues || 'No issues'}`,
             items,
             hours: hrs,
@@ -6833,7 +6847,7 @@ function buildQATasksDataset() {
         });
     });
 
-    // 2. Account Merging QA Sessions (115 rows)
+    // 2. Account Merging QA Sessions
     (sheetData.account_merging || []).forEach(r => {
         const hrs = Math.max(0.25, Number(r.hours) || 1.0);
         const items = (Number(r.locations_count) || 0) + (Number(r.merged_accounts) || 0);
@@ -6841,6 +6855,8 @@ function buildQATasksDataset() {
             date: normalizeDateStr(r.date) || r.date,
             specialist: normalize1LifeQAName(r.qa),
             category: 'Account Merging',
+            time_started: r.time_started || '-',
+            time_ended: r.time_ended || '-',
             description: `${r.monitoring_id}: Checked ${r.locations_count} locations (${String(r.locations_checked || '').substring(0, 48)})`,
             items,
             hours: hrs,
@@ -6849,13 +6865,15 @@ function buildQATasksDataset() {
         });
     });
 
-    // 3. Output QA Sessions (184 rows)
+    // 3. Output QA Sessions
     (sheetData.output_qa || []).forEach(r => {
         const hrs = Math.max(0.25, Number(r.hours) || 0.5);
         sheetTaskStreams.push({
             date: normalizeDateStr(r.date) || r.date,
             specialist: normalize1LifeQAName(r.qa_checker),
             category: 'Output QA',
+            time_started: r.time_started || '-',
+            time_ended: r.time_ended || '-',
             description: `${r.ticket_no || r.monitoring_id}: ${r.report_name} (Analyst: ${r.data_analyst}) — ${r.overall_result}`,
             items: 1,
             hours: hrs,
@@ -6864,7 +6882,7 @@ function buildQATasksDataset() {
         });
     });
 
-    // 4. Dispatch QA Sessions (46 rows)
+    // 4. Dispatch QA Sessions
     (sheetData.dispatch_qa || []).forEach(r => {
         const hrs = Math.max(0.25, Number(r.hours) || 1.0);
         const items = Number(r.overridden_count) || 0;
@@ -6872,6 +6890,8 @@ function buildQATasksDataset() {
             date: normalizeDateStr(r.date) || r.date,
             specialist: normalize1LifeQAName(r.qa),
             category: 'Dispatch QA',
+            time_started: r.time_started || '-',
+            time_ended: r.time_ended || '-',
             description: `${r.monitoring_id}: Dispatch Override QA (${r.scope}) — ${r.issues || 'Verified'}`,
             items,
             hours: hrs,
@@ -6880,7 +6900,7 @@ function buildQATasksDataset() {
         });
     });
 
-    // 5. IT Schedule Monitoring Sessions (54 rows)
+    // 5. IT Schedule Monitoring Sessions
     (sheetData.it_schedule || []).forEach(r => {
         const hrs = Math.max(0.25, Number(r.hours) || 0.8);
         const items = Number(r.checked_count) || 0;
@@ -6888,6 +6908,8 @@ function buildQATasksDataset() {
             date: normalizeDateStr(r.date) || r.date,
             specialist: normalize1LifeQAName(r.qa),
             category: 'IT Schedule Monitoring',
+            time_started: r.time_started || '-',
+            time_ended: r.time_ended || '-',
             description: `${r.monitoring_id}: Checked ${r.checked_count} schedules, Linked ${r.linked_count} (${r.scope})`,
             items,
             hours: hrs,
@@ -6985,14 +7007,11 @@ function renderWorkspaceHome() {
         last14.unshift({ date: '-', hours: 0, items: 0, tasksCount: 0 });
     }
 
-    let todayHours = 0;
-    let todayTasks = 0;
-    let todayItems = 0;
-    if (shiftClockActive && shiftClockStartMs) {
-        const elapsedHrs = Math.max(0.02, (Date.now() - shiftClockStartMs) / 3600000);
-        todayHours += elapsedHrs;
-        todayTasks += 1;
-    }
+    const todayDateStr = `${new Date().getMonth() + 1}/${new Date().getDate()}/${new Date().getFullYear()}`;
+    const todayRec = dateAgg.get(todayDateStr) || { hours: 0, items: 0, tasksCount: 0 };
+    const todayHours = todayRec.hours;
+    const todayTasks = todayRec.tasksCount;
+    const todayItems = todayRec.items;
 
     const weekSlice = last14.slice(-7);
     const weekHours = weekSlice.reduce((s, d) => s + d.hours, 0) || 16.43;
@@ -7596,6 +7615,87 @@ function exportAllTasksSummaryPDF() {
     exportQATasksPDF();
 }
 
+function renderTaskLogCharts(filteredRows) {
+    if (typeof Chart === 'undefined') return;
+
+    // 1. Hours Worked by QA Task Module (Doughnut)
+    const ctxMod = document.getElementById('chart-tasklog-by-module');
+    if (ctxMod) {
+        if (charts.taskLogModule) charts.taskLogModule.destroy();
+        const modHours = {};
+        filteredRows.forEach(t => {
+            const cat = t.category || 'Other';
+            modHours[cat] = (modHours[cat] || 0) + (Number(t.hours) || 0);
+        });
+        const labels = Object.keys(modHours);
+        const values = labels.map(k => +modHours[k].toFixed(2));
+        charts.taskLogModule = new Chart(ctxMod, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#2563eb', '#0284c7', '#4f46e5', '#06b6d4', '#f59e0b'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.label}: ${formatHoursMinutes(ctx.parsed)}`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Daily QA Hours Logged Trend (Bar)
+    const ctxDaily = document.getElementById('chart-tasklog-daily-hours');
+    if (ctxDaily) {
+        if (charts.taskLogDaily) charts.taskLogDaily.destroy();
+        const dayMap = new Map();
+        filteredRows.forEach(t => {
+            if (!t.date) return;
+            dayMap.set(t.date, (dayMap.get(t.date) || 0) + (Number(t.hours) || 0));
+        });
+        const sortedDays = Array.from(dayMap.entries())
+            .sort((a, b) => {
+                const da = parseSlashDate(a[0]);
+                const db = parseSlashDate(b[0]);
+                return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+            })
+            .slice(-20);
+
+        charts.taskLogDaily = new Chart(ctxDaily, {
+            type: 'bar',
+            data: {
+                labels: sortedDays.map(d => d[0]),
+                datasets: [{
+                    label: 'Hours Worked',
+                    data: sortedDays.map(d => +d[1].toFixed(2)),
+                    backgroundColor: '#2563eb',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Hours' } },
+                    x: { ticks: { maxRotation: 45, font: { size: 10 } } }
+                }
+            }
+        });
+    }
+}
+
 function renderQATasksTable() {
     const tbody = document.getElementById('qa-tasks-table-tbody');
     const tfoot = document.getElementById('qa-tasks-table-tfoot');
@@ -7605,16 +7705,17 @@ function renderQATasksTable() {
         buildQATasksDataset();
     }
 
+    const q = (document.getElementById('qa-task-search-input')?.value || '').trim().toLowerCase();
     const specFilter = (document.getElementById('qa-task-specialist-filter')?.value) || 'ALL';
     const catFilter = (document.getElementById('qa-task-category-filter')?.value) || 'ALL';
 
     const filtered = qaTasksData.filter(t => {
         if (specFilter !== 'ALL' && t.specialist !== specFilter) return false;
         if (catFilter !== 'ALL' && t.category !== catFilter) return false;
+        if (q && !JSON.stringify(t).toLowerCase().includes(q)) return false;
         return true;
     });
 
-    const displayRows = filtered.slice(0, 80);
     let totalItems = 0;
     let totalHours = 0;
     filtered.forEach(t => {
@@ -7622,20 +7723,31 @@ function renderQATasksTable() {
         totalHours += Number(t.hours) || 0;
     });
 
+    const avgIph = totalHours > 0 ? (totalItems / totalHours).toFixed(1) : '0.0';
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('tl-kpi-sessions', filtered.length.toLocaleString());
+    setTxt('tl-kpi-hours', formatHoursMinutes(totalHours));
+    setTxt('tl-kpi-items', totalItems.toLocaleString());
+    setTxt('tl-kpi-iph', avgIph);
+
+    renderTaskLogCharts(filtered);
+
+    const displayRows = filtered.slice(0, 120);
     tbody.innerHTML = displayRows.map(t => `
         <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition">
-            <td class="px-4 py-2.5 font-mono text-xs text-slate-600">${escapeHtml(t.date)}</td>
-            <td class="px-4 py-2.5 font-semibold text-slate-800">${escapeHtml(t.specialist)}</td>
-            <td class="px-4 py-2.5">
+            <td class="px-3 py-2.5 font-mono text-xs text-slate-600 whitespace-nowrap">${escapeHtml(t.date)}</td>
+            <td class="px-3 py-2.5 font-semibold text-slate-800 whitespace-nowrap">${escapeHtml(t.specialist)}</td>
+            <td class="px-3 py-2.5 whitespace-nowrap">
                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                     ${escapeHtml(t.category)}
                 </span>
             </td>
-            <td class="px-4 py-2.5 text-slate-600">${escapeHtml(t.description)}</td>
-            <td class="px-4 py-2.5 text-right font-mono font-bold text-slate-800">${Number(t.items).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${formatHoursMinutes(t.hours)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-slate-600">${t.iph}</td>
-            <td class="px-4 py-2.5 text-center">
+            <td class="px-3 py-2.5 font-mono text-xs text-sky-700 font-semibold whitespace-nowrap">${escapeHtml(t.time_started || '-')}</td>
+            <td class="px-3 py-2.5 font-mono text-xs text-indigo-700 font-semibold whitespace-nowrap">${escapeHtml(t.time_ended || '-')}</td>
+            <td class="px-3 py-2.5 text-right font-mono text-blue-700 font-semibold whitespace-nowrap">${formatHoursMinutes(t.hours)}</td>
+            <td class="px-3 py-2.5 text-slate-600 max-w-md truncate" title="${escapeHtml(t.description)}">${escapeHtml(t.description)}</td>
+            <td class="px-3 py-2.5 text-right font-mono font-bold text-slate-800">${Number(t.items).toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-center">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     ${escapeHtml(t.status || 'Completed')}
                 </span>
@@ -7644,14 +7756,13 @@ function renderQATasksTable() {
     `).join('');
 
     if (tfoot) {
-        const avgIph = totalHours > 0 ? (totalItems / totalHours).toFixed(1) : '0.0';
         tfoot.innerHTML = `
             <tr class="bg-slate-100 font-bold text-slate-900 border-t-2 border-blue-500/40">
-                <td colspan="4" class="px-4 py-3">TOTAL QA TASK OUTPUT (${filtered.length.toLocaleString()} Task Sessions)</td>
-                <td class="px-4 py-3 text-right font-mono text-blue-700">${totalItems.toLocaleString()}</td>
-                <td class="px-4 py-3 text-right font-mono text-blue-700">${formatHoursMinutes(totalHours)}</td>
-                <td class="px-4 py-3 text-right font-mono">${avgIph} / hr</td>
-                <td class="px-4 py-3 text-center text-emerald-700">100% On Track</td>
+                <td colspan="5" class="px-3 py-3">TOTAL TASK LOG OUTPUT (${filtered.length.toLocaleString()} Sessions)</td>
+                <td class="px-3 py-3 text-right font-mono text-blue-700">${formatHoursMinutes(totalHours)}</td>
+                <td class="px-3 py-3 text-slate-600 font-medium">Avg Output: ${avgIph} items/hr</td>
+                <td class="px-3 py-3 text-right font-mono text-blue-700">${totalItems.toLocaleString()}</td>
+                <td class="px-3 py-3 text-center text-emerald-700">100% Synced</td>
             </tr>
         `;
     }
@@ -7806,7 +7917,10 @@ function ingestUploadedQATasksCSV(csvText, showToast = false) {
 // ============================================================================
 
 function getJsPDFConstructor() {
-    return (window.jspdf && window.jspdf.jsPDF) || window.jsPDF || null;
+    if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+    if (window.jsPDF && typeof window.jsPDF === 'function') return window.jsPDF;
+    if (window.jsPDF && window.jsPDF.jsPDF) return window.jsPDF.jsPDF;
+    return null;
 }
 
 function stamp1LifePDFFooters(doc, reportTitle) {
@@ -7820,20 +7934,20 @@ function stamp1LifePDFFooters(doc, reportTitle) {
         doc.setTextColor(100, 116, 139);
         doc.text(`QA Task Monitoring - 1Life Data Analytics  •  1Life Inc. Philippines (1life.ph)  •  ${reportTitle}`, 8, 205.5);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(15, 118, 110);
+        doc.setTextColor(30, 64, 175);
         doc.text(`Page ${p} of ${totalPages}`, 289, 205.5, { align: 'right' });
     }
 }
 
 function draw1LifePDFHeader(doc, title, subtitle, rightLine1, rightLine2) {
-    doc.setFillColor(15, 118, 110); // 1Life Teal #0f766e
+    doc.setFillColor(30, 64, 175); // 1Life Corporate Royal Blue #1e40af
     doc.roundedRect(8, 7, 281, 22, 2.5, 2.5, 'F');
 
-    doc.setFillColor(19, 78, 74);
+    doc.setFillColor(23, 37, 84);
     doc.roundedRect(12, 9.5, 62, 4.8, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
-    doc.setTextColor(204, 251, 241);
+    doc.setTextColor(219, 234, 254);
     doc.text('QA TASK MONITORING • 1LIFE DATA ANALYTICS', 14.5, 12.8);
 
     doc.setFont('helvetica', 'bold');
