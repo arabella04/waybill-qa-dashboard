@@ -6186,9 +6186,8 @@ function previewRTHPrintableReport() {
 
 const QA_TASKS_SHEET_ID = "1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg";
 
-// Admin: Replace with your Google Cloud Web OAuth Client ID (e.g. "1234567890-abc.apps.googleusercontent.com")
-// so every @1life.ph team member signs in with Google automatically without entering a Client ID.
-const DEFAULT_1LIFE_GOOGLE_CLIENT_ID = "";
+// Official 1Life Data Analytics Google Cloud OAuth 2.0 Web Client ID (@1life.ph Workspace)
+const DEFAULT_1LIFE_GOOGLE_CLIENT_ID = "634449350902-7gih2fj9ltn0efd3jjjm0v165ask52f9.apps.googleusercontent.com";
 
 const ONE_LIFE_TEAM_DIRECTORY = {
     'armorales@1life.ph': { name: 'Arabella Morales', initials: 'AM', role: 'QA Specialist' },
