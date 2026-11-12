@@ -7937,13 +7937,33 @@ async function fetchGvizSheetRows(sheetId, tabName) {
     return { cols, rows };
 }
 
+function parseTimeToMins(tStr) {
+    const s = String(tStr || '').trim();
+    if (!s) return null;
+    const m = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+    if (!m) return null;
+    let h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    const ampm = (m[3] || '').toUpperCase();
+    if (ampm === 'PM' && h < 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return h * 60 + min;
+}
+
 function parseGvizDurationHrs(val, startStr, endStr) {
     const s = String(val || '').trim();
     const hms = s.match(/^(\d+):(\d+):(\d+)$/);
     if (hms) return +((+hms[1]) + (+hms[2]) / 60 + (+hms[3]) / 3600).toFixed(2);
     const num = parseFloat(s);
     if (!isNaN(num) && num > 0 && num < 24) return +num.toFixed(2);
-    return 1.0;
+    const sMins = parseTimeToMins(startStr);
+    const eMins = parseTimeToMins(endStr);
+    if (sMins !== null && eMins !== null) {
+        let diff = eMins - sMins;
+        if (diff < 0) diff += 1440;
+        if (diff > 0 && diff <= 16 * 60) return +(diff / 60).toFixed(2);
+    }
+    return 0;
 }
 
 // Live sync with QA Tasks Google Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)
@@ -8032,18 +8052,25 @@ async function syncQATasksSheet(showToast = false) {
             const parsed = [];
             am.rows.forEach(r => {
                 const mid = String(r[0] || '').trim();
-                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                const qaName = String(r[2] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input') || qaName.includes('Input appropriate')) return;
+                const locsText = String(r[6] || '').trim();
+                let locsCount = toInt(r[10]);
+                if (locsCount === 0 && locsText) {
+                    locsCount = locsText.split(/\r?\n/).filter(x => x.trim()).length;
+                }
                 parsed.push({
                     monitoring_id: mid,
                     email: String(r[1] || '').trim(),
-                    qa: String(r[2] || '').trim(),
+                    qa: qaName,
                     date: String(r[3] || '').trim(),
                     time_started: String(r[4] || '').trim(),
                     time_ended: String(r[5] || '').trim(),
-                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
-                    locations_checked: String(r[7] || '').trim(),
-                    locations_count: toInt(r[8]),
-                    merged_accounts: toInt(r[9])
+                    hours: parseGvizDurationHrs('', r[4], r[5]),
+                    locations_checked: locsText,
+                    locations_count: locsCount,
+                    merged_accounts: toInt(r[11]),
+                    modified_by: String(r[9] || '').trim()
                 });
             });
             if (parsed.length > 0) data.account_merging = parsed;
@@ -8053,20 +8080,21 @@ async function syncQATasksSheet(showToast = false) {
             const parsed = [];
             its.rows.forEach(r => {
                 const mid = String(r[0] || '').trim();
-                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                const qaName = String(r[2] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input') || qaName.includes('Input appropriate')) return;
                 parsed.push({
                     monitoring_id: mid,
                     email: String(r[1] || '').trim(),
-                    qa: String(r[2] || '').trim(),
+                    qa: qaName,
                     date: String(r[3] || '').trim(),
                     time_started: String(r[4] || '').trim(),
                     time_ended: String(r[5] || '').trim(),
-                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
-                    scope: String(r[7] || '').trim(),
-                    checked_count: toInt(r[8]),
-                    linked_count: toInt(r[9]),
-                    status: String(r[10] || '').trim(),
-                    issues: String(r[11] || '').trim()
+                    hours: parseGvizDurationHrs('', r[4], r[5]),
+                    scope: String(r[6] || '').trim(),
+                    checked_count: toInt(r[7]),
+                    linked_count: toInt(r[8]),
+                    status: String(r[9] || '').trim(),
+                    issues: String(r[10] || '').trim()
                 });
             });
             if (parsed.length > 0) data.it_schedule = parsed;
@@ -8076,23 +8104,32 @@ async function syncQATasksSheet(showToast = false) {
             const parsed = [];
             oqa.rows.forEach(r => {
                 const mid = String(r[0] || '').trim();
-                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                const ticket = String(r[1] || '').trim();
+                const reportName = String(r[3] || '').trim();
+                const qaChecker = String(r[6] || '').trim();
+                if (!ticket && !reportName && !qaChecker) return;
+                if (ticket === 'TicketNumber' || reportName === 'Report / Dashboard' || mid.includes('MonitoringID')) return;
                 parsed.push({
-                    monitoring_id: mid,
-                    ticket_no: String(r[2] || '').trim(),
-                    date: String(r[3] || '').trim(),
-                    time_started: String(r[4] || '').trim(),
-                    time_ended: String(r[5] || '').trim(),
-                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
-                    report_name: String(r[7] || '').trim(),
-                    data_analyst: String(r[8] || '').trim(),
-                    qa_checker: String(r[9] || '').trim(),
-                    accuracy: String(r[10] || '').trim(),
-                    completeness: String(r[11] || '').trim(),
-                    logic: String(r[12] || '').trim(),
-                    formatting: String(r[13] || '').trim(),
-                    overall_result: String(r[14] || '').trim(),
-                    remarks: String(r[15] || '').trim()
+                    monitoring_id: mid || `OUTQA-${parsed.length + 1}`,
+                    ticket_no: ticket || '-',
+                    date: String(r[2] || '').trim(),
+                    report_name: reportName,
+                    cutoff_date: String(r[4] || '').trim(),
+                    data_analyst: String(r[5] || '').trim(),
+                    qa_checker: qaChecker,
+                    qa_start: String(r[7] || '').trim(),
+                    qa_end: String(r[8] || '').trim(),
+                    hours: parseGvizDurationHrs('', r[7], r[8]),
+                    accuracy: String(r[9] || '').trim() || 'PASS',
+                    completeness: String(r[10] || '').trim() || 'PASS',
+                    logic: String(r[11] || '').trim() || 'PASS',
+                    formatting: String(r[12] || '').trim() || 'PASS',
+                    error_count: toInt(r[13]),
+                    critical_error: String(r[14] || '').trim() || 'NO',
+                    overall_result: String(r[15] || '').trim() || 'PASSED',
+                    remarks: String(r[16] || '').trim(),
+                    corrective_action: String(r[17] || '').trim(),
+                    resolution_status: String(r[18] || '').trim() || 'RESOLVED'
                 });
             });
             if (parsed.length > 0) data.output_qa = parsed;
@@ -8102,19 +8139,20 @@ async function syncQATasksSheet(showToast = false) {
             const parsed = [];
             disp.rows.forEach(r => {
                 const mid = String(r[0] || '').trim();
-                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                const qaName = String(r[2] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input') || qaName.includes('Input appropriate')) return;
                 parsed.push({
                     monitoring_id: mid,
                     email: String(r[1] || '').trim(),
-                    qa: String(r[2] || '').trim(),
+                    qa: qaName,
                     date: String(r[3] || '').trim(),
                     time_started: String(r[4] || '').trim(),
                     time_ended: String(r[5] || '').trim(),
-                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
-                    scope: String(r[7] || '').trim(),
-                    overridden_count: toInt(r[8]),
-                    status: String(r[9] || '').trim(),
-                    issues: String(r[10] || '').trim()
+                    hours: parseGvizDurationHrs('', r[4], r[5]),
+                    scope: String(r[6] || '').trim(),
+                    overridden_count: toInt(r[7]),
+                    status: String(r[8] || '').trim(),
+                    issues: String(r[9] || '').trim()
                 });
             });
             if (parsed.length > 0) data.dispatch_qa = parsed;
