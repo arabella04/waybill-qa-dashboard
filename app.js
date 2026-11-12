@@ -3455,11 +3455,15 @@ function classifyIssueCategory(remarks) {
     }
 }
 
-// Normalize date strings (e.g., '11/09/2026' or '2026-11-09' -> '11/9/2026') so leading zeros never break date matching
+// Normalize date strings (e.g., '11/09/2026', '2026-11-09', 'November 12, 2026', 'Date(2026,10,12)' -> '11/12/2026')
 function normalizeDateStr(str) {
     if (!str) return '';
     const s = String(str).trim();
     if (!s) return '';
+    const gvizMatch = s.match(/^Date\((\d+),(\d+),(\d+)/);
+    if (gvizMatch) {
+        return `${parseInt(gvizMatch[2], 10) + 1}/${parseInt(gvizMatch[3], 10)}/${parseInt(gvizMatch[1], 10)}`;
+    }
     if (s.includes('/')) {
         const parts = s.split('/');
         if (parts.length === 3) {
@@ -3478,6 +3482,12 @@ function normalizeDateStr(str) {
         const d = parseInt(parts[2], 10);
         if (!isNaN(m) && !isNaN(d) && !isNaN(y)) {
             return `${m}/${d}/${y}`;
+        }
+    } else {
+        const parsedMs = Date.parse(s);
+        if (!isNaN(parsedMs)) {
+            const dt = new Date(parsedMs);
+            return `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear()}`;
         }
     }
     return s;
@@ -3516,10 +3526,25 @@ function enrichRecords(records) {
 }
 
 function parseSlashDate(str) {
-    if (!str || typeof str !== 'string' || !str.includes('/')) return null;
-    const parts = str.split('/').map(Number);
-    if (parts.length < 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return null;
-    return new Date(parts[2], parts[0] - 1, parts[1]);
+    if (!str || typeof str !== 'string') return null;
+    const norm = normalizeDateStr(str);
+    if (norm.includes('/')) {
+        const parts = norm.split('/').map(Number);
+        if (parts.length >= 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+            return new Date(parts[2], parts[0] - 1, parts[1]);
+        }
+    }
+    const ms = Date.parse(str);
+    return isNaN(ms) ? null : new Date(ms);
+}
+
+function sortByLatestDateDesc(rows, dateField = 'date') {
+    if (!Array.isArray(rows)) return [];
+    return [...rows].sort((a, b) => {
+        const da = parseSlashDate(a[dateField] || a.date_validated || a.date || '');
+        const db = parseSlashDate(b[dateField] || b.date_validated || b.date || '');
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    });
 }
 
 function getSaturdayFridayRange(date) {
@@ -7095,9 +7120,10 @@ function renderHomeSpreadsheetViewer() {
         return true;
     });
 
-    const slice = filtered.slice(0, 100);
+    const sortedFiltered = sortByLatestDateDesc(filtered, activeHomeSheetTab === 'invalid_waybills' ? 'date_validated' : 'date');
+    const slice = sortedFiltered.slice(0, 100);
     if (footerEl) {
-        footerEl.textContent = `Showing ${slice.length.toLocaleString()} of ${filtered.length.toLocaleString()} records in [${activeHomeSheetTab.toUpperCase()}] tab`;
+        footerEl.textContent = `Showing ${slice.length.toLocaleString()} of ${sortedFiltered.length.toLocaleString()} records in [${activeHomeSheetTab.toUpperCase()}] tab (Latest First)`;
     }
 
     if (activeHomeSheetTab === 'pharmacy') {
@@ -7266,12 +7292,12 @@ function renderHomeSpreadsheetViewer() {
     }
 }
 
-// Render Pharmacy & Daily Waybill Log inside Waybill Dashboard
+// Render Pharmacy & Daily Waybill Log inside Task Log
 function renderPharmacyAndDailyLogTables() {
     const sheetData = getQASheetData();
     const dailyTbody = document.getElementById('daily-waybill-log-tbody');
     if (dailyTbody) {
-        const rows = sheetData.daily_waybill_log || [];
+        const rows = sortByLatestDateDesc(sheetData.daily_waybill_log || [], 'date');
         dailyTbody.innerHTML = rows.map(r => `<tr class="hover:bg-blue-50/50 transition">
             <td class="px-3 py-2 font-mono font-semibold text-blue-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.total_waybills || 0).toLocaleString()}</td>
@@ -7290,7 +7316,7 @@ function renderPharmacyAndDailyLogTables() {
     const pharmaTbody = document.getElementById('pharmacy-sheet-tbody');
     if (pharmaTbody) {
         const q = (document.getElementById('pharmacy-sheet-search')?.value || '').trim().toLowerCase();
-        const rows = (sheetData.pharmacy || []).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+        const rows = sortByLatestDateDesc((sheetData.pharmacy || []).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q)), 'date');
         pharmaTbody.innerHTML = rows.map(r => `<tr class="hover:bg-blue-50/50 transition">
             <td class="px-4 py-2.5 font-mono font-semibold text-blue-700">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
@@ -7312,11 +7338,11 @@ function renderDispatchQASheetTable() {
     const q = (document.getElementById('dispatch-qa-search')?.value || '').trim().toLowerCase();
     const spec = (document.getElementById('dispatch-qa-specialist-filter')?.value || 'ALL').toLowerCase();
 
-    const filtered = rows.filter(r => {
+    const filtered = sortByLatestDateDesc(rows.filter(r => {
         if (spec !== 'all' && !String(r.qa || '').toLowerCase().includes(spec)) return false;
         if (q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
         return true;
-    });
+    }), 'date');
 
     const totalOverridden = filtered.reduce((s, r) => s + (Number(r.overridden_count) || 0), 0);
     const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0), 0);
@@ -7351,11 +7377,11 @@ function renderAccountMergingDashboard() {
     const q = (document.getElementById('am-search-input')?.value || '').trim().toLowerCase();
     const spec = (document.getElementById('am-qa-filter')?.value || 'ALL').toLowerCase();
 
-    const filtered = rows.filter(r => {
+    const filtered = sortByLatestDateDesc(rows.filter(r => {
         if (spec !== 'all' && !String(r.qa || '').toLowerCase().includes(spec)) return false;
         if (q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
         return true;
-    });
+    }), 'date');
 
     const totalLocs = filtered.reduce((s, r) => s + (Number(r.locations_count) || 0), 0);
     const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0), 0);
@@ -7411,13 +7437,13 @@ function renderOutputQADashboard() {
     const checker = (document.getElementById('oqa-checker-filter')?.value || 'ALL').toLowerCase();
     const resFilter = (document.getElementById('oqa-result-filter')?.value || 'ALL').toLowerCase();
 
-    const filtered = rows.filter(r => {
+    const filtered = sortByLatestDateDesc(rows.filter(r => {
         if (checker !== 'all' && !String(r.qa_checker || '').toLowerCase().includes(checker)) return false;
         if (resFilter === 'passed' && !String(r.overall_result || '').toLowerCase().includes('pass')) return false;
         if (resFilter === 'failed' && String(r.overall_result || '').toLowerCase().includes('pass')) return false;
         if (q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
         return true;
-    });
+    }), 'date');
 
     const passedCount = filtered.filter(r => String(r.overall_result || '').toLowerCase().includes('pass')).length;
     const passRate = filtered.length > 0 ? ((passedCount / filtered.length) * 100).toFixed(1) : '100.0';
@@ -7457,15 +7483,17 @@ function renderOutputQADashboard() {
     }
 }
 
-// Render Dedicated IT Schedule Monitoring Dashboard
+// Render Dedicated IT Schedule Monitoring Dashboard + Charts (Linked/Unlinked & Issues)
 function renderITScheduleDashboard() {
     const sheetData = getQASheetData();
     const rows = sheetData.it_schedule || [];
     const q = (document.getElementById('its-search-input')?.value || '').trim().toLowerCase();
-    const filtered = rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+    const filtered = sortByLatestDateDesc(rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q)), 'date');
 
     const totalChecked = filtered.reduce((s, r) => s + (Number(r.checked_count) || 0), 0);
     const totalLinked = filtered.reduce((s, r) => s + (Number(r.linked_count) || 0), 0);
+    const totalUnlinked = Math.max(0, totalChecked - totalLinked);
+    const linkRate = totalChecked > 0 ? ((totalLinked / totalChecked) * 100).toFixed(1) : '0.0';
     const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0), 0);
 
     const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -7473,6 +7501,80 @@ function renderITScheduleDashboard() {
     setTxt('its-kpi-checked', totalChecked.toLocaleString());
     setTxt('its-kpi-linked', totalLinked.toLocaleString());
     setTxt('its-kpi-hours', formatHoursMinutes(totalHrs));
+    setTxt('its-link-rate-badge', `${linkRate}% Linked`);
+
+    // Render IT Schedule Charts
+    if (typeof Chart !== 'undefined') {
+        const ctxLink = document.getElementById('chart-its-linked-unlinked');
+        if (ctxLink) {
+            if (charts.itsLinkedUnlinked) charts.itsLinkedUnlinked.destroy();
+            charts.itsLinkedUnlinked = new Chart(ctxLink, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        `Linked (${totalLinked.toLocaleString()})`,
+                        `Unlinked (${totalUnlinked.toLocaleString()})`
+                    ],
+                    datasets: [{
+                        data: [totalLinked, totalUnlinked],
+                        backgroundColor: ['#10b981', '#2563eb'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        const ctxIss = document.getElementById('chart-its-issues');
+        if (ctxIss) {
+            if (charts.itsIssues) charts.itsIssues.destroy();
+            const issCounts = {};
+            filtered.forEach(r => {
+                const raw = String(r.issues || '').trim();
+                const low = raw.toLowerCase();
+                let cat = 'No Issues / Clean';
+                if (raw && low !== 'none' && low !== 'no issues' && low !== 'n/a' && low !== '-') {
+                    if (low.includes('date')) cat = 'Date / Run Date Mismatch';
+                    else if (low.includes('client') || low.includes('location') || low.includes('name')) cat = 'Wrong Client / Location / Naming';
+                    else if (low.includes('not linked') || low.includes('unlinked') || low.includes('missing') || low.includes('no schedule')) cat = 'Missing / Unlinked Schedule';
+                    else if (low.includes('duplicate')) cat = 'Duplicate Schedule Entry';
+                    else if (low.includes('hard to find') || low.includes('search')) cat = 'Hard to Locate / Search Issue';
+                    else cat = raw.length > 36 ? raw.slice(0, 36) + '...' : raw;
+                }
+                issCounts[cat] = (issCounts[cat] || 0) + 1;
+            });
+            const sortedIss = Object.entries(issCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            charts.itsIssues = new Chart(ctxIss, {
+                type: 'bar',
+                data: {
+                    labels: sortedIss.map(i => i[0]),
+                    datasets: [{
+                        label: 'Sessions',
+                        data: sortedIss.map(i => i[1]),
+                        backgroundColor: ['#2563eb', '#0284c7', '#f59e0b', '#ef4444', '#6366f1', '#0ea5e9', '#10b981', '#64748b'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0 } },
+                        y: { ticks: { font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    }
 
     const tbody = document.getElementById('its-table-tbody');
     if (tbody) {
@@ -7732,7 +7834,7 @@ function renderQATasksTable() {
 
     renderTaskLogCharts(filtered);
 
-    const displayRows = filtered.slice(0, 120);
+    const displayRows = filtered.slice(0, 700);
     tbody.innerHTML = displayRows.map(t => `
         <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition">
             <td class="px-3 py-2.5 font-mono text-xs text-slate-600 whitespace-nowrap">${escapeHtml(t.date)}</td>
@@ -7814,10 +7916,212 @@ async function syncAll1LifeSheets() {
     syncQATasksSheet(true);
 }
 
+// Live Gviz parser & fetcher for 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (All 7 Operational Tabs)
+async function fetchGvizSheetRows(sheetId, tabName) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('Invalid Gviz response');
+    const json = JSON.parse(text.substring(start, end + 1));
+    const table = json.table || {};
+    const cols = (table.cols || []).map(c => (c.label || '').trim());
+    const rows = (table.rows || []).map(r => (r.c || []).map(cell => {
+        if (!cell) return '';
+        if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+        if (cell.v !== undefined && cell.v !== null) return cell.v;
+        return '';
+    }));
+    return { cols, rows };
+}
+
+function parseGvizDurationHrs(val, startStr, endStr) {
+    const s = String(val || '').trim();
+    const hms = s.match(/^(\d+):(\d+):(\d+)$/);
+    if (hms) return +((+hms[1]) + (+hms[2]) / 60 + (+hms[3]) / 3600).toFixed(2);
+    const num = parseFloat(s);
+    if (!isNaN(num) && num > 0 && num < 24) return +num.toFixed(2);
+    return 1.0;
+}
+
 // Live sync with QA Tasks Google Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)
 async function syncQATasksSheet(showToast = false) {
     const statusEl = document.getElementById('qa-tasks-sheet-status');
     if (statusEl) statusEl.textContent = 'Syncing 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg...';
+
+    try {
+        const [ph, dwl, inv, am, its, oqa, disp] = await Promise.all([
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'Pharmacy').catch(() => null),
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'Daily Waybill Log').catch(() => null),
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'Invalid Waybills').catch(() => null),
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'Account Merging').catch(() => null),
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'IT Schedule Monitoring').catch(() => null),
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'Output QA').catch(() => null),
+            fetchGvizSheetRows(QA_TASKS_SHEET_ID, 'Dispatch').catch(() => null)
+        ]);
+
+        const data = getQASheetData();
+        const toNum = (v) => parseFloat(String(v || '0').replace(/,/g, '')) || 0;
+        const toInt = (v) => Math.round(toNum(v));
+
+        if (ph && ph.rows.length > 0) {
+            const parsed = [];
+            ph.rows.forEach(r => {
+                const mid = String(r[0] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                parsed.push({
+                    monitoring_id: mid,
+                    email: String(r[1] || '').trim(),
+                    qa: String(r[2] || '').trim(),
+                    date: String(r[3] || '').trim(),
+                    time_started: String(r[4] || '').trim(),
+                    time_ended: String(r[5] || '').trim(),
+                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
+                    scope: String(r[7] || '').trim(),
+                    validated_count: toInt(r[8]),
+                    status: String(r[9] || '').trim(),
+                    issues: String(r[10] || '').trim()
+                });
+            });
+            if (parsed.length > 0) data.pharmacy = parsed;
+        }
+
+        if (dwl && dwl.rows.length > 0) {
+            const parsed = [];
+            dwl.rows.forEach(r => {
+                const dt = String(r[0] || '').trim();
+                if (!dt || dt === 'Date') return;
+                parsed.push({
+                    date: dt,
+                    total_waybills: toInt(r[1]),
+                    quota_pct: String(r[2] || '').trim(),
+                    target_per_qa: toInt(r[3]),
+                    arabella: toInt(r[4]),
+                    janryl: toInt(r[5]),
+                    john_michael: toInt(r[6]),
+                    julius: toInt(r[7]),
+                    yesha: toInt(r[8]),
+                    total_validated: toInt(r[9]),
+                    status: String(r[10] || '').trim()
+                });
+            });
+            if (parsed.length > 0) data.daily_waybill_log = parsed;
+        }
+
+        if (inv && inv.rows.length > 0) {
+            const parsed = [];
+            inv.rows.forEach(r => {
+                const eid = String(r[0] || '').trim();
+                if (!eid || eid.includes('EntryID') || eid.startsWith('Input')) return;
+                parsed.push({
+                    entry_id: eid,
+                    date_validated: String(r[1] || '').trim(),
+                    qa: String(r[2] || '').trim(),
+                    waybill_no: String(r[3] || '').trim(),
+                    issue: String(r[4] || '').trim(),
+                    rider: String(r[5] || '').trim(),
+                    logged_by: String(r[6] || '').trim()
+                });
+            });
+            if (parsed.length > 0) data.invalid_waybills = parsed;
+        }
+
+        if (am && am.rows.length > 0) {
+            const parsed = [];
+            am.rows.forEach(r => {
+                const mid = String(r[0] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                parsed.push({
+                    monitoring_id: mid,
+                    email: String(r[1] || '').trim(),
+                    qa: String(r[2] || '').trim(),
+                    date: String(r[3] || '').trim(),
+                    time_started: String(r[4] || '').trim(),
+                    time_ended: String(r[5] || '').trim(),
+                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
+                    locations_checked: String(r[7] || '').trim(),
+                    locations_count: toInt(r[8]),
+                    merged_accounts: toInt(r[9])
+                });
+            });
+            if (parsed.length > 0) data.account_merging = parsed;
+        }
+
+        if (its && its.rows.length > 0) {
+            const parsed = [];
+            its.rows.forEach(r => {
+                const mid = String(r[0] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                parsed.push({
+                    monitoring_id: mid,
+                    email: String(r[1] || '').trim(),
+                    qa: String(r[2] || '').trim(),
+                    date: String(r[3] || '').trim(),
+                    time_started: String(r[4] || '').trim(),
+                    time_ended: String(r[5] || '').trim(),
+                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
+                    scope: String(r[7] || '').trim(),
+                    checked_count: toInt(r[8]),
+                    linked_count: toInt(r[9]),
+                    status: String(r[10] || '').trim(),
+                    issues: String(r[11] || '').trim()
+                });
+            });
+            if (parsed.length > 0) data.it_schedule = parsed;
+        }
+
+        if (oqa && oqa.rows.length > 0) {
+            const parsed = [];
+            oqa.rows.forEach(r => {
+                const mid = String(r[0] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                parsed.push({
+                    monitoring_id: mid,
+                    ticket_no: String(r[2] || '').trim(),
+                    date: String(r[3] || '').trim(),
+                    time_started: String(r[4] || '').trim(),
+                    time_ended: String(r[5] || '').trim(),
+                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
+                    report_name: String(r[7] || '').trim(),
+                    data_analyst: String(r[8] || '').trim(),
+                    qa_checker: String(r[9] || '').trim(),
+                    accuracy: String(r[10] || '').trim(),
+                    completeness: String(r[11] || '').trim(),
+                    logic: String(r[12] || '').trim(),
+                    formatting: String(r[13] || '').trim(),
+                    overall_result: String(r[14] || '').trim(),
+                    remarks: String(r[15] || '').trim()
+                });
+            });
+            if (parsed.length > 0) data.output_qa = parsed;
+        }
+
+        if (disp && disp.rows.length > 0) {
+            const parsed = [];
+            disp.rows.forEach(r => {
+                const mid = String(r[0] || '').trim();
+                if (!mid || mid.includes('MonitoringID') || mid.startsWith('Input')) return;
+                parsed.push({
+                    monitoring_id: mid,
+                    email: String(r[1] || '').trim(),
+                    qa: String(r[2] || '').trim(),
+                    date: String(r[3] || '').trim(),
+                    time_started: String(r[4] || '').trim(),
+                    time_ended: String(r[5] || '').trim(),
+                    hours: parseGvizDurationHrs(r[6], r[4], r[5]),
+                    scope: String(r[7] || '').trim(),
+                    overridden_count: toInt(r[8]),
+                    status: String(r[9] || '').trim(),
+                    issues: String(r[10] || '').trim()
+                });
+            });
+            if (parsed.length > 0) data.dispatch_qa = parsed;
+        }
+    } catch (err) {
+        console.warn('Live Gviz QA Tasks fallback to cached sheet data:', err);
+    }
 
     buildQATasksDataset();
     renderWorkspaceHome();
@@ -7830,10 +8134,10 @@ async function syncQATasksSheet(showToast = false) {
     renderITScheduleDashboard();
 
     if (statusEl) {
-        statusEl.textContent = `1Life QA Tasks Active • ${qaTasksData.length.toLocaleString()} Task Sessions Synced`;
+        statusEl.textContent = `1Life QA Tasks Live • ${qaTasksData.length.toLocaleString()} Task Sessions Synced`;
     }
     if (showToast) {
-        showNotification(`Synced all 7 tabs from 1Life QA Monitoring Sheet (1CiVJpYv00...): ${qaTasksData.length.toLocaleString()} sessions active!`, 'success');
+        showNotification(`Live Synced all 7 tabs from 1Life QA Monitoring Sheet (1CiVJpYv00...): ${qaTasksData.length.toLocaleString()} sessions active!`, 'success');
     }
 }
 
