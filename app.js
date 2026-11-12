@@ -434,9 +434,9 @@ function switchTab(tabId) {
 
     document.querySelectorAll('.nav-tab').forEach(btn => {
         if (btn.dataset.tab === tabId) {
-            btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-semibold text-sm border-teal-500 text-teal-400 bg-blue-50/50 rounded-t-lg whitespace-nowrap';
+            btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-semibold text-sm border-blue-600 text-blue-700 bg-blue-50/70 rounded-t-lg whitespace-nowrap';
         } else {
-            btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-300 hover:border-slate-300 whitespace-nowrap';
+            btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 whitespace-nowrap';
         }
     });
 
@@ -6177,14 +6177,18 @@ function previewRTHPrintableReport() {
 
 // ============================================================================
 // 1LIFE DATA ANALYTICS WORKSPACE ENGINE:
-// - @1life.ph Corporate Email Login Gate & Profile Switcher
-// - Dark / Light / System Theme Switcher & Collapsible Sidebar
+// - Google OAuth 2.0 (@1life.ph Workspace Hosted Domain Verification)
+// - Corporate Blue Light Theme (Default) & Deep Navy Dark Mode Switcher
 // - QA Task Monitoring Google Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)
 // - 14-Day Hours & Items Bar Chart + Live Shift Clock-In
 // - Universal PDF Export (.pdf) for ALL Reports alongside Excel (.xlsx)
 // ============================================================================
 
 const QA_TASKS_SHEET_ID = "1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg";
+
+// Admin: Replace with your Google Cloud Web OAuth Client ID (e.g. "1234567890-abc.apps.googleusercontent.com")
+// so every @1life.ph team member signs in with Google automatically without entering a Client ID.
+const DEFAULT_1LIFE_GOOGLE_CLIENT_ID = "";
 
 const ONE_LIFE_TEAM_DIRECTORY = {
     'armorales@1life.ph': { name: 'Arabella Morales', initials: 'AM', role: 'QA Specialist' },
@@ -6199,40 +6203,240 @@ const ONE_LIFE_TEAM_DIRECTORY = {
 };
 
 let current1LifeUser = {
-    email: 'armorales@1life.ph',
-    name: 'Arabella Morales',
-    initials: 'AM',
-    role: 'QA Specialist'
+    email: '',
+    name: '1Life QA User',
+    initials: '1L',
+    role: 'QA Specialist',
+    picture: '',
+    auth_provider: '',
+    verified_hd: ''
 };
 
-let workspaceThemeMode = 'dark';
+let workspaceThemeMode = 'light';
 let shiftClockActive = false;
 let shiftClockStartMs = null;
 let shiftClockTimerId = null;
 let qaTasksData = [];
 let customLoggedTasks = [];
 
-function init1LifeWorkspace() {
-    // 1. Load saved theme preference (defaults to 'dark' matching Screenshot 2)
-    const savedTheme = localStorage.getItem('1life_workspace_theme') || 'dark';
-    setWorkspaceTheme(savedTheme, false);
+function getGoogleOAuthClientId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId = (urlParams.get('google_client_id') || '').trim();
+    if (paramId && paramId.includes('.apps.googleusercontent.com')) {
+        localStorage.setItem('1life_google_client_id', paramId);
+        return paramId;
+    }
+    const storedId = (localStorage.getItem('1life_google_client_id') || '').trim();
+    return storedId || DEFAULT_1LIFE_GOOGLE_CLIENT_ID;
+}
 
-    // 2. Check @1life.ph Auth Session
+function updateGoogleClientStatusUI() {
+    const cid = getGoogleOAuthClientId();
+    const pill = document.getElementById('google-client-status-pill');
+    const input = document.getElementById('google-client-id-input');
+    const box = document.getElementById('google-oauth-setup-box');
+    if (input && cid) input.value = cid;
+    if (pill) {
+        if (cid && cid.includes('.apps.googleusercontent.com')) {
+            pill.textContent = 'Google OAuth Ready';
+            pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800';
+        } else {
+            pill.textContent = 'Setup Needed';
+            pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800';
+        }
+    }
+    if (box && !cid) {
+        box.classList.remove('hidden');
+    }
+}
+
+function toggleGoogleClientSetup() {
+    const box = document.getElementById('google-oauth-setup-box');
+    if (box) box.classList.toggle('hidden');
+    updateGoogleClientStatusUI();
+}
+
+function saveGoogleOAuthClientId() {
+    const input = document.getElementById('google-client-id-input');
+    const errEl = document.getElementById('auth-error-msg');
+    const val = (input ? input.value : '').trim();
+    if (!val || !val.includes('.apps.googleusercontent.com')) {
+        if (errEl) {
+            errEl.textContent = 'Invalid Google Client ID format. Must end with ".apps.googleusercontent.com".';
+            errEl.classList.remove('hidden');
+        }
+        return;
+    }
+    localStorage.setItem('1life_google_client_id', val);
+    if (errEl) errEl.classList.add('hidden');
+    updateGoogleClientStatusUI();
+    showNotification('Google OAuth Client ID saved! Launching Google Sign-In (@1life.ph)...', 'success');
+    trigger1LifeGoogleSignIn();
+}
+
+function verify1LifeGooglePayload(userinfo) {
+    const errEl = document.getElementById('auth-error-msg');
+    if (!userinfo || typeof userinfo !== 'object') {
+        return { ok: false, reason: 'Invalid response received from Google Authentication.' };
+    }
+    const email = String(userinfo.email || '').trim().toLowerCase();
+    const hd = String(userinfo.hd || '').trim().toLowerCase();
+    const emailVerified = Boolean(userinfo.email_verified);
+
+    if (!emailVerified) {
+        return { ok: false, reason: `Google account (${email || 'unknown'}) does not have a verified email address.` };
+    }
+    if (!email.endsWith('@1life.ph')) {
+        return { ok: false, reason: `Access Denied: "${email}" is not a company @1life.ph email. Sign in with your 1Life Google account.` };
+    }
+    if (hd !== '1life.ph') {
+        return { ok: false, reason: `Access Denied: "${email}" is not verified under Google Workspace hosted domain "1life.ph" (hd="${hd || 'none'}").` };
+    }
+    return { ok: true, email, hd };
+}
+
+function completeGoogle1LifeLogin(userinfo) {
+    const check = verify1LifeGooglePayload(userinfo);
+    const errEl = document.getElementById('auth-error-msg');
+
+    if (!check.ok) {
+        if (errEl) {
+            errEl.textContent = check.reason;
+            errEl.classList.remove('hidden');
+        }
+        showNotification(check.reason, 'error');
+        return false;
+    }
+
+    if (errEl) errEl.classList.add('hidden');
+
+    const knownProfile = ONE_LIFE_TEAM_DIRECTORY[check.email];
+    const displayName = (userinfo.name || (knownProfile ? knownProfile.name : '') || check.email.split('@')[0]).trim();
+    const role = knownProfile ? knownProfile.role : 'QA Specialist';
+    const nameParts = displayName.split(/\s+/);
+    const initials = knownProfile
+        ? knownProfile.initials
+        : (nameParts.length >= 2 ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase() : displayName.slice(0, 2).toUpperCase());
+
+    current1LifeUser = {
+        email: check.email,
+        name: displayName,
+        initials,
+        role,
+        picture: userinfo.picture || '',
+        auth_provider: 'google_oauth',
+        verified_hd: check.hd,
+        verified_at: new Date().toISOString()
+    };
+
+    localStorage.setItem('1life_auth_user', JSON.stringify(current1LifeUser));
+
+    const modal = document.getElementById('one-life-auth-modal');
+    if (modal) modal.classList.add('hidden');
+
+    apply1LifeUserProfileUI();
+    renderWorkspaceHome();
+    renderQATasksTable();
+    showNotification(`Google Verified: Welcome ${current1LifeUser.name} (${current1LifeUser.email})`, 'success');
+    return true;
+}
+
+function trigger1LifeGoogleSignIn() {
+    const errEl = document.getElementById('auth-error-msg');
+    const clientId = getGoogleOAuthClientId();
+
+    if (!clientId || !clientId.includes('.apps.googleusercontent.com')) {
+        const box = document.getElementById('google-oauth-setup-box');
+        if (box) box.classList.remove('hidden');
+        if (errEl) {
+            errEl.textContent = 'Google OAuth Client ID required: Paste your 1Life Google Cloud Web Client ID below so users authenticate directly through Google (@1life.ph).';
+            errEl.classList.remove('hidden');
+        }
+        updateGoogleClientStatusUI();
+        return;
+    }
+
+    if (!window.google || !google.accounts || !google.accounts.oauth2) {
+        if (errEl) {
+            errEl.textContent = 'Google Identity Services script is still loading or blocked by network/adblocker. Please refresh and try again.';
+            errEl.classList.remove('hidden');
+        }
+        return;
+    }
+
+    try {
+        const tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'openid email profile',
+            hd: '1life.ph',
+            prompt: 'select_account',
+            callback: async (tokenResponse) => {
+                if (tokenResponse.error || !tokenResponse.access_token) {
+                    const msg = tokenResponse.error_description || tokenResponse.error || 'Google authentication was cancelled or failed.';
+                    if (errEl) {
+                        errEl.textContent = `Google Auth Error: ${msg}`;
+                        errEl.classList.remove('hidden');
+                    }
+                    return;
+                }
+                try {
+                    const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                    });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    const userinfo = await resp.json();
+                    const accepted = completeGoogle1LifeLogin(userinfo);
+                    if (!accepted && google.accounts.oauth2.revoke) {
+                        google.accounts.oauth2.revoke(tokenResponse.access_token);
+                    }
+                } catch (err) {
+                    if (errEl) {
+                        errEl.textContent = `Failed to verify Google account profile (${err.message}).`;
+                        errEl.classList.remove('hidden');
+                    }
+                }
+            }
+        });
+        tokenClient.requestAccessToken();
+    } catch (err) {
+        if (errEl) {
+            errEl.textContent = `Google Sign-In initialization failed: ${err.message}`;
+            errEl.classList.remove('hidden');
+        }
+    }
+}
+
+function init1LifeWorkspace() {
+    // 1. Load saved theme preference (defaults to Corporate Blue 'light' mode)
+    const savedTheme = localStorage.getItem('1life_workspace_theme') || 'light';
+    setWorkspaceTheme(savedTheme, false);
+    updateGoogleClientStatusUI();
+
+    // 2. Enforce Verified Google OAuth @1life.ph Auth Session
+    // Rejects any old unverified/manual localStorage logins (e.g. hatfog@1life.ph without Google OAuth proof)
     const savedUserJson = localStorage.getItem('1life_auth_user');
+    let validSession = false;
     if (savedUserJson) {
         try {
             const parsed = JSON.parse(savedUserJson);
-            if (parsed && parsed.email && parsed.email.toLowerCase().endsWith('@1life.ph')) {
+            if (
+                parsed &&
+                parsed.auth_provider === 'google_oauth' &&
+                String(parsed.verified_hd || '').toLowerCase() === '1life.ph' &&
+                String(parsed.email || '').toLowerCase().endsWith('@1life.ph')
+            ) {
                 current1LifeUser = parsed;
-                apply1LifeUserProfileUI();
-            } else {
-                open1LifeLoginModal();
+                validSession = true;
             }
         } catch (e) {
-            open1LifeLoginModal();
+            validSession = false;
         }
+    }
+
+    if (validSession) {
+        apply1LifeUserProfileUI();
     } else {
-        // Show @1life.ph Login Security Gate for unauthenticated visitors
+        localStorage.removeItem('1life_auth_user');
         open1LifeLoginModal();
         apply1LifeUserProfileUI();
     }
@@ -6274,89 +6478,45 @@ function init1LifeWorkspace() {
     }, 400);
 }
 
-function fill1LifeDemoUser(email, name, role) {
-    const emailEl = document.getElementById('auth-email-input');
-    const nameEl = document.getElementById('auth-name-input');
-    const roleEl = document.getElementById('auth-role-select');
-    const errEl = document.getElementById('auth-error-msg');
-    if (emailEl) emailEl.value = email;
-    if (nameEl) nameEl.value = name;
-    if (roleEl) roleEl.value = role;
-    if (errEl) errEl.classList.add('hidden');
-}
-
 function open1LifeLoginModal() {
     const modal = document.getElementById('one-life-auth-modal');
     if (modal) modal.classList.remove('hidden');
     const pop = document.getElementById('sidebar-profile-popover');
     if (pop) pop.classList.add('hidden');
-}
-
-function handle1LifeLogin(e) {
-    if (e) e.preventDefault();
-    const emailInput = document.getElementById('auth-email-input');
-    const nameInput = document.getElementById('auth-name-input');
-    const roleSelect = document.getElementById('auth-role-select');
-    const errEl = document.getElementById('auth-error-msg');
-
-    const rawEmail = (emailInput ? emailInput.value : '').trim().toLowerCase();
-    // Strict @1life.ph corporate domain check
-    const emailRegex = /^[a-z0-9._%+-]+@1life\.ph$/i;
-    if (!emailRegex.test(rawEmail)) {
-        if (errEl) {
-            errEl.textContent = 'Security Alert: Access is strictly restricted to official @1life.ph corporate email addresses (e.g., armorales@1life.ph).';
-            errEl.classList.remove('hidden');
-        }
-        showNotification('Access Restricted: Only @1life.ph email addresses are allowed.', 'error');
-        return;
-    }
-
-    if (errEl) errEl.classList.add('hidden');
-
-    const knownProfile = ONE_LIFE_TEAM_DIRECTORY[rawEmail];
-    let displayName = (nameInput ? nameInput.value : '').trim();
-    if (knownProfile && (!displayName || displayName === 'Arabella Morales' && rawEmail !== 'armorales@1life.ph')) {
-        displayName = knownProfile.name;
-    }
-    if (!displayName) {
-        const localPart = rawEmail.split('@')[0].replace(/[._-]+/g, ' ');
-        displayName = localPart.replace(/\b\w/g, c => c.toUpperCase());
-    }
-
-    const role = knownProfile ? knownProfile.role : (roleSelect ? roleSelect.value : 'QA Specialist');
-    const nameParts = displayName.trim().split(/\s+/);
-    const initials = knownProfile
-        ? knownProfile.initials
-        : (nameParts.length >= 2 ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase() : displayName.slice(0, 2).toUpperCase());
-
-    current1LifeUser = {
-        email: rawEmail,
-        name: displayName,
-        initials,
-        role
-    };
-
-    localStorage.setItem('1life_auth_user', JSON.stringify(current1LifeUser));
-
-    const modal = document.getElementById('one-life-auth-modal');
-    if (modal) modal.classList.add('hidden');
-
-    apply1LifeUserProfileUI();
-    renderWorkspaceHome();
-    renderQATasksTable();
-    showNotification(`Welcome to 1Life Data Analytics, ${current1LifeUser.name} (${current1LifeUser.email})`, 'success');
+    updateGoogleClientStatusUI();
 }
 
 function handle1LifeLogout() {
     localStorage.removeItem('1life_auth_user');
+    current1LifeUser = {
+        email: '',
+        name: '1Life QA User',
+        initials: '1L',
+        role: 'QA Specialist',
+        picture: '',
+        auth_provider: '',
+        verified_hd: ''
+    };
     const pop = document.getElementById('sidebar-profile-popover');
     if (pop) pop.classList.add('hidden');
+    apply1LifeUserProfileUI();
     open1LifeLoginModal();
-    showNotification('Signed out of 1Life Data Analytics Workspace.', 'info');
+    showNotification('Signed out of 1Life Google Workspace.', 'info');
+}
+
+function renderAvatarChip(elId, user) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (user.picture) {
+        el.innerHTML = `<img src="${escapeHtml(user.picture)}" alt="${escapeHtml(user.initials)}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer">`;
+    } else {
+        el.textContent = user.initials || '1L';
+    }
 }
 
 function apply1LifeUserProfileUI() {
-    const firstName = current1LifeUser.name.split(' ')[0] || current1LifeUser.name;
+    const displayName = current1LifeUser.name || '1Life QA User';
+    const firstName = displayName.split(' ')[0] || displayName;
     const hr = new Date().getHours();
     const tod = hr < 12 ? 'morning' : (hr < 18 ? 'afternoon' : 'evening');
 
@@ -6368,20 +6528,20 @@ function apply1LifeUserProfileUI() {
     if (bannerDateEl) bannerDateEl.textContent = `${nowStr} • 1Life Data Analytics`;
 
     const roleBadgeEl = document.getElementById('workspace-banner-role-badge');
-    if (roleBadgeEl) roleBadgeEl.textContent = `${current1LifeUser.role.toUpperCase()} VIEW`;
+    if (roleBadgeEl) roleBadgeEl.textContent = `${(current1LifeUser.role || 'QA Specialist').toUpperCase()} VIEW`;
 
     const setTxt = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.textContent = val;
     };
-    setTxt('sidebar-user-initials', current1LifeUser.initials);
-    setTxt('sidebar-user-name', current1LifeUser.name);
-    setTxt('sidebar-user-role', current1LifeUser.role);
-    setTxt('popover-user-initials', current1LifeUser.initials);
-    setTxt('popover-user-name', current1LifeUser.name);
-    setTxt('popover-user-email', current1LifeUser.email);
-    setTxt('popover-user-role-badge', current1LifeUser.role.toUpperCase());
-    setTxt('ws-active-specialist-label', current1LifeUser.name);
+    renderAvatarChip('sidebar-user-initials', current1LifeUser);
+    renderAvatarChip('popover-user-initials', current1LifeUser);
+    setTxt('sidebar-user-name', displayName);
+    setTxt('sidebar-user-role', current1LifeUser.email ? `${current1LifeUser.role} • Google` : 'Sign in @1life.ph');
+    setTxt('popover-user-name', displayName);
+    setTxt('popover-user-email', current1LifeUser.email || 'Unauthenticated');
+    setTxt('popover-user-role-badge', current1LifeUser.verified_hd === '1life.ph' ? 'VERIFIED @1LIFE.PH' : (current1LifeUser.role || 'GUEST').toUpperCase());
+    setTxt('ws-active-specialist-label', displayName);
 }
 
 function toggleProfilePopover(e) {
@@ -6413,15 +6573,15 @@ function setWorkspaceTheme(mode, notify = true) {
         const btn = document.getElementById(`theme-btn-${m}`);
         if (btn) {
             if (m === mode) {
-                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg bg-[#232830] text-teal-300 font-semibold text-[11px] transition';
+                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-[11px] transition shadow-xs';
             } else {
-                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-400 hover:text-white font-medium text-[11px] transition';
+                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg text-blue-200/70 hover:text-white font-medium text-[11px] transition';
             }
         }
     });
 
     if (notify) {
-        showNotification(`Appearance set to ${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`, 'info');
+        showNotification(`Appearance set to ${mode.charAt(0).toUpperCase() + mode.slice(1)} Blue theme`, 'info');
     }
 }
 
@@ -6552,11 +6712,11 @@ function highlightSidebarTaskButton(activeId) {
         const el = document.getElementById(id);
         if (!el) return;
         if (id === activeId) {
-            el.classList.add('bg-[#1e2227]', 'text-white', 'font-semibold');
-            el.classList.remove('text-slate-400');
+            el.classList.add('bg-blue-600/30', 'border', 'border-blue-400/30', 'text-white', 'font-semibold');
+            el.classList.remove('text-blue-100/75', 'text-blue-200/70');
         } else {
-            el.classList.remove('bg-[#1e2227]', 'text-white', 'font-semibold');
-            el.classList.add('text-slate-400');
+            el.classList.remove('bg-blue-600/30', 'border', 'border-blue-400/30', 'text-white', 'font-semibold');
+            el.classList.add('text-blue-100/75');
         }
     });
 }
@@ -6634,7 +6794,7 @@ function toggleClockShift() {
         shiftClockActive = false;
         if (shiftClockTimerId) clearInterval(shiftClockTimerId);
         if (labelEl) labelEl.textContent = 'Clock in on My shift';
-        if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-teal-400';
+        if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-blue-600';
         if (statusEl) statusEl.textContent = 'All on track';
         showNotification(`Shift completed & logged for ${current1LifeUser.name}`, 'info');
         renderWorkspaceHome();
@@ -6854,15 +7014,15 @@ function renderWorkspaceHome() {
     setTxt('ws-kpi-month-sub', `${formatHoursMinutes(monthHours)} • 100% on track`);
     setTxt('ws-14day-total-items', `${monthItems.toLocaleString()} items`);
 
-    // Render 14-day vertical teal bars
+    // Render 14-day vertical Corporate Blue bars
     const barsContainer = document.getElementById('ws-14day-bars');
     if (barsContainer) {
         const maxHrs = Math.max(...last14.map(d => d.hours), 6);
         barsContainer.innerHTML = last14.map((d, idx) => {
             const pct = d.hours > 0 ? Math.max(12, Math.min(100, Math.round((d.hours / maxHrs) * 100))) : 3;
             const barColor = d.hours > 0
-                ? 'bg-gradient-to-t from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 shadow-[0_0_12px_rgba(20,184,166,0.3)]'
-                : 'bg-[#232830]';
+                ? 'bg-gradient-to-t from-blue-600 to-sky-400 hover:from-blue-500 hover:to-sky-300 shadow-[0_2px_10px_rgba(37,99,235,0.28)]'
+                : 'bg-slate-200';
             const dayNum = idx + 1;
             const tooltip = d.date !== '-' ? `${d.date}: ${formatHoursMinutes(d.hours)} (${d.items} items)` : `Day ${dayNum}: 0h 0m`;
             return `
@@ -6886,9 +7046,9 @@ function selectHomeSheetTab(tabKey) {
         const btn = document.getElementById(`sheet-tab-btn-${t}`);
         if (!btn) return;
         if (t === tabKey) {
-            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-slate-950 transition whitespace-nowrap shadow';
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition whitespace-nowrap shadow-xs';
         } else {
-            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap';
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition whitespace-nowrap';
         }
     });
     renderHomeSpreadsheetViewer();
@@ -6934,16 +7094,16 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Status</th>
             <th class="px-3 py-2.5">Issues Encountered</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-teal-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
-            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
-            <td class="px-3 py-2">${escapeHtml(r.scope)}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-white">${Number(r.validated_count || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">${escapeHtml(r.status)}</span></td>
-            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.issues)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-blue-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-slate-700">${escapeHtml(r.scope)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-slate-900">${Number(r.validated_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-slate-600">${escapeHtml(r.issues)}</td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'daily_waybill_log') {
         thead.innerHTML = `<tr>
@@ -6959,18 +7119,18 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-right font-bold">Total Validated</th>
             <th class="px-3 py-2.5 text-center">Status</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-teal-300 font-semibold">${escapeHtml(r.date)}</td>
-            <td class="px-3 py-2 text-right font-mono">${Number(r.total_waybills || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono text-slate-400">${escapeHtml(r.quota_pct)}</td>
-            <td class="px-3 py-2 text-right font-mono">${Number(r.target_per_qa || 0).toLocaleString()}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-blue-700 font-semibold">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-800">${Number(r.total_waybills || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-500">${escapeHtml(r.quota_pct)}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-700">${Number(r.target_per_qa || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.arabella || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.janryl || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.john_michael || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.julius || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.yesha || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-300">${Number(r.total_validated || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-blue-700">${Number(r.total_validated || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">${escapeHtml(r.status)}</span></td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'invalid_waybills') {
         thead.innerHTML = `<tr>
@@ -6982,14 +7142,14 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5">Assigned Rider</th>
             <th class="px-3 py-2.5">Logged By</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-rose-300">${escapeHtml(r.entry_id)}</td>
-            <td class="px-3 py-2 font-mono">${escapeHtml(r.date_validated)}</td>
-            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
-            <td class="px-3 py-2 font-mono font-bold text-teal-300">${escapeHtml(r.waybill_no)}</td>
-            <td class="px-3 py-2 text-rose-300 font-medium">${escapeHtml(r.issue)}</td>
-            <td class="px-3 py-2 text-slate-200">${escapeHtml(r.rider)}</td>
-            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.logged_by)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-rose-600 font-medium">${escapeHtml(r.entry_id)}</td>
+            <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date_validated)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono font-bold text-blue-700">${escapeHtml(r.waybill_no)}</td>
+            <td class="px-3 py-2 text-rose-700 font-medium">${escapeHtml(r.issue)}</td>
+            <td class="px-3 py-2 text-slate-700">${escapeHtml(r.rider)}</td>
+            <td class="px-3 py-2 text-slate-500">${escapeHtml(r.logged_by)}</td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'account_merging') {
         thead.innerHTML = `<tr>
@@ -7002,15 +7162,15 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-right"># Locations Checked</th>
             <th class="px-3 py-2.5 text-right"># Merged Accounts</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-purple-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
-            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
-            <td class="px-3 py-2 text-slate-200 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-purple-300">${Number(r.locations_count || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono text-emerald-300">${Number(r.merged_accounts || 0).toLocaleString()}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-indigo-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-slate-700 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-indigo-700">${Number(r.locations_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono text-emerald-700 font-semibold">${Number(r.merged_accounts || 0).toLocaleString()}</td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'it_schedule') {
         thead.innerHTML = `<tr>
@@ -7025,17 +7185,17 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Status</th>
             <th class="px-3 py-2.5">Issues Encountered</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-amber-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
-            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
-            <td class="px-3 py-2">${escapeHtml(r.scope)}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-amber-300">${Number(r.checked_count || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-300">${Number(r.linked_count || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">${escapeHtml(r.status)}</span></td>
-            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.issues)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-amber-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-slate-700">${escapeHtml(r.scope)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-amber-700">${Number(r.checked_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-700">${Number(r.linked_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-slate-600">${escapeHtml(r.issues)}</td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'output_qa') {
         thead.innerHTML = `<tr>
@@ -7050,17 +7210,17 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Overall Result</th>
             <th class="px-3 py-2.5">Findings / Remarks</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-emerald-300 font-semibold">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
-            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.report_name)}</td>
-            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.data_analyst)}</td>
-            <td class="px-3 py-2 text-teal-300 font-medium">${escapeHtml(r.qa_checker)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-blue-700 font-semibold">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.report_name)}</td>
+            <td class="px-3 py-2 text-slate-700">${escapeHtml(r.data_analyst)}</td>
+            <td class="px-3 py-2 text-sky-700 font-semibold">${escapeHtml(r.qa_checker)}</td>
             <td class="px-3 py-2 text-center">${escapeHtml(r.accuracy)}</td>
             <td class="px-3 py-2 text-center">${escapeHtml(r.completeness)}</td>
             <td class="px-3 py-2 text-center">${escapeHtml(r.logic)}</td>
-            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${String(r.overall_result).toLowerCase().includes('pass') ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${escapeHtml(r.overall_result)}</span></td>
-            <td class="px-3 py-2 text-slate-300 max-w-xs truncate" title="${escapeHtml(r.remarks)}">${escapeHtml(r.remarks)}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${String(r.overall_result).toLowerCase().includes('pass') ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${escapeHtml(r.overall_result)}</span></td>
+            <td class="px-3 py-2 text-slate-600 max-w-xs truncate" title="${escapeHtml(r.remarks)}">${escapeHtml(r.remarks)}</td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'dispatch_qa') {
         thead.innerHTML = `<tr>
@@ -7074,16 +7234,16 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Status</th>
             <th class="px-3 py-2.5">Issues Encountered</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
-            <td class="px-3 py-2 font-mono text-sky-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
-            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
-            <td class="px-3 py-2">${escapeHtml(r.scope)}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-sky-300">${Number(r.overridden_count || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">${escapeHtml(r.status)}</span></td>
-            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.issues)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+            <td class="px-3 py-2 font-mono text-sky-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-slate-700">${escapeHtml(r.scope)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-sky-700">${Number(r.overridden_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-slate-600">${escapeHtml(r.issues)}</td>
         </tr>`).join('');
     }
 }
@@ -7094,18 +7254,18 @@ function renderPharmacyAndDailyLogTables() {
     const dailyTbody = document.getElementById('daily-waybill-log-tbody');
     if (dailyTbody) {
         const rows = sheetData.daily_waybill_log || [];
-        dailyTbody.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50/10">
-            <td class="px-3 py-2 font-mono font-semibold text-teal-400">${escapeHtml(r.date)}</td>
+        dailyTbody.innerHTML = rows.map(r => `<tr class="hover:bg-blue-50/50 transition">
+            <td class="px-3 py-2 font-mono font-semibold text-blue-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.total_waybills || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono text-slate-400">${escapeHtml(r.quota_pct)}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-500">${escapeHtml(r.quota_pct)}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.target_per_qa || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.arabella || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.janryl || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.john_michael || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.julius || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.yesha || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-400">${Number(r.total_validated || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-blue-700">${Number(r.total_validated || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
         </tr>`).join('');
     }
 
@@ -7113,16 +7273,16 @@ function renderPharmacyAndDailyLogTables() {
     if (pharmaTbody) {
         const q = (document.getElementById('pharmacy-sheet-search')?.value || '').trim().toLowerCase();
         const rows = (sheetData.pharmacy || []).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
-        pharmaTbody.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50/10">
-            <td class="px-4 py-2.5 font-mono font-semibold text-teal-400">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+        pharmaTbody.innerHTML = rows.map(r => `<tr class="hover:bg-blue-50/50 transition">
+            <td class="px-4 py-2.5 font-mono font-semibold text-blue-700">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold">${Number(r.validated_count || 0).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.issues)}</td>
+            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.issues)}</td>
         </tr>`).join('');
     }
 }
@@ -7152,16 +7312,16 @@ function renderDispatchQASheetTable() {
 
     const tbody = document.getElementById('dispatch-qa-sheet-tbody');
     if (tbody) {
-        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-slate-50/10">
-            <td class="px-4 py-2.5 font-mono font-semibold text-sky-400">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-blue-50/50 transition">
+            <td class="px-4 py-2.5 font-mono font-semibold text-sky-700">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
-            <td class="px-4 py-2.5 text-right font-mono font-bold text-sky-400">${Number(r.overridden_count || 0).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.issues)}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-sky-700">${Number(r.overridden_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.issues)}</td>
         </tr>`).join('');
     }
 }
@@ -7189,7 +7349,7 @@ function renderAccountMergingDashboard() {
     setTxt('am-kpi-hours', formatHoursMinutes(totalHrs));
     setTxt('am-kpi-rate', rate);
 
-    // Specialist breakdown cards
+    // Specialist breakdown cards (theme-aware Corporate Blue)
     const specContainer = document.getElementById('am-specialist-cards');
     if (specContainer) {
         const bySpec = {};
@@ -7201,26 +7361,26 @@ function renderAccountMergingDashboard() {
             bySpec[name].hrs += Number(r.hours) || 0;
         });
         specContainer.innerHTML = Object.entries(bySpec).map(([name, st]) => `
-            <div class="rounded-xl p-3.5 bg-[#15181c] border border-[#252a30] text-xs space-y-1">
-                <div class="font-bold text-white truncate">${escapeHtml(name)}</div>
-                <div class="text-lg font-black text-purple-300 font-mono">${st.locs.toLocaleString()} locs</div>
-                <div class="text-[11px] text-slate-400">${st.sessions} sessions • ${formatHoursMinutes(st.hrs)}</div>
+            <div class="ws-card rounded-xl p-3.5 bg-white border border-indigo-100 shadow-xs text-xs space-y-1">
+                <div class="font-bold text-slate-900 truncate">${escapeHtml(name)}</div>
+                <div class="text-lg font-black text-indigo-700 font-mono">${st.locs.toLocaleString()} locs</div>
+                <div class="text-[11px] text-slate-500">${st.sessions} sessions • ${formatHoursMinutes(st.hrs)}</div>
             </div>
         `).join('');
     }
 
     const tbody = document.getElementById('am-table-tbody');
     if (tbody) {
-        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-slate-50/10">
-            <td class="px-4 py-2.5 font-mono font-semibold text-purple-400">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
-            <td class="px-4 py-2.5 text-slate-400 font-mono text-[11px]">${escapeHtml(r.email)}</td>
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-blue-50/50 transition">
+            <td class="px-4 py-2.5 font-mono font-semibold text-indigo-700">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
+            <td class="px-4 py-2.5 text-slate-500 font-mono text-[11px]">${escapeHtml(r.email)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
-            <td class="px-4 py-2.5 text-right font-mono font-bold text-purple-400">${Number(r.locations_count || 0).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-emerald-400">${Number(r.merged_accounts || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-indigo-700">${Number(r.locations_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-emerald-700 font-semibold">${Number(r.merged_accounts || 0).toLocaleString()}</td>
         </tr>`).join('');
     }
 }
@@ -7258,22 +7418,22 @@ function renderOutputQADashboard() {
     if (tbody) {
         tbody.innerHTML = filtered.map(r => {
             const isPass = String(r.overall_result || '').toLowerCase().includes('pass');
-            return `<tr class="hover:bg-slate-50/10">
-                <td class="px-3 py-2.5 font-mono font-semibold text-emerald-400">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
+            return `<tr class="hover:bg-blue-50/50 transition">
+                <td class="px-3 py-2.5 font-mono font-semibold text-blue-700">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
                 <td class="px-3 py-2.5 font-mono">${escapeHtml(r.date)}</td>
-                <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.report_name)}</td>
-                <td class="px-3 py-2.5 text-slate-300">${escapeHtml(r.data_analyst)}</td>
-                <td class="px-3 py-2.5 text-teal-400 font-semibold">${escapeHtml(r.qa_checker)}</td>
+                <td class="px-3 py-2.5 font-semibold text-slate-900">${escapeHtml(r.report_name)}</td>
+                <td class="px-3 py-2.5 text-slate-700">${escapeHtml(r.data_analyst)}</td>
+                <td class="px-3 py-2.5 text-sky-700 font-semibold">${escapeHtml(r.qa_checker)}</td>
                 <td class="px-3 py-2.5 text-center">${escapeHtml(r.accuracy)}</td>
                 <td class="px-3 py-2.5 text-center">${escapeHtml(r.completeness)}</td>
                 <td class="px-3 py-2.5 text-center">${escapeHtml(r.logic)}</td>
                 <td class="px-3 py-2.5 text-center">${escapeHtml(r.formatting)}</td>
                 <td class="px-3 py-2.5 text-center">
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPass ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                         ${escapeHtml(r.overall_result)}
                     </span>
                 </td>
-                <td class="px-3 py-2.5 text-slate-400 max-w-xs truncate" title="${escapeHtml(r.remarks)}">${escapeHtml(r.remarks)}</td>
+                <td class="px-3 py-2.5 text-slate-500 max-w-xs truncate" title="${escapeHtml(r.remarks)}">${escapeHtml(r.remarks)}</td>
             </tr>`;
         }).join('');
     }
@@ -7298,17 +7458,17 @@ function renderITScheduleDashboard() {
 
     const tbody = document.getElementById('its-table-tbody');
     if (tbody) {
-        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-slate-50/10">
-            <td class="px-4 py-2.5 font-mono font-semibold text-amber-400">${escapeHtml(r.monitoring_id)}</td>
-            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-blue-50/50 transition">
+            <td class="px-4 py-2.5 font-mono font-semibold text-amber-700">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
-            <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-400">${Number(r.checked_count || 0).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-400">${Number(r.linked_count || 0).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
-            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.issues)}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-700">${Number(r.checked_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-700">${Number(r.linked_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
+            <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.issues)}</td>
         </tr>`).join('');
     }
 }
@@ -7464,20 +7624,20 @@ function renderQATasksTable() {
     });
 
     tbody.innerHTML = displayRows.map(t => `
-        <tr class="border-b border-slate-100 hover:bg-teal-500/5 transition">
+        <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition">
             <td class="px-4 py-2.5 font-mono text-xs text-slate-600">${escapeHtml(t.date)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-800">${escapeHtml(t.specialist)}</td>
             <td class="px-4 py-2.5">
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                     ${escapeHtml(t.category)}
                 </span>
             </td>
             <td class="px-4 py-2.5 text-slate-600">${escapeHtml(t.description)}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold text-slate-800">${Number(t.items).toLocaleString()}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-teal-400 font-semibold">${formatHoursMinutes(t.hours)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${formatHoursMinutes(t.hours)}</td>
             <td class="px-4 py-2.5 text-right font-mono text-slate-600">${t.iph}</td>
             <td class="px-4 py-2.5 text-center">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     ${escapeHtml(t.status || 'Completed')}
                 </span>
             </td>
@@ -7487,12 +7647,12 @@ function renderQATasksTable() {
     if (tfoot) {
         const avgIph = totalHours > 0 ? (totalItems / totalHours).toFixed(1) : '0.0';
         tfoot.innerHTML = `
-            <tr class="bg-slate-100 font-bold text-slate-900 border-t-2 border-teal-500/40">
+            <tr class="bg-slate-100 font-bold text-slate-900 border-t-2 border-blue-500/40">
                 <td colspan="4" class="px-4 py-3">TOTAL QA TASK OUTPUT (${filtered.length.toLocaleString()} Task Sessions)</td>
-                <td class="px-4 py-3 text-right font-mono text-teal-400">${totalItems.toLocaleString()}</td>
-                <td class="px-4 py-3 text-right font-mono text-teal-400">${formatHoursMinutes(totalHours)}</td>
+                <td class="px-4 py-3 text-right font-mono text-blue-700">${totalItems.toLocaleString()}</td>
+                <td class="px-4 py-3 text-right font-mono text-blue-700">${formatHoursMinutes(totalHours)}</td>
                 <td class="px-4 py-3 text-right font-mono">${avgIph} / hr</td>
-                <td class="px-4 py-3 text-center text-emerald-400">100% On Track</td>
+                <td class="px-4 py-3 text-center text-emerald-700">100% On Track</td>
             </tr>
         `;
     }
