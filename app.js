@@ -447,14 +447,23 @@ function switchTab(tabId) {
     // Re-render charts or preview if tab opened
     if (tabId === 'overview') {
         renderOverviewCharts();
+    } else if (tabId === 'pharmacy-log') {
+        if (typeof renderPharmacyAndDailyLogTables === 'function') renderPharmacyAndDailyLogTables();
     } else if (tabId === 'my-shift') {
         if (typeof renderQATasksTable === 'function') renderQATasksTable();
     } else if (tabId === 'qa-report') {
         renderQACharts();
         renderQATrendLineChart();
     } else if (tabId === 'dispatch-report') {
+        if (typeof renderDispatchQASheetTable === 'function') renderDispatchQASheetTable();
         renderDispatchCharts();
         renderDispatchTrendLineChart();
+    } else if (tabId === 'account-merging') {
+        if (typeof renderAccountMergingDashboard === 'function') renderAccountMergingDashboard();
+    } else if (tabId === 'output-qa') {
+        if (typeof renderOutputQADashboard === 'function') renderOutputQADashboard();
+    } else if (tabId === 'it-schedule') {
+        if (typeof renderITScheduleDashboard === 'function') renderITScheduleDashboard();
     } else if (tabId === 'rth-report') {
         renderRTHReport();
     } else if (tabId === 'custom-report') {
@@ -6236,10 +6245,28 @@ function init1LifeWorkspace() {
         customLoggedTasks = [];
     }
 
-    // 4. Build initial QA Task Monitoring dataset & render Workspace Home
+    // 4. Build initial QA Task Monitoring dataset & render Workspace Home (Default: Summarized All Tasks Homepage)
     buildQATasksDataset();
     renderWorkspaceHome();
     renderQATasksTable();
+    renderHomeSpreadsheetViewer();
+    renderPharmacyAndDailyLogTables();
+    renderDispatchQASheetTable();
+    renderAccountMergingDashboard();
+    renderOutputQADashboard();
+    renderITScheduleDashboard();
+
+    // Open Homepage (All Summarized Tasks) by default unless URL hash points to a specific task
+    const initialHash = window.location.hash.replace('#', '');
+    if (['waybill', 'dispatch', 'account-merging', 'output-qa', 'it-schedule'].includes(initialHash)) {
+        switchTaskDashboard(initialHash);
+    } else if (['rth-report', 'pharmacy-log', 'waybills', 'qa-report', 'progress-report', 'custom-report'].includes(initialHash)) {
+        switchTaskDashboard('waybill', initialHash);
+    } else if (initialHash === 'dispatch-report') {
+        switchTaskDashboard('dispatch');
+    } else {
+        switchTaskDashboard('home');
+    }
 
     // 5. Attempt background live sync with QA Tasks Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)
     setTimeout(() => {
@@ -6415,25 +6442,149 @@ function toggleDataQualityModule() {
     if (chev) chev.classList.toggle('-rotate-90');
 }
 
+let activeTaskModule = 'home';
+let activeHomeSheetTab = 'pharmacy';
+
+function getQASheetData() {
+    if (!window.QA_MONITORING_DATA) {
+        window.QA_MONITORING_DATA = {
+            pharmacy: [],
+            daily_waybill_log: [],
+            invalid_waybills: [],
+            account_merging: [],
+            output_qa: [],
+            dispatch_qa: [],
+            it_schedule: []
+        };
+    }
+    return window.QA_MONITORING_DATA;
+}
+
+// Switch between top-level Task Dashboards from Left Panel:
+// 'home' | 'waybill' | 'dispatch' | 'account-merging' | 'output-qa' | 'it-schedule'
+function switchTaskDashboard(taskKey, subTab = null) {
+    activeTaskModule = taskKey;
+    const homeSec = document.getElementById('workspace-home-section');
+    const wbFilterBar = document.getElementById('waybill-filter-bar');
+    const wbKpiSec = document.getElementById('waybill-kpi-cards-section');
+    const wbPipeSec = document.getElementById('waybill-pipeline-section');
+    const wbTabsBar = document.getElementById('waybill-nav-tabs-bar');
+    const headerTitle = document.getElementById('main-header-dashboard-title');
+
+    const toggleEl = (el, show) => {
+        if (el) el.classList.toggle('hidden', !show);
+    };
+
+    if (taskKey === 'home') {
+        toggleEl(homeSec, true);
+        toggleEl(wbFilterBar, false);
+        toggleEl(wbKpiSec, false);
+        toggleEl(wbPipeSec, false);
+        toggleEl(wbTabsBar, false);
+        // Hide all sub-tab panels so Homepage is a dedicated All-Tasks Summary + Multi-Sheet Explorer
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — All Tasks Summary (Homepage)';
+        renderWorkspaceHome();
+        renderHomeSpreadsheetViewer();
+        highlightSidebarTaskButton('side-nav-home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (taskKey === 'waybill') {
+        toggleEl(homeSec, false);
+        toggleEl(wbFilterBar, true);
+        toggleEl(wbKpiSec, true);
+        toggleEl(wbPipeSec, true);
+        toggleEl(wbTabsBar, true);
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — Waybill Q.A. Dashboard';
+        const targetSubTab = subTab || 'overview';
+        switchTab(targetSubTab);
+        highlightSidebarTaskButton(subTab === 'pharmacy-log' ? 'side-nav-waybill-log' : (subTab === 'rth-report' ? 'side-nav-invalid-waybills' : 'side-nav-task-waybill'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (taskKey === 'dispatch') {
+        toggleEl(homeSec, false);
+        toggleEl(wbFilterBar, true);
+        toggleEl(wbKpiSec, false);
+        toggleEl(wbPipeSec, false);
+        toggleEl(wbTabsBar, false);
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — Dispatch Q.A. Dashboard';
+        switchTab('dispatch-report');
+        highlightSidebarTaskButton('side-nav-task-dispatch');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (taskKey === 'account-merging') {
+        toggleEl(homeSec, false);
+        toggleEl(wbFilterBar, false);
+        toggleEl(wbKpiSec, false);
+        toggleEl(wbPipeSec, false);
+        toggleEl(wbTabsBar, false);
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — Account Merging Dashboard';
+        switchTab('account-merging');
+        highlightSidebarTaskButton('side-nav-task-merging');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (taskKey === 'output-qa') {
+        toggleEl(homeSec, false);
+        toggleEl(wbFilterBar, false);
+        toggleEl(wbKpiSec, false);
+        toggleEl(wbPipeSec, false);
+        toggleEl(wbTabsBar, false);
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — Output QA Dashboard';
+        switchTab('output-qa');
+        highlightSidebarTaskButton('side-nav-task-output-qa');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (taskKey === 'it-schedule') {
+        toggleEl(homeSec, false);
+        toggleEl(wbFilterBar, false);
+        toggleEl(wbKpiSec, false);
+        toggleEl(wbPipeSec, false);
+        toggleEl(wbTabsBar, false);
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — IT Schedule Monitoring Dashboard';
+        switchTab('it-schedule');
+        highlightSidebarTaskButton('side-nav-task-it-schedule');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function highlightSidebarTaskButton(activeId) {
+    const allIds = [
+        'side-nav-home', 'side-nav-my-shift', 'side-nav-notes', 'side-nav-feedback',
+        'side-nav-task-waybill', 'side-nav-waybill-log', 'side-nav-invalid-waybills',
+        'side-nav-task-dispatch', 'side-nav-task-merging', 'side-nav-task-output-qa', 'side-nav-task-it-schedule'
+    ];
+    allIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id === activeId) {
+            el.classList.add('bg-[#1e2227]', 'text-white', 'font-semibold');
+            el.classList.remove('text-slate-400');
+        } else {
+            el.classList.remove('bg-[#1e2227]', 'text-white', 'font-semibold');
+            el.classList.add('text-slate-400');
+        }
+    });
+}
+
 function switchWorkspaceNav(target) {
     const homeSec = document.getElementById('workspace-home-section');
     if (target === 'home') {
-        if (homeSec) homeSec.classList.remove('hidden');
-        switchTab('overview');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        switchTaskDashboard('home');
     } else if (target === 'my-shift') {
         if (homeSec) homeSec.classList.remove('hidden');
+        document.getElementById('waybill-filter-bar')?.classList.add('hidden');
+        document.getElementById('waybill-kpi-cards-section')?.classList.add('hidden');
+        document.getElementById('waybill-pipeline-section')?.classList.add('hidden');
+        document.getElementById('waybill-nav-tabs-bar')?.classList.add('hidden');
         switchTab('my-shift');
+        highlightSidebarTaskButton('side-nav-my-shift');
+        document.getElementById('tab-my-shift')?.scrollIntoView({ behavior: 'smooth' });
     } else if (target === 'records') {
-        switchTab('overview');
+        switchTaskDashboard('waybill', 'overview');
     } else if (target === 'waybill-log') {
-        switchTab('waybills');
+        switchTaskDashboard('waybill', 'pharmacy-log');
     } else if (target === 'invalid-waybills' || target === 'notes') {
-        switchTab('rth-report');
+        switchTaskDashboard('waybill', 'rth-report');
     } else if (target === 'qa-checks') {
-        switchTab('qa-report');
+        switchTaskDashboard('output-qa');
     } else if (target === 'feedback') {
-        switchTab('progress-report');
+        switchTaskDashboard('waybill', 'progress-report');
+        highlightSidebarTaskButton('side-nav-feedback');
     } else if (target === 'documentation') {
         triggerFileDownload('Waybill_QA_Dashboard_Comprehensive_Documentation.docx', '1Life_QA_Task_Monitoring_Documentation.docx');
         showNotification('Downloading 1Life QA Task Monitoring Documentation (.docx)...', 'success');
@@ -6448,25 +6599,18 @@ function switchWorkspaceNav(target) {
 
 function updateSidebarActiveState(tabId) {
     const map = {
-        'overview': 'side-nav-home',
         'my-shift': 'side-nav-my-shift',
-        'waybills': 'side-nav-waybill-log',
+        'pharmacy-log': 'side-nav-waybill-log',
         'rth-report': 'side-nav-invalid-waybills',
-        'qa-report': 'side-nav-qa-checks',
+        'dispatch-report': 'side-nav-task-dispatch',
+        'account-merging': 'side-nav-task-merging',
+        'output-qa': 'side-nav-task-output-qa',
+        'it-schedule': 'side-nav-task-it-schedule',
         'progress-report': 'side-nav-feedback'
     };
-    const activeId = map[tabId] || 'side-nav-home';
-    ['side-nav-home', 'side-nav-notes', 'side-nav-feedback', 'side-nav-my-shift', 'side-nav-records', 'side-nav-waybill-log', 'side-nav-invalid-waybills', 'side-nav-qa-checks'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (id === activeId) {
-            el.classList.add('bg-[#1e2227]', 'text-white', 'font-semibold');
-            el.classList.remove('text-slate-400');
-        } else {
-            el.classList.remove('bg-[#1e2227]', 'text-white', 'font-semibold');
-            el.classList.add('text-slate-400');
-        }
-    });
+    if (map[tabId]) {
+        highlightSidebarTaskButton(map[tabId]);
+    }
 }
 
 function toggleClockShift() {
@@ -6497,65 +6641,103 @@ function toggleClockShift() {
     }
 }
 
-// Build comprehensive QA Task Monitoring rows from live Waybill QA records + QA Tasks Sheet + logged tasks
+// Normalize short QA names (e.g. "Arabella", "Julius Rod", "Yesha Nicholai", "Janryl Jay", "John Michael")
+function normalize1LifeQAName(raw) {
+    const s = String(raw || '').trim();
+    const low = s.toLowerCase();
+    if (low.includes('arabella')) return 'Arabella Morales';
+    if (low.includes('julius')) return 'Julius Rod Dayag';
+    if (low.includes('yesha')) return 'Yesha Nicholai Lao';
+    if (low.includes('janryl')) return 'Janryl Jay Canaway';
+    if (low.includes('john michael')) return 'John Michael Francisco';
+    return s || '1Life QA Specialist';
+}
+
+// Build comprehensive QA Task Monitoring rows from 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (all tabs) + Waybill records
 function buildQATasksDataset() {
-    const daySpecialistMap = new Map();
+    const sheetData = getQASheetData();
+    const sheetTaskStreams = [];
 
-    allData.forEach(r => {
-        // 1. Initial QA Validation Task Stream
-        if (r.initial_validated_by && r.initial_val_date) {
-            const key = `${r.initial_val_date}|${r.initial_validated_by}|Initial Waybill QA`;
-            if (!daySpecialistMap.has(key)) {
-                daySpecialistMap.set(key, {
-                    date: r.initial_val_date,
-                    specialist: r.initial_validated_by,
-                    category: 'Initial Waybill QA',
-                    description: 'Initial Waybill Document & ID/MDC/RC/LOA Verification',
-                    items: 0,
-                    invalids: 0
-                });
-            }
-            const entry = daySpecialistMap.get(key);
-            entry.items++;
-            if (r.qa_initial_status === 'Invalid') entry.invalids++;
-        }
-
-        // 2. Final QA Validation Task Stream
-        if (r.final_validated_by && r.final_val_date && (r.final_val_status === 'Valid' || r.final_val_status === 'Invalid')) {
-            const key = `${r.final_val_date}|${r.final_validated_by}|Final Waybill QA`;
-            if (!daySpecialistMap.has(key)) {
-                daySpecialistMap.set(key, {
-                    date: r.final_val_date,
-                    specialist: r.final_validated_by,
-                    category: 'Final Waybill QA',
-                    description: 'Post-Dispatch Override Final QA Signoff & Audit',
-                    items: 0,
-                    invalids: 0
-                });
-            }
-            const entry = daySpecialistMap.get(key);
-            entry.items++;
-        }
-    });
-
-    const derivedTasks = Array.from(daySpecialistMap.values()).map(t => {
-        // Standard 1Life QA benchmark velocity ~42.4 items/hr
-        const hrs = Math.max(0.5, +(t.items / 42.4).toFixed(2));
-        const iph = +(t.items / hrs).toFixed(1);
-        return {
-            date: t.date,
-            specialist: t.specialist,
-            category: t.category,
-            description: t.invalids > 0 ? `${t.description} (${t.invalids} RTH defects flagged)` : t.description,
-            items: t.items,
+    // 1. Pharmacy QA Sessions (216 rows)
+    (sheetData.pharmacy || []).forEach(r => {
+        const hrs = Math.max(0.25, Number(r.hours) || 1.0);
+        const items = Number(r.validated_count) || 0;
+        sheetTaskStreams.push({
+            date: normalizeDateStr(r.date) || r.date,
+            specialist: normalize1LifeQAName(r.qa),
+            category: 'Waybill / Pharmacy QA',
+            description: `${r.monitoring_id}: Pharmacy Waybill Validation (${r.scope || 'All'}) — ${r.issues || 'No issues'}`,
+            items,
             hours: hrs,
-            iph,
-            status: 'Completed'
-        };
+            iph: +(items / hrs).toFixed(1),
+            status: r.status || 'Completed'
+        });
     });
 
-    // Combine custom / synced QA Tasks sheet rows + derived daily task streams
-    qaTasksData = [...customLoggedTasks, ...derivedTasks].sort((a, b) => {
+    // 2. Account Merging QA Sessions (115 rows)
+    (sheetData.account_merging || []).forEach(r => {
+        const hrs = Math.max(0.25, Number(r.hours) || 1.0);
+        const items = (Number(r.locations_count) || 0) + (Number(r.merged_accounts) || 0);
+        sheetTaskStreams.push({
+            date: normalizeDateStr(r.date) || r.date,
+            specialist: normalize1LifeQAName(r.qa),
+            category: 'Account Merging',
+            description: `${r.monitoring_id}: Checked ${r.locations_count} locations (${String(r.locations_checked || '').substring(0, 48)})`,
+            items,
+            hours: hrs,
+            iph: +(items / hrs).toFixed(1),
+            status: 'Completed'
+        });
+    });
+
+    // 3. Output QA Sessions (184 rows)
+    (sheetData.output_qa || []).forEach(r => {
+        const hrs = Math.max(0.25, Number(r.hours) || 0.5);
+        sheetTaskStreams.push({
+            date: normalizeDateStr(r.date) || r.date,
+            specialist: normalize1LifeQAName(r.qa_checker),
+            category: 'Output QA',
+            description: `${r.ticket_no || r.monitoring_id}: ${r.report_name} (Analyst: ${r.data_analyst}) — ${r.overall_result}`,
+            items: 1,
+            hours: hrs,
+            iph: +(1 / hrs).toFixed(1),
+            status: r.overall_result || 'Passed'
+        });
+    });
+
+    // 4. Dispatch QA Sessions (46 rows)
+    (sheetData.dispatch_qa || []).forEach(r => {
+        const hrs = Math.max(0.25, Number(r.hours) || 1.0);
+        const items = Number(r.overridden_count) || 0;
+        sheetTaskStreams.push({
+            date: normalizeDateStr(r.date) || r.date,
+            specialist: normalize1LifeQAName(r.qa),
+            category: 'Dispatch QA',
+            description: `${r.monitoring_id}: Dispatch Override QA (${r.scope}) — ${r.issues || 'Verified'}`,
+            items,
+            hours: hrs,
+            iph: +(items / hrs).toFixed(1),
+            status: r.status || 'Completed'
+        });
+    });
+
+    // 5. IT Schedule Monitoring Sessions (54 rows)
+    (sheetData.it_schedule || []).forEach(r => {
+        const hrs = Math.max(0.25, Number(r.hours) || 0.8);
+        const items = Number(r.checked_count) || 0;
+        sheetTaskStreams.push({
+            date: normalizeDateStr(r.date) || r.date,
+            specialist: normalize1LifeQAName(r.qa),
+            category: 'IT Schedule Monitoring',
+            description: `${r.monitoring_id}: Checked ${r.checked_count} schedules, Linked ${r.linked_count} (${r.scope})`,
+            items,
+            hours: hrs,
+            iph: +(items / hrs).toFixed(1),
+            status: r.status || 'Completed'
+        });
+    });
+
+    qaTasksData = [...customLoggedTasks, ...sheetTaskStreams].sort((a, b) => {
         const da = parseSlashDate(a.date);
         const db = parseSlashDate(b.date);
         return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
@@ -6573,6 +6755,48 @@ function renderWorkspaceHome() {
     if (!qaTasksData || qaTasksData.length === 0) {
         buildQATasksDataset();
     }
+
+    const sheetData = getQASheetData();
+    const setTxt = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
+
+    // Update 5 Summarized Task Cards on Homepage
+    setTxt('sum-card-waybill-main', (allData.length || 21124).toLocaleString());
+    setTxt('sum-card-pharma-count', `${(sheetData.pharmacy || []).length} sessions`);
+    setTxt('sum-card-dailylog-count', `${(sheetData.daily_waybill_log || []).length} days`);
+    setTxt('sum-card-invalid-count', `${(sheetData.invalid_waybills || []).length.toLocaleString()} logged`);
+
+    const dispRows = sheetData.dispatch_qa || [];
+    const dispOverriddenSum = dispRows.reduce((s, r) => s + (Number(r.overridden_count) || 0), 0);
+    const dispHoursSum = dispRows.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+    const liveDispOver = allData.filter(r => r.dispatch_status === 'Override Done').length;
+    setTxt('sum-card-dispatch-main', dispRows.length.toLocaleString());
+    setTxt('sum-card-dispatch-overridden', `${dispOverriddenSum.toLocaleString()} waybills`);
+    setTxt('sum-card-dispatch-live', `${liveDispOver.toLocaleString()} done`);
+    setTxt('sum-card-dispatch-hours', `${dispHoursSum.toFixed(1)} hrs`);
+
+    const amRows = sheetData.account_merging || [];
+    const amLocsSum = amRows.reduce((s, r) => s + (Number(r.locations_count) || 0), 0);
+    const amHoursSum = amRows.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+    setTxt('sum-card-merging-main', amRows.length.toLocaleString());
+    setTxt('sum-card-merging-locs', `${amLocsSum.toLocaleString()} locs`);
+    setTxt('sum-card-merging-hours', `${amHoursSum.toFixed(1)} hrs`);
+
+    const oqaRows = sheetData.output_qa || [];
+    const oqaPass = oqaRows.filter(r => String(r.overall_result).toLowerCase().includes('pass')).length;
+    setTxt('sum-card-outputqa-main', oqaRows.length.toLocaleString());
+    setTxt('sum-card-outputqa-pass', `${oqaPass.toLocaleString()} Passed`);
+
+    const itsRows = sheetData.it_schedule || [];
+    const itsChecked = itsRows.reduce((s, r) => s + (Number(r.checked_count) || 0), 0);
+    const itsLinked = itsRows.reduce((s, r) => s + (Number(r.linked_count) || 0), 0);
+    const itsHours = itsRows.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+    setTxt('sum-card-itsched-main', itsRows.length.toLocaleString());
+    setTxt('sum-card-itsched-checked', itsChecked.toLocaleString());
+    setTxt('sum-card-itsched-linked', itsLinked.toLocaleString());
+    setTxt('sum-card-itsched-hours', `${itsHours.toFixed(1)} hrs`);
 
     const activeSpec = current1LifeUser.name || 'Arabella Morales';
     const specTasks = qaTasksData.filter(t => t.specialist.toLowerCase() === activeSpec.toLowerCase());
@@ -6602,7 +6826,6 @@ function renderWorkspaceHome() {
         last14.unshift({ date: '-', hours: 0, items: 0, tasksCount: 0 });
     }
 
-    // Today metrics (or live shift clock-in)
     let todayHours = 0;
     let todayTasks = 0;
     let todayItems = 0;
@@ -6612,7 +6835,6 @@ function renderWorkspaceHome() {
         todayTasks += 1;
     }
 
-    // Weekly & Monthly totals matching 1Life QA Specialist View
     const weekSlice = last14.slice(-7);
     const weekHours = weekSlice.reduce((s, d) => s + d.hours, 0) || 16.43;
     const weekItems = weekSlice.reduce((s, d) => s + d.items, 0) || 646;
@@ -6621,11 +6843,6 @@ function renderWorkspaceHome() {
     const monthItems = last14.reduce((s, d) => s + d.items, 0) || 1620;
     const monthHours = last14.reduce((s, d) => s + d.hours, 0) || 38.17;
     const iph = monthHours > 0 ? (monthItems / monthHours).toFixed(1) : '42.4';
-
-    const setTxt = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = val;
-    };
 
     setTxt('ws-kpi-today-hours', formatHoursMinutes(todayHours));
     setTxt('ws-kpi-today-sub', `${todayTasks} tasks • ${todayItems.toLocaleString()} items`);
@@ -6637,7 +6854,7 @@ function renderWorkspaceHome() {
     setTxt('ws-kpi-month-sub', `${formatHoursMinutes(monthHours)} • 100% on track`);
     setTxt('ws-14day-total-items', `${monthItems.toLocaleString()} items`);
 
-    // Render 14-day vertical teal bars (matching Screenshot 2)
+    // Render 14-day vertical teal bars
     const barsContainer = document.getElementById('ws-14day-bars');
     if (barsContainer) {
         const maxHrs = Math.max(...last14.map(d => d.hours), 6);
@@ -6649,13 +6866,575 @@ function renderWorkspaceHome() {
             const dayNum = idx + 1;
             const tooltip = d.date !== '-' ? `${d.date}: ${formatHoursMinutes(d.hours)} (${d.items} items)` : `Day ${dayNum}: 0h 0m`;
             return `
-                <div class="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer" title="${escapeHtml(tooltip)}" onclick="if('${d.date}' !== '-') selectDate('${d.date}')">
+                <div class="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer" title="${escapeHtml(tooltip)}">
                     <div class="w-full max-w-[24px] rounded-t-md transition-all duration-300 ${barColor}" style="height: ${pct}%"></div>
                     <span class="text-[10px] text-slate-500 mt-1.5 font-mono">${dayNum}</span>
                 </div>
             `;
         }).join('');
     }
+}
+
+// ============================================================================
+// HOMEPAGE LIVE MULTI-TAB GOOGLE SPREADSHEET VIEWER & TASK MODULE RENDERERS
+// ============================================================================
+
+function selectHomeSheetTab(tabKey) {
+    activeHomeSheetTab = tabKey;
+    const tabs = ['pharmacy', 'daily_waybill_log', 'invalid_waybills', 'account_merging', 'it_schedule', 'output_qa', 'dispatch_qa'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`sheet-tab-btn-${t}`);
+        if (!btn) return;
+        if (t === tabKey) {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-slate-950 transition whitespace-nowrap shadow';
+        } else {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap';
+        }
+    });
+    renderHomeSpreadsheetViewer();
+}
+
+function renderHomeSpreadsheetViewer() {
+    const thead = document.getElementById('home-excel-thead');
+    const tbody = document.getElementById('home-excel-tbody');
+    const footerEl = document.getElementById('home-excel-footer-count');
+    if (!thead || !tbody) return;
+
+    const sheetData = getQASheetData();
+    const rawList = sheetData[activeHomeSheetTab] || [];
+    const q = (document.getElementById('home-excel-search')?.value || '').trim().toLowerCase();
+    const qaFilter = (document.getElementById('home-excel-qa-filter')?.value || 'ALL').toLowerCase();
+
+    const filtered = rawList.filter(r => {
+        if (qaFilter !== 'all') {
+            const rowStr = JSON.stringify(r).toLowerCase();
+            if (!rowStr.includes(qaFilter)) return false;
+        }
+        if (q) {
+            const rowStr = JSON.stringify(r).toLowerCase();
+            if (!rowStr.includes(q)) return false;
+        }
+        return true;
+    });
+
+    const slice = filtered.slice(0, 100);
+    if (footerEl) {
+        footerEl.textContent = `Showing ${slice.length.toLocaleString()} of ${filtered.length.toLocaleString()} records in [${activeHomeSheetTab.toUpperCase()}] tab`;
+    }
+
+    if (activeHomeSheetTab === 'pharmacy') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Monitoring ID</th>
+            <th class="px-3 py-2.5">Q.A.</th>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5">Time Started - Ended</th>
+            <th class="px-3 py-2.5 text-right">Hours</th>
+            <th class="px-3 py-2.5">Scope</th>
+            <th class="px-3 py-2.5 text-right"># Validated Waybills</th>
+            <th class="px-3 py-2.5 text-center">Status</th>
+            <th class="px-3 py-2.5">Issues Encountered</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-teal-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
+            <td class="px-3 py-2">${escapeHtml(r.scope)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-white">${Number(r.validated_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.issues)}</td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'daily_waybill_log') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5 text-right">Total Waybills</th>
+            <th class="px-3 py-2.5 text-right">Quota %</th>
+            <th class="px-3 py-2.5 text-right">Target / QA</th>
+            <th class="px-3 py-2.5 text-right">Arabella</th>
+            <th class="px-3 py-2.5 text-right">Janryl</th>
+            <th class="px-3 py-2.5 text-right">John Michael</th>
+            <th class="px-3 py-2.5 text-right">Julius</th>
+            <th class="px-3 py-2.5 text-right">Yesha</th>
+            <th class="px-3 py-2.5 text-right font-bold">Total Validated</th>
+            <th class="px-3 py-2.5 text-center">Status</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-teal-300 font-semibold">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.total_waybills || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-400">${escapeHtml(r.quota_pct)}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.target_per_qa || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.arabella || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.janryl || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.john_michael || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.julius || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.yesha || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-300">${Number(r.total_validated || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300">${escapeHtml(r.status)}</span></td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'invalid_waybills') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Entry ID</th>
+            <th class="px-3 py-2.5">Date Validated</th>
+            <th class="px-3 py-2.5">Q.A. Specialist</th>
+            <th class="px-3 py-2.5">Waybill Number</th>
+            <th class="px-3 py-2.5">Reason / Issue</th>
+            <th class="px-3 py-2.5">Assigned Rider</th>
+            <th class="px-3 py-2.5">Logged By</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-rose-300">${escapeHtml(r.entry_id)}</td>
+            <td class="px-3 py-2 font-mono">${escapeHtml(r.date_validated)}</td>
+            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono font-bold text-teal-300">${escapeHtml(r.waybill_no)}</td>
+            <td class="px-3 py-2 text-rose-300 font-medium">${escapeHtml(r.issue)}</td>
+            <td class="px-3 py-2 text-slate-200">${escapeHtml(r.rider)}</td>
+            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.logged_by)}</td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'account_merging') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Monitoring ID</th>
+            <th class="px-3 py-2.5">Q.A. Specialist</th>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5">Time Started - Ended</th>
+            <th class="px-3 py-2.5 text-right">Hours</th>
+            <th class="px-3 py-2.5">Locations Checked</th>
+            <th class="px-3 py-2.5 text-right"># Locations Checked</th>
+            <th class="px-3 py-2.5 text-right"># Merged Accounts</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-purple-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
+            <td class="px-3 py-2 text-slate-200 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-purple-300">${Number(r.locations_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono text-emerald-300">${Number(r.merged_accounts || 0).toLocaleString()}</td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'it_schedule') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Monitoring ID</th>
+            <th class="px-3 py-2.5">Q.A. Specialist</th>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5">Time Started - Ended</th>
+            <th class="px-3 py-2.5 text-right">Hours</th>
+            <th class="px-3 py-2.5">Scope</th>
+            <th class="px-3 py-2.5 text-right"># Checked</th>
+            <th class="px-3 py-2.5 text-right"># Linked</th>
+            <th class="px-3 py-2.5 text-center">Status</th>
+            <th class="px-3 py-2.5">Issues Encountered</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-amber-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
+            <td class="px-3 py-2">${escapeHtml(r.scope)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-amber-300">${Number(r.checked_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-300">${Number(r.linked_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.issues)}</td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'output_qa') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Ticket #</th>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5">Report / Dashboard</th>
+            <th class="px-3 py-2.5">Data Analyst</th>
+            <th class="px-3 py-2.5">QA Checker</th>
+            <th class="px-3 py-2.5 text-center">Accuracy</th>
+            <th class="px-3 py-2.5 text-center">Completeness</th>
+            <th class="px-3 py-2.5 text-center">Logic</th>
+            <th class="px-3 py-2.5 text-center">Overall Result</th>
+            <th class="px-3 py-2.5">Findings / Remarks</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-emerald-300 font-semibold">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.report_name)}</td>
+            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.data_analyst)}</td>
+            <td class="px-3 py-2 text-teal-300 font-medium">${escapeHtml(r.qa_checker)}</td>
+            <td class="px-3 py-2 text-center">${escapeHtml(r.accuracy)}</td>
+            <td class="px-3 py-2 text-center">${escapeHtml(r.completeness)}</td>
+            <td class="px-3 py-2 text-center">${escapeHtml(r.logic)}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${String(r.overall_result).toLowerCase().includes('pass') ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${escapeHtml(r.overall_result)}</span></td>
+            <td class="px-3 py-2 text-slate-300 max-w-xs truncate" title="${escapeHtml(r.remarks)}">${escapeHtml(r.remarks)}</td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'dispatch_qa') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Monitoring ID</th>
+            <th class="px-3 py-2.5">Q.A. Specialist</th>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5">Time Started - Ended</th>
+            <th class="px-3 py-2.5 text-right">Hours</th>
+            <th class="px-3 py-2.5">Scope</th>
+            <th class="px-3 py-2.5 text-right"># Overridden Waybills</th>
+            <th class="px-3 py-2.5 text-center">Status</th>
+            <th class="px-3 py-2.5">Issues Encountered</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-white/5">
+            <td class="px-3 py-2 font-mono text-sky-300 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-3 py-2 font-semibold text-white">${escapeHtml(r.qa)}</td>
+            <td class="px-3 py-2 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-3 py-2 text-right font-mono text-teal-300">${r.hours}h</td>
+            <td class="px-3 py-2">${escapeHtml(r.scope)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-sky-300">${Number(r.overridden_count || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">${escapeHtml(r.status)}</span></td>
+            <td class="px-3 py-2 text-slate-300">${escapeHtml(r.issues)}</td>
+        </tr>`).join('');
+    }
+}
+
+// Render Pharmacy & Daily Waybill Log inside Waybill Dashboard
+function renderPharmacyAndDailyLogTables() {
+    const sheetData = getQASheetData();
+    const dailyTbody = document.getElementById('daily-waybill-log-tbody');
+    if (dailyTbody) {
+        const rows = sheetData.daily_waybill_log || [];
+        dailyTbody.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50/10">
+            <td class="px-3 py-2 font-mono font-semibold text-teal-400">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.total_waybills || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-400">${escapeHtml(r.quota_pct)}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.target_per_qa || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.arabella || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.janryl || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.john_michael || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.julius || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono">${Number(r.yesha || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-emerald-400">${Number(r.total_validated || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
+        </tr>`).join('');
+    }
+
+    const pharmaTbody = document.getElementById('pharmacy-sheet-tbody');
+    if (pharmaTbody) {
+        const q = (document.getElementById('pharmacy-sheet-search')?.value || '').trim().toLowerCase();
+        const rows = (sheetData.pharmacy || []).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+        pharmaTbody.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50/10">
+            <td class="px-4 py-2.5 font-mono font-semibold text-teal-400">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+            <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold">${Number(r.validated_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.issues)}</td>
+        </tr>`).join('');
+    }
+}
+
+// Render Dispatch Q.A. Monitoring Sheet Table inside Dispatch Dashboard
+function renderDispatchQASheetTable() {
+    const sheetData = getQASheetData();
+    const rows = sheetData.dispatch_qa || [];
+    const q = (document.getElementById('dispatch-qa-search')?.value || '').trim().toLowerCase();
+    const spec = (document.getElementById('dispatch-qa-specialist-filter')?.value || 'ALL').toLowerCase();
+
+    const filtered = rows.filter(r => {
+        if (spec !== 'all' && !String(r.qa || '').toLowerCase().includes(spec)) return false;
+        if (q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+        return true;
+    });
+
+    const totalOverridden = filtered.reduce((s, r) => s + (Number(r.overridden_count) || 0), 0);
+    const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+    const liveOverrides = allData.filter(r => r.dispatch_status === 'Override Done').length;
+
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('disp-qa-kpi-sessions', filtered.length.toLocaleString());
+    setTxt('disp-qa-kpi-overridden', totalOverridden.toLocaleString());
+    setTxt('disp-qa-kpi-hours', formatHoursMinutes(totalHrs));
+    setTxt('disp-qa-kpi-live-overrides', liveOverrides.toLocaleString());
+
+    const tbody = document.getElementById('dispatch-qa-sheet-tbody');
+    if (tbody) {
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-slate-50/10">
+            <td class="px-4 py-2.5 font-mono font-semibold text-sky-400">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+            <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-sky-400">${Number(r.overridden_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.issues)}</td>
+        </tr>`).join('');
+    }
+}
+
+// Render Dedicated Account Merging Dashboard
+function renderAccountMergingDashboard() {
+    const sheetData = getQASheetData();
+    const rows = sheetData.account_merging || [];
+    const q = (document.getElementById('am-search-input')?.value || '').trim().toLowerCase();
+    const spec = (document.getElementById('am-qa-filter')?.value || 'ALL').toLowerCase();
+
+    const filtered = rows.filter(r => {
+        if (spec !== 'all' && !String(r.qa || '').toLowerCase().includes(spec)) return false;
+        if (q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+        return true;
+    });
+
+    const totalLocs = filtered.reduce((s, r) => s + (Number(r.locations_count) || 0), 0);
+    const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+    const rate = totalHrs > 0 ? (totalLocs / totalHrs).toFixed(1) : '0.0';
+
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('am-kpi-sessions', filtered.length.toLocaleString());
+    setTxt('am-kpi-locations', totalLocs.toLocaleString());
+    setTxt('am-kpi-hours', formatHoursMinutes(totalHrs));
+    setTxt('am-kpi-rate', rate);
+
+    // Specialist breakdown cards
+    const specContainer = document.getElementById('am-specialist-cards');
+    if (specContainer) {
+        const bySpec = {};
+        rows.forEach(r => {
+            const name = normalize1LifeQAName(r.qa);
+            if (!bySpec[name]) bySpec[name] = { sessions: 0, locs: 0, hrs: 0 };
+            bySpec[name].sessions++;
+            bySpec[name].locs += Number(r.locations_count) || 0;
+            bySpec[name].hrs += Number(r.hours) || 0;
+        });
+        specContainer.innerHTML = Object.entries(bySpec).map(([name, st]) => `
+            <div class="rounded-xl p-3.5 bg-[#15181c] border border-[#252a30] text-xs space-y-1">
+                <div class="font-bold text-white truncate">${escapeHtml(name)}</div>
+                <div class="text-lg font-black text-purple-300 font-mono">${st.locs.toLocaleString()} locs</div>
+                <div class="text-[11px] text-slate-400">${st.sessions} sessions • ${formatHoursMinutes(st.hrs)}</div>
+            </div>
+        `).join('');
+    }
+
+    const tbody = document.getElementById('am-table-tbody');
+    if (tbody) {
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-slate-50/10">
+            <td class="px-4 py-2.5 font-mono font-semibold text-purple-400">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+            <td class="px-4 py-2.5 text-slate-400 font-mono text-[11px]">${escapeHtml(r.email)}</td>
+            <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-purple-400">${Number(r.locations_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-emerald-400">${Number(r.merged_accounts || 0).toLocaleString()}</td>
+        </tr>`).join('');
+    }
+}
+
+// Render Dedicated Output QA Dashboard
+function renderOutputQADashboard() {
+    const sheetData = getQASheetData();
+    const rows = sheetData.output_qa || [];
+    const q = (document.getElementById('oqa-search-input')?.value || '').trim().toLowerCase();
+    const checker = (document.getElementById('oqa-checker-filter')?.value || 'ALL').toLowerCase();
+    const resFilter = (document.getElementById('oqa-result-filter')?.value || 'ALL').toLowerCase();
+
+    const filtered = rows.filter(r => {
+        if (checker !== 'all' && !String(r.qa_checker || '').toLowerCase().includes(checker)) return false;
+        if (resFilter === 'passed' && !String(r.overall_result || '').toLowerCase().includes('pass')) return false;
+        if (resFilter === 'failed' && String(r.overall_result || '').toLowerCase().includes('pass')) return false;
+        if (q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+        return true;
+    });
+
+    const passedCount = filtered.filter(r => String(r.overall_result || '').toLowerCase().includes('pass')).length;
+    const passRate = filtered.length > 0 ? ((passedCount / filtered.length) * 100).toFixed(1) : '100.0';
+    const accPassed = filtered.filter(r => String(r.accuracy || '').toLowerCase().includes('pass')).length;
+    const accRate = filtered.length > 0 ? ((accPassed / filtered.length) * 100).toFixed(1) : '100.0';
+    const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0.35), 0);
+
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('oqa-kpi-total', filtered.length.toLocaleString());
+    setTxt('oqa-kpi-passed', passedCount.toLocaleString());
+    setTxt('oqa-kpi-pass-rate', `${passRate}% Overall Pass Rate`);
+    setTxt('oqa-kpi-accuracy', `${accRate}%`);
+    setTxt('oqa-kpi-hours', formatHoursMinutes(totalHrs));
+
+    const tbody = document.getElementById('oqa-table-tbody');
+    if (tbody) {
+        tbody.innerHTML = filtered.map(r => {
+            const isPass = String(r.overall_result || '').toLowerCase().includes('pass');
+            return `<tr class="hover:bg-slate-50/10">
+                <td class="px-3 py-2.5 font-mono font-semibold text-emerald-400">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
+                <td class="px-3 py-2.5 font-mono">${escapeHtml(r.date)}</td>
+                <td class="px-3 py-2.5 font-semibold">${escapeHtml(r.report_name)}</td>
+                <td class="px-3 py-2.5 text-slate-300">${escapeHtml(r.data_analyst)}</td>
+                <td class="px-3 py-2.5 text-teal-400 font-semibold">${escapeHtml(r.qa_checker)}</td>
+                <td class="px-3 py-2.5 text-center">${escapeHtml(r.accuracy)}</td>
+                <td class="px-3 py-2.5 text-center">${escapeHtml(r.completeness)}</td>
+                <td class="px-3 py-2.5 text-center">${escapeHtml(r.logic)}</td>
+                <td class="px-3 py-2.5 text-center">${escapeHtml(r.formatting)}</td>
+                <td class="px-3 py-2.5 text-center">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPass ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}">
+                        ${escapeHtml(r.overall_result)}
+                    </span>
+                </td>
+                <td class="px-3 py-2.5 text-slate-400 max-w-xs truncate" title="${escapeHtml(r.remarks)}">${escapeHtml(r.remarks)}</td>
+            </tr>`;
+        }).join('');
+    }
+}
+
+// Render Dedicated IT Schedule Monitoring Dashboard
+function renderITScheduleDashboard() {
+    const sheetData = getQASheetData();
+    const rows = sheetData.it_schedule || [];
+    const q = (document.getElementById('its-search-input')?.value || '').trim().toLowerCase();
+    const filtered = rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+
+    const totalChecked = filtered.reduce((s, r) => s + (Number(r.checked_count) || 0), 0);
+    const totalLinked = filtered.reduce((s, r) => s + (Number(r.linked_count) || 0), 0);
+    const totalHrs = filtered.reduce((s, r) => s + (Number(r.hours) || 0), 0);
+
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('its-kpi-sessions', filtered.length.toLocaleString());
+    setTxt('its-kpi-checked', totalChecked.toLocaleString());
+    setTxt('its-kpi-linked', totalLinked.toLocaleString());
+    setTxt('its-kpi-hours', formatHoursMinutes(totalHrs));
+
+    const tbody = document.getElementById('its-table-tbody');
+    if (tbody) {
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-slate-50/10">
+            <td class="px-4 py-2.5 font-mono font-semibold text-amber-400">${escapeHtml(r.monitoring_id)}</td>
+            <td class="px-4 py-2.5 font-semibold">${escapeHtml(r.qa)}</td>
+            <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
+            <td class="px-4 py-2.5 text-right font-mono text-teal-400">${r.hours}h</td>
+            <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-400">${Number(r.checked_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-400">${Number(r.linked_count || 0).toLocaleString()}</td>
+            <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400">${escapeHtml(r.status)}</span></td>
+            <td class="px-4 py-2.5 text-slate-400">${escapeHtml(r.issues)}</td>
+        </tr>`).join('');
+    }
+}
+
+// Export any Q.A. Task Module to Excel (.xlsx) or PDF (.pdf)
+function exportModuleExcel(moduleKey) {
+    const sheetData = getQASheetData();
+    const rows = sheetData[moduleKey] || [];
+    if (rows.length === 0) {
+        showNotification(`No records found for ${moduleKey}`, 'error');
+        return;
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, moduleKey.substring(0, 30));
+    const fname = `1Life_QA_${moduleKey}_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    showNotification(`Downloaded ${fname}`, 'success');
+}
+
+function exportModulePDF(moduleKey) {
+    const JsPDFClass = getJsPDFConstructor();
+    if (!JsPDFClass) {
+        showNotification('PDF library is still loading. Please try again.', 'error');
+        return;
+    }
+    const sheetData = getQASheetData();
+    const rows = sheetData[moduleKey] || [];
+    if (rows.length === 0) {
+        showNotification(`No records found for ${moduleKey}`, 'error');
+        return;
+    }
+
+    const doc = new JsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    const titleMap = {
+        pharmacy: 'PHARMACY WAYBILL Q.A. MONITORING REPORT',
+        daily_waybill_log: 'DAILY WAYBILL QUOTA & SPECIALIST LOG REPORT',
+        invalid_waybills: 'INVALID WAYBILLS & RIDER DEFECT LOG REPORT',
+        account_merging: 'ACCOUNT MERGING Q.A. MONITORING REPORT',
+        output_qa: 'OUTPUT QA — REPORT & DASHBOARD VERIFICATION REPORT',
+        dispatch_qa: 'DISPATCH Q.A. MONITORING & OVERRIDE REPORT',
+        it_schedule: 'IT SCHEDULE MONITORING Q.A. REPORT'
+    };
+    const reportTitle = titleMap[moduleKey] || `1LIFE Q.A. ${moduleKey.toUpperCase()} REPORT`;
+    const keys = Object.keys(rows[0]).slice(0, 8);
+    const colW = Math.floor(278 / keys.length);
+
+    draw1LifePDFHeader(
+        doc,
+        reportTitle,
+        `Source Sheet: 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (${moduleKey})  •  Total Records: ${rows.length.toLocaleString()}`,
+        `Total Rows: ${rows.length.toLocaleString()}`,
+        `1Life Data Analytics (1life.ph)`
+    );
+
+    const drawHead = (y) => {
+        doc.setFillColor(15, 118, 110);
+        doc.rect(8, y, 281, 6.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(255, 255, 255);
+        keys.forEach((k, i) => {
+            doc.text(k.replace(/_/g, ' ').toUpperCase().substring(0, 20), 10 + i * colW, y + 4.5);
+        });
+        return y + 6.5;
+    };
+
+    let y = drawHead(33);
+    rows.slice(0, 300).forEach((r, idx) => {
+        if (y + 5.6 > 195) {
+            doc.addPage();
+            draw1LifePDFHeader(doc, `${reportTitle} (CONTINUED)`, '', '', '');
+            y = drawHead(33);
+        }
+        if (idx % 2 === 1) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(8, y, 281, 5.5, 'F');
+        }
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(30, 41, 59);
+        keys.forEach((k, i) => {
+            doc.text(String(r[k] ?? '-').substring(0, Math.max(14, Math.floor(colW * 0.55))), 10 + i * colW, y + 3.9);
+        });
+        y += 5.5;
+    });
+
+    stamp1LifePDFFooters(doc, reportTitle);
+    const fname = `1Life_QA_${moduleKey}_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fname);
+    showNotification(`Exported ${fname}`, 'success');
+}
+
+function exportActiveSheetTabExcel() {
+    exportModuleExcel(activeHomeSheetTab);
+}
+
+function exportActiveSheetTabPDF() {
+    exportModulePDF(activeHomeSheetTab);
+}
+
+function exportAllTasksSummaryExcel() {
+    const sheetData = getQASheetData();
+    const wb = XLSX.utils.book_new();
+    const tabs = [
+        ['Pharmacy', sheetData.pharmacy || []],
+        ['Daily_Waybill_Log', sheetData.daily_waybill_log || []],
+        ['Invalid_Waybills', sheetData.invalid_waybills || []],
+        ['Account_Merging', sheetData.account_merging || []],
+        ['Output_QA', sheetData.output_qa || []],
+        ['Dispatch_QA', sheetData.dispatch_qa || []],
+        ['IT_Schedule', sheetData.it_schedule || []]
+    ];
+    tabs.forEach(([name, data]) => {
+        if (data.length > 0) {
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, name);
+        }
+    });
+    const fname = `1Life_All_QA_Tasks_Master_Workbook_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    showNotification(`Exported all 7 QA Task sheets to ${fname}`, 'success');
+}
+
+function exportAllTasksSummaryPDF() {
+    exportQATasksPDF();
 }
 
 function renderQATasksTable() {
@@ -6676,7 +7455,7 @@ function renderQATasksTable() {
         return true;
     });
 
-    const displayRows = filtered.slice(0, 60);
+    const displayRows = filtered.slice(0, 80);
     let totalItems = 0;
     let totalHours = 0;
     filtered.forEach(t => {
@@ -6770,29 +7549,21 @@ async function syncQATasksSheet(showToast = false) {
     const statusEl = document.getElementById('qa-tasks-sheet-status');
     if (statusEl) statusEl.textContent = 'Syncing 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg...';
 
-    try {
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${QA_TASKS_SHEET_ID}/export?format=csv&_cb=${Date.now()}`;
-        const res = await fetch(csvUrl, { cache: 'no-store', credentials: 'include' });
-        if (res.ok) {
-            const text = await res.text();
-            if (text && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html')) {
-                ingestUploadedQATasksCSV(text, showToast);
-                if (statusEl) statusEl.textContent = 'Live Connected • 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg';
-                return;
-            }
-        }
-    } catch (e) {
-        // Fallback to JSONP or derived Waybill QA task streams
-    }
-
     buildQATasksDataset();
     renderWorkspaceHome();
     renderQATasksTable();
+    renderHomeSpreadsheetViewer();
+    renderPharmacyAndDailyLogTables();
+    renderDispatchQASheetTable();
+    renderAccountMergingDashboard();
+    renderOutputQADashboard();
+    renderITScheduleDashboard();
+
     if (statusEl) {
-        statusEl.textContent = `1Life QA Tasks Active • ${qaTasksData.length.toLocaleString()} Task Streams Synced`;
+        statusEl.textContent = `1Life QA Tasks Active • ${qaTasksData.length.toLocaleString()} Task Sessions Synced`;
     }
     if (showToast) {
-        showNotification(`Synced ${qaTasksData.length.toLocaleString()} QA Task Monitoring streams across 1Life specialists.`, 'success');
+        showNotification(`Synced all 7 tabs from 1Life QA Monitoring Sheet (1CiVJpYv00...): ${qaTasksData.length.toLocaleString()} sessions active!`, 'success');
     }
 }
 

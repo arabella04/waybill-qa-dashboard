@@ -261,8 +261,8 @@
                     1L
                 </div>
                 <div class="sidebar-label min-w-0">
-                    <div class="text-sm font-bold text-white leading-tight truncate">1Life Data Analytics</div>
-                    <div class="text-[11px] text-slate-400 truncate">Team workspace</div>
+                    <div class="text-sm font-extrabold text-white leading-tight truncate" title="1Life Q.A Task Dashboard">1Life Q.A Task Dashboard</div>
+                    <div class="text-[11px] text-teal-400 font-medium truncate">1Life Data Analytics</div>
                 </div>
             </div>
 
@@ -271,24 +271,31 @@
                 <div class="sidebar-section-title px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                     WORKSPACE
                 </div>
-                <button type="button" onclick="switchWorkspaceNav('home')" id="side-nav-home" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold bg-[#1e2227] text-white transition">
-                    <svg class="w-4 h-4 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="sidebar-label truncate">Home</span>
+                <button type="button" onclick="switchTaskDashboard('home')" id="side-nav-home" class="sidebar-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-[#1e2227] text-white transition">
+                    <span class="flex items-center gap-3 truncate">
+                        <svg class="w-4 h-4 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span class="sidebar-label truncate">Home (All Tasks)</span>
+                    </span>
+                    <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-bold bg-teal-950 text-teal-300 border border-teal-700/40">SUMMARY</span>
+                </button>
+                <button type="button" onclick="switchWorkspaceNav('my-shift')" id="side-nav-my-shift" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-slate-200 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="sidebar-label truncate">My shift & Task Log</span>
                 </button>
                 <button type="button" onclick="switchWorkspaceNav('notes')" id="side-nav-notes" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-slate-200 transition">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="sidebar-label truncate">Notes</span>
+                    <span class="sidebar-label truncate">RTH Notes</span>
                 </button>
                 <button type="button" onclick="switchWorkspaceNav('feedback')" id="side-nav-feedback" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-slate-200 transition">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    <span class="sidebar-label truncate">Feedback</span>
+                    <span class="sidebar-label truncate">Executive Report</span>
                 </button>
             </div>
 
-            <!-- MODULES SECTION -->
+            <!-- MODULES SECTION: DEDICATED Q.A. TASK DASHBOARDS -->
             <div class="space-y-1">
                 <div class="sidebar-section-title px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                    MODULES
+                    Q.A. TASK DASHBOARDS
                 </div>
 
                 <!-- Data Quality Collapsible Parent -->
@@ -297,42 +304,64 @@
                         <span class="flex items-center gap-2.5">
                             <svg id="dq-module-chevron" class="w-3.5 h-3.5 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             <svg class="w-4 h-4 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                            <span class="sidebar-label">Data Quality</span>
+                            <span class="sidebar-label">Q.A. Tasks</span>
                         </span>
                     </button>
 
-                    <!-- Data Quality Sub-Items -->
-                    <div id="dq-module-items" class="mt-1 ml-4 pl-2.5 border-l border-[#252a30] space-y-0.5">
-                        <button type="button" onclick="switchWorkspaceNav('my-shift')" id="side-nav-my-shift" class="sidebar-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+                    <!-- Dedicated Task Dashboards List -->
+                    <div id="dq-module-items" class="mt-1 ml-3 pl-2.5 border-l border-[#252a30] space-y-1">
+                        <!-- 1. WAYBILL DASHBOARD -->
+                        <button type="button" onclick="switchTaskDashboard('waybill')" id="side-nav-task-waybill" class="sidebar-item w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
                             <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span class="sidebar-label truncate">My shift</span>
+                                <svg class="w-3.5 h-3.5 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m4 4v10M4 7v10l8 4"></path></svg>
+                                <span class="sidebar-label truncate">Waybill</span>
                             </span>
+                            <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1d232a] text-teal-300">21.1k</span>
                         </button>
-                        <button type="button" onclick="switchWorkspaceNav('records')" id="side-nav-records" class="sidebar-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+                        <!-- Waybill Quick Sub-links -->
+                        <div class="ml-4 pl-2 border-l border-[#1f242b] space-y-0.5">
+                            <button type="button" onclick="switchTaskDashboard('waybill', 'pharmacy-log')" id="side-nav-waybill-log" class="sidebar-item w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+                                <span class="sidebar-label truncate">• Pharmacy & Daily Log</span>
+                            </button>
+                            <button type="button" onclick="switchTaskDashboard('waybill', 'rth-report')" id="side-nav-invalid-waybills" class="sidebar-item w-full flex items-center justify-between px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+                                <span class="sidebar-label truncate">• Invalid Waybills (3,610)</span>
+                            </button>
+                        </div>
+
+                        <!-- 2. DISPATCH DASHBOARD -->
+                        <button type="button" onclick="switchTaskDashboard('dispatch')" id="side-nav-task-dispatch" class="sidebar-item w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
                             <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                                <span class="sidebar-label truncate">Records</span>
+                                <svg class="w-3.5 h-3.5 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                <span class="sidebar-label truncate">Dispatch</span>
                             </span>
+                            <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1d232a] text-sky-300">46</span>
                         </button>
-                        <button type="button" onclick="switchWorkspaceNav('waybill-log')" id="side-nav-waybill-log" class="sidebar-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+
+                        <!-- 3. ACCOUNT MERGING DASHBOARD -->
+                        <button type="button" onclick="switchTaskDashboard('account-merging')" id="side-nav-task-merging" class="sidebar-item w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
                             <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span class="sidebar-label truncate">Waybill log</span>
+                                <svg class="w-3.5 h-3.5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="sidebar-label truncate">Account Merging</span>
                             </span>
+                            <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1d232a] text-purple-300">115</span>
                         </button>
-                        <button type="button" onclick="switchWorkspaceNav('invalid-waybills')" id="side-nav-invalid-waybills" class="sidebar-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+
+                        <!-- 4. OUTPUT QA DASHBOARD -->
+                        <button type="button" onclick="switchTaskDashboard('output-qa')" id="side-nav-task-output-qa" class="sidebar-item w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
                             <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                <span class="sidebar-label truncate">Invalid waybills</span>
+                                <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="sidebar-label truncate">Output QA</span>
                             </span>
+                            <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1d232a] text-emerald-300">184</span>
                         </button>
-                        <button type="button" onclick="switchWorkspaceNav('qa-checks')" id="side-nav-qa-checks" class="sidebar-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
+
+                        <!-- 5. IT SCHEDULE MONITORING DASHBOARD -->
+                        <button type="button" onclick="switchTaskDashboard('it-schedule')" id="side-nav-task-it-schedule" class="sidebar-item w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-[#1a1d21] hover:text-white transition">
                             <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span class="sidebar-label truncate">QA checks</span>
+                                <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                <span class="sidebar-label truncate">IT Schedule</span>
                             </span>
-                            <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-950/90 text-amber-400 border border-amber-700/40">MAINT.</span>
+                            <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#1d232a] text-amber-300">54</span>
                         </button>
                     </div>
                 </div>
@@ -452,13 +481,13 @@
                 <div class="flex items-center gap-3 min-w-0">
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h1 class="text-sm sm:text-base font-bold tracking-tight text-white">QA Task Monitoring - 1Life Data Analytics</h1>
+                            <h1 id="main-header-dashboard-title" class="text-sm sm:text-base font-bold tracking-tight text-white">1Life Q.A Task Dashboard — All Tasks Summary</h1>
                             <span id="live-sheet-status-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span> Live Ready • 21,124 records
                             </span>
                         </div>
                         <p class="text-[11px] text-slate-300 flex items-center gap-2 flex-wrap">
-                            <span>QA Tasks Sheet: <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-teal-300 hover:text-white underline font-semibold">1CiVJpYv00...</a></span>
+                            <span>QA Tasks Sheet: <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-teal-300 hover:text-white underline font-semibold">1CiVJpYv00... (9 Tabs)</a></span>
                             <span>•</span>
                             <span>Waybills Sheet: <a href="https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/edit?usp=sharing" target="_blank" class="text-ice-200 hover:text-white underline">1l_WgHYJno...</a></span>
                             <span>•</span>
@@ -514,8 +543,8 @@
         </div>
     </header>
 
-    <!-- FILTER BAR -->
-    <section class="bg-white border-b border-slate-200/80 shadow-xs sticky top-16 z-30">
+    <!-- FILTER BAR (Shown on Waybill & Dispatch Dashboards) -->
+    <section id="waybill-filter-bar" class="bg-white border-b border-slate-200/80 shadow-xs sticky top-16 z-30 hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 
@@ -737,10 +766,221 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ======================================================================= -->
+            <!-- HOMEPAGE: ALL SUMMARIZED Q.A. TASKS (CLICK TO OPEN DEDICATED DASHBOARD) -->
+            <!-- ======================================================================= -->
+            <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#252a30] pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse"></span>
+                            <h3 class="text-base font-extrabold text-white">1Life Q.A. Task Dashboards — Summarized Overview</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Live summary of all QA tasks from <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-teal-400 underline font-semibold">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg</a>. Click any task below or in the left sidebar to open its dedicated dashboard.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="exportAllTasksSummaryExcel()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export All Sheets (.xlsx)
+                        </button>
+                        <button type="button" onclick="exportAllTasksSummaryPDF()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition flex items-center gap-1.5 shadow">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            Export Summary (.pdf)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5 Dedicated QA Task Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                    <!-- 1. WAYBILL TASK -->
+                    <div onclick="switchTaskDashboard('waybill')" class="cursor-pointer group rounded-xl p-4 bg-[#1b2026] hover:bg-[#202730] border border-[#2c343e] hover:border-teal-400/60 transition flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-teal-500/20 text-teal-300 border border-teal-500/30">1. Waybill QA</span>
+                                <span class="text-xs text-teal-400 font-bold group-hover:translate-x-0.5 transition">Open →</span>
+                            </div>
+                            <div id="sum-card-waybill-main" class="text-2xl font-black text-white font-mono mt-2">21,124</div>
+                            <div class="text-[11px] text-slate-400">Master Waybills Validated</div>
+                            <div class="mt-2.5 pt-2 border-t border-[#28303a] space-y-1 text-[11px] text-slate-300">
+                                <div class="flex justify-between"><span>Pharmacy Sheet:</span><strong id="sum-card-pharma-count" class="text-teal-300 font-mono">216 sessions</strong></div>
+                                <div class="flex justify-between"><span>Daily Waybill Log:</span><strong id="sum-card-dailylog-count" class="text-cyan-300 font-mono">70 days</strong></div>
+                                <div class="flex justify-between"><span>Invalid Waybills:</span><strong id="sum-card-invalid-count" class="text-rose-400 font-mono">3,610 logged</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-teal-400 flex items-center justify-between pt-1">
+                            <span>Waybill Dashboard</span>
+                            <span>View Task →</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. DISPATCH TASK -->
+                    <div onclick="switchTaskDashboard('dispatch')" class="cursor-pointer group rounded-xl p-4 bg-[#1b2026] hover:bg-[#202730] border border-[#2c343e] hover:border-sky-400/60 transition flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-sky-500/20 text-sky-300 border border-sky-500/30">2. Dispatch QA</span>
+                                <span class="text-xs text-sky-400 font-bold group-hover:translate-x-0.5 transition">Open →</span>
+                            </div>
+                            <div id="sum-card-dispatch-main" class="text-2xl font-black text-white font-mono mt-2">46</div>
+                            <div class="text-[11px] text-slate-400">Dispatch Monitoring Sessions</div>
+                            <div class="mt-2.5 pt-2 border-t border-[#28303a] space-y-1 text-[11px] text-slate-300">
+                                <div class="flex justify-between"><span>Sheet Overridden:</span><strong id="sum-card-dispatch-overridden" class="text-sky-300 font-mono">1,813 waybills</strong></div>
+                                <div class="flex justify-between"><span>Live Overrides:</span><strong id="sum-card-dispatch-live" class="text-emerald-300 font-mono">704 done</strong></div>
+                                <div class="flex justify-between"><span>Hours Logged:</span><strong id="sum-card-dispatch-hours" class="text-slate-200 font-mono">52.4 hrs</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-sky-400 flex items-center justify-between pt-1">
+                            <span>Dispatch Dashboard</span>
+                            <span>View Task →</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. ACCOUNT MERGING TASK -->
+                    <div onclick="switchTaskDashboard('account-merging')" class="cursor-pointer group rounded-xl p-4 bg-[#1b2026] hover:bg-[#202730] border border-[#2c343e] hover:border-purple-400/60 transition flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">3. Account Merging</span>
+                                <span class="text-xs text-purple-400 font-bold group-hover:translate-x-0.5 transition">Open →</span>
+                            </div>
+                            <div id="sum-card-merging-main" class="text-2xl font-black text-white font-mono mt-2">115</div>
+                            <div class="text-[11px] text-slate-400">Account Merging Sessions</div>
+                            <div class="mt-2.5 pt-2 border-t border-[#28303a] space-y-1 text-[11px] text-slate-300">
+                                <div class="flex justify-between"><span>Locations Checked:</span><strong id="sum-card-merging-locs" class="text-purple-300 font-mono">10,130 locs</strong></div>
+                                <div class="flex justify-between"><span>Hours Worked:</span><strong id="sum-card-merging-hours" class="text-emerald-300 font-mono">108.9 hrs</strong></div>
+                                <div class="flex justify-between"><span>Active QAs:</span><strong class="text-slate-200 font-mono">5 Specialists</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-purple-400 flex items-center justify-between pt-1">
+                            <span>Account Merging Dashboard</span>
+                            <span>View Task →</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. OUTPUT QA TASK -->
+                    <div onclick="switchTaskDashboard('output-qa')" class="cursor-pointer group rounded-xl p-4 bg-[#1b2026] hover:bg-[#202730] border border-[#2c343e] hover:border-emerald-400/60 transition flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">4. Output QA</span>
+                                <span class="text-xs text-emerald-400 font-bold group-hover:translate-x-0.5 transition">Open →</span>
+                            </div>
+                            <div id="sum-card-outputqa-main" class="text-2xl font-black text-white font-mono mt-2">184</div>
+                            <div class="text-[11px] text-slate-400">Reports & Dashboards Audited</div>
+                            <div class="mt-2.5 pt-2 border-t border-[#28303a] space-y-1 text-[11px] text-slate-300">
+                                <div class="flex justify-between"><span>Passed Audits:</span><strong id="sum-card-outputqa-pass" class="text-emerald-300 font-mono">171 Passed</strong></div>
+                                <div class="flex justify-between"><span>Accuracy / Logic:</span><strong class="text-teal-300 font-mono">98.4% Pass</strong></div>
+                                <div class="flex justify-between"><span>Analysts Audited:</span><strong class="text-slate-200 font-mono">Data Team</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-emerald-400 flex items-center justify-between pt-1">
+                            <span>Output QA Dashboard</span>
+                            <span>View Task →</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. IT SCHEDULE MONITORING TASK -->
+                    <div onclick="switchTaskDashboard('it-schedule')" class="cursor-pointer group rounded-xl p-4 bg-[#1b2026] hover:bg-[#202730] border border-[#2c343e] hover:border-amber-400/60 transition flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">5. IT Schedule</span>
+                                <span class="text-xs text-amber-400 font-bold group-hover:translate-x-0.5 transition">Open →</span>
+                            </div>
+                            <div id="sum-card-itsched-main" class="text-2xl font-black text-white font-mono mt-2">54</div>
+                            <div class="text-[11px] text-slate-400">IT Schedule QA Sessions</div>
+                            <div class="mt-2.5 pt-2 border-t border-[#28303a] space-y-1 text-[11px] text-slate-300">
+                                <div class="flex justify-between"><span>Schedules Checked:</span><strong id="sum-card-itsched-checked" class="text-amber-300 font-mono">10,771</strong></div>
+                                <div class="flex justify-between"><span>Schedules Linked:</span><strong id="sum-card-itsched-linked" class="text-emerald-300 font-mono">8,953</strong></div>
+                                <div class="flex justify-between"><span>Hours Logged:</span><strong id="sum-card-itsched-hours" class="text-slate-200 font-mono">45.0 hrs</strong></div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-bold text-amber-400 flex items-center justify-between pt-1">
+                            <span>IT Schedule Dashboard</span>
+                            <span>View Task →</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================================= -->
+            <!-- LIVE GOOGLE SPREADSHEET MULTI-TAB DATA VIEWER (SCREENSHOT 2 TABS)       -->
+            <!-- ======================================================================= -->
+            <div class="rounded-2xl bg-[#15181c] border border-[#252a30] shadow-sm overflow-hidden">
+                <!-- Header & Sheet Tab Pills -->
+                <div class="p-4 border-b border-[#252a30] space-y-3">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-teal-500/20 text-teal-300 border border-teal-500/30">Live Excel Data</span>
+                                <h3 class="text-sm font-bold text-white">Q.A. Monitoring Spreadsheet Explorer (All 7 Operational Tabs)</h3>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Directly viewing live records from <code class="text-teal-300 font-mono">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg</code> — select any sheet tab below or search across rows.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="text" id="home-excel-search" oninput="renderHomeSpreadsheetViewer()" placeholder="Search ID, QA, Waybill #, Ticket, Issue..." class="px-3 py-1.5 rounded-lg bg-[#1d2228] border border-[#2e3540] text-xs text-white focus:outline-none focus:border-teal-400 w-56">
+                            <select id="home-excel-qa-filter" onchange="renderHomeSpreadsheetViewer()" class="px-2.5 py-1.5 rounded-lg bg-[#1d2228] border border-[#2e3540] text-xs text-white">
+                                <option value="ALL">All QA Team Members</option>
+                                <option value="Arabella">Arabella Morales</option>
+                                <option value="Julius">Julius Rod Dayag</option>
+                                <option value="Yesha">Yesha Nicholai Lao</option>
+                                <option value="Janryl">Janryl Jay Canaway</option>
+                                <option value="John Michael">John Michael Francisco</option>
+                            </select>
+                            <button type="button" onclick="exportActiveSheetTabExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+                                Export Tab (.xlsx)
+                            </button>
+                            <button type="button" onclick="exportActiveSheetTabPDF()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition">
+                                Export Tab (.pdf)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Google Sheet Bottom-Style Tab Bar (Matches Screenshot 2: Pharmacy | Daily Waybill Log | Invalid Waybills | Account Merging | IT Schedule Monitoring | Output QA | Dispatch) -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5">
+                        <button type="button" onclick="selectHomeSheetTab('pharmacy')" id="sheet-tab-btn-pharmacy" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-slate-950 transition whitespace-nowrap">
+                            Pharmacy (216)
+                        </button>
+                        <button type="button" onclick="selectHomeSheetTab('daily_waybill_log')" id="sheet-tab-btn-daily_waybill_log" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap">
+                            Daily Waybill Log (70)
+                        </button>
+                        <button type="button" onclick="selectHomeSheetTab('invalid_waybills')" id="sheet-tab-btn-invalid_waybills" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap">
+                            Invalid Waybills (3,610)
+                        </button>
+                        <button type="button" onclick="selectHomeSheetTab('account_merging')" id="sheet-tab-btn-account_merging" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap">
+                            Account Merging (115)
+                        </button>
+                        <button type="button" onclick="selectHomeSheetTab('it_schedule')" id="sheet-tab-btn-it_schedule" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap">
+                            IT Schedule Monitoring (54)
+                        </button>
+                        <button type="button" onclick="selectHomeSheetTab('output_qa')" id="sheet-tab-btn-output_qa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap">
+                            Output QA (184)
+                        </button>
+                        <button type="button" onclick="selectHomeSheetTab('dispatch_qa')" id="sheet-tab-btn-dispatch_qa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d2228] text-slate-300 hover:text-white transition whitespace-nowrap">
+                            Dispatch (46)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Spreadsheet Table Container -->
+                <div class="overflow-x-auto max-h-[460px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead id="home-excel-thead" class="bg-[#1b2026] text-slate-300 uppercase text-[11px] sticky top-0 z-10 border-b border-[#2c343e]">
+                        </thead>
+                        <tbody id="home-excel-tbody" class="divide-y divide-[#232830] text-slate-200">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-4 py-2.5 bg-[#1b2026] border-t border-[#252a30] flex items-center justify-between text-[11px] text-slate-400">
+                    <span id="home-excel-footer-count">Showing live records from Q.A. Monitoring Spreadsheet</span>
+                    <span>Source: 1Life Q.A. Task Monitoring Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)</span>
+                </div>
+            </div>
         </section>
 
-        <!-- KPI SUMMARY CARDS -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- KPI SUMMARY CARDS (Waybill Task Dashboard) -->
+        <section id="waybill-kpi-cards-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hidden">
 
             <!-- Card 1: Total Waybills -->
             <div class="bg-white rounded-2xl p-5 border border-ice-100 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
@@ -829,8 +1069,8 @@
 
         </section>
 
-        <!-- PROCESS FUNNEL PIPELINE -->
-        <section class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+        <!-- PROCESS FUNNEL PIPELINE (Waybill Task Dashboard) -->
+        <section id="waybill-pipeline-section" class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hidden">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs">
@@ -884,25 +1124,21 @@
             </div>
         </section>
 
-        <!-- NAVIGATION TABS -->
-        <div class="border-b border-slate-200 bg-white rounded-t-xl px-2 pt-2 shadow-xs">
+        <!-- WAYBILL NAVIGATION TABS -->
+        <div id="waybill-nav-tabs-bar" class="border-b border-slate-200 bg-white rounded-t-xl px-2 pt-2 shadow-xs hidden">
             <nav class="flex space-x-1 sm:space-x-3 overflow-x-auto">
                 <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg transition whitespace-nowrap" data-tab="overview">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Overview & Trends
+                    Waybill Overview & Trends
                 </button>
-                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="my-shift">
-                    <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    All QA Tasks (My Shift)
-                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-400 border border-teal-500/30">1Life Sheet</span>
+                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="pharmacy-log">
+                    <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Pharmacy & Daily Waybill Log
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-400 border border-teal-500/30">Excel Sheet</span>
                 </button>
                 <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="qa-report">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    QA Performance Report
-                </button>
-                <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="dispatch-report">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                    Dispatch Team Report
+                    Waybill QA Performance
                 </button>
                 <button class="nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition whitespace-nowrap" data-tab="waybills">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
@@ -1221,9 +1457,97 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- TAB 3: DISPATCH TEAM REPORT                    -->
+        <!-- TAB 3: DISPATCH TASK DASHBOARD                 -->
         <!-- ============================================== -->
         <div id="tab-dispatch-report" class="tab-panel hidden space-y-6">
+            <!-- Dedicated Dispatch Task Header Banner -->
+            <div class="bg-gradient-to-r from-[#0c4a6e] via-[#0369a1] to-[#0284c7] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-sky-400/30">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-400/20 text-sky-200 border border-sky-400/30">
+                        <span class="w-2 h-2 rounded-full bg-sky-300 animate-pulse"></span>
+                        <span>1Life Q.A Task Dashboard • Dispatch Module</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-white">Dispatch Q.A. Monitoring & Override Dashboard</h2>
+                    <p class="text-xs text-sky-100 max-w-2xl">
+                        Live Dispatch Q.A. Monitoring logs from <code class="font-mono text-white">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (Dispatch Tab)</code> combined with Dispatch Team Waybill Override resolution metrics.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportModuleExcel('dispatch_qa')" class="inline-flex items-center text-xs font-bold px-3.5 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 shadow transition">
+                        Export Dispatch Sheet (.xlsx)
+                    </button>
+                    <button onclick="exportModulePDF('dispatch_qa')" class="inline-flex items-center text-xs font-bold px-3.5 py-2 bg-rose-600 text-white rounded-xl hover:bg-rose-700 shadow transition">
+                        Export Dispatch Sheet (.pdf)
+                    </button>
+                    <button onclick="exportDispatchReportPDF()" class="inline-flex items-center text-xs font-semibold px-3 py-2 bg-white/15 text-white rounded-xl hover:bg-white/25 border border-white/25 transition">
+                        Override Scorecard (.pdf)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Dispatch Task KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-sky-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Dispatch QA Sessions</div>
+                    <div id="disp-qa-kpi-sessions" class="text-3xl font-black text-white font-mono mt-2">46</div>
+                    <div class="text-xs text-sky-400 mt-1">Logged in Dispatch Sheet</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-teal-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Overridden Waybills (Sheet)</div>
+                    <div id="disp-qa-kpi-overridden" class="text-3xl font-black text-teal-300 font-mono mt-2">1,813</div>
+                    <div class="text-xs text-slate-400 mt-1">Total # of Overridden Waybills</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-emerald-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Hours Worked</div>
+                    <div id="disp-qa-kpi-hours" class="text-3xl font-black text-emerald-300 font-mono mt-2">52h 24m</div>
+                    <div class="text-xs text-slate-400 mt-1">Dispatch QA Monitoring Time</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-indigo-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Waybill Sheet Overrides</div>
+                    <div id="disp-qa-kpi-live-overrides" class="text-3xl font-black text-indigo-300 font-mono mt-2">704</div>
+                    <div class="text-xs text-slate-400 mt-1">Danica, Daniel & Kim</div>
+                </div>
+            </div>
+
+            <!-- Dispatch Q.A. Monitoring Excel Sheet Table (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg) -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Dispatch Q.A. Monitoring Records (Excel Sheet Data)</h3>
+                        <p class="text-xs text-slate-500">All 46 Dispatch QA sessions from <code class="font-mono text-sky-400">Dispatch</code> tab in <code class="font-mono">1CiVJpYv00...</code></p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <input type="text" id="dispatch-qa-search" oninput="renderDispatchQASheetTable()" placeholder="Search DISPATCH ID, QA, Scope, Issues..." class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 w-56">
+                        <select id="dispatch-qa-specialist-filter" onchange="renderDispatchQASheetTable()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
+                            <option value="ALL">All QA Specialists</option>
+                            <option value="Arabella">Arabella Morales</option>
+                            <option value="Julius">Julius Rod Dayag</option>
+                            <option value="Yesha">Yesha Nicholai Lao</option>
+                            <option value="Janryl">Janryl Jay Canaway</option>
+                            <option value="John Michael">John Michael Francisco</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[420px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-[11px] border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3">Monitoring ID</th>
+                                <th class="px-4 py-3">Q.A. Specialist</th>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3">Time Started - Ended</th>
+                                <th class="px-4 py-3 text-right">Hours</th>
+                                <th class="px-4 py-3">Scope</th>
+                                <th class="px-4 py-3 text-right"># Overridden Waybills</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3">Issues Encountered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dispatch-qa-sheet-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="bg-sky-50/60 border border-sky-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h3 class="text-sm font-bold text-sky-900">Dispatch Team Override & Resolution Scorecard</h3>
@@ -2120,6 +2444,364 @@
             </div>
         </div>
 
+        <!-- ============================================================== -->
+        <!-- TAB: PHARMACY & DAILY WAYBILL LOG (WAYBILL TASK SUB-VIEW)      -->
+        <!-- ============================================================== -->
+        <div id="tab-pharmacy-log" class="tab-panel hidden space-y-6">
+            <div class="bg-gradient-to-r from-[#0f2926] via-[#115e59] to-[#0d9488] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-teal-500/30">
+                <div class="space-y-1">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-400/20 text-teal-200 border border-teal-400/30">
+                        1Life Q.A Task Dashboard • Waybill Module (Spreadsheet Tabs 1, 2 & 3)
+                    </span>
+                    <h2 class="text-xl font-extrabold text-white">Pharmacy Waybill QA, Daily Waybill Log & Invalid Waybills</h2>
+                    <p class="text-xs text-teal-100 max-w-2xl">
+                        Directly synced from <code class="font-mono text-white">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg</code> — includes Pharmacy Validation Sessions (216), Daily Waybill Quota Log (70 days), and Invalid Waybills Log (3,610).
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportModuleExcel('pharmacy')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+                        Export Pharmacy (.xlsx)
+                    </button>
+                    <button onclick="exportModulePDF('pharmacy')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow transition">
+                        Export Pharmacy (.pdf)
+                    </button>
+                    <button onclick="exportModuleExcel('daily_waybill_log')" class="px-3 py-2 rounded-xl text-xs font-bold bg-teal-950/80 hover:bg-teal-950 text-teal-200 border border-teal-400/30 transition">
+                        Daily Log (.xlsx)
+                    </button>
+                    <button onclick="exportModulePDF('daily_waybill_log')" class="px-3 py-2 rounded-xl text-xs font-bold bg-teal-950/80 hover:bg-teal-950 text-rose-200 border border-rose-400/30 transition">
+                        Daily Log (.pdf)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Daily Waybill Quota Log Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Daily Waybill Log (Quota & Specialist Daily Output — 70 Days)</h3>
+                        <p class="text-xs text-slate-500">Arabella Morales, Janryl Jay Canaway, John Michael Francisco, Julius Rod Dayag, Yesha Nicholai Lao</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[360px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-[11px] border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2.5">Date</th>
+                                <th class="px-3 py-2.5 text-right">Total Waybills</th>
+                                <th class="px-3 py-2.5 text-right">Quota %</th>
+                                <th class="px-3 py-2.5 text-right">Target / QA</th>
+                                <th class="px-3 py-2.5 text-right">Arabella</th>
+                                <th class="px-3 py-2.5 text-right">Janryl</th>
+                                <th class="px-3 py-2.5 text-right">John Michael</th>
+                                <th class="px-3 py-2.5 text-right">Julius</th>
+                                <th class="px-3 py-2.5 text-right">Yesha</th>
+                                <th class="px-3 py-2.5 text-right font-bold">Total Validated</th>
+                                <th class="px-3 py-2.5 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-waybill-log-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pharmacy Waybill Validation Sessions Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Pharmacy Waybill Q.A. Monitoring (216 Sessions)</h3>
+                        <p class="text-xs text-slate-500">MonitoringID (`PHARMA2026...`), Q.A. Specialist, Scope, Validated Waybills & Issues Encountered</p>
+                    </div>
+                    <input type="text" id="pharmacy-sheet-search" oninput="renderPharmacyAndDailyLogTables()" placeholder="Search PHARMA ID, QA, Scope, Issues..." class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs w-64">
+                </div>
+                <div class="overflow-x-auto max-h-[420px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-[11px] border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3">Monitoring ID</th>
+                                <th class="px-4 py-3">Q.A. Specialist</th>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3">Time Started - Ended</th>
+                                <th class="px-4 py-3 text-right">Hours</th>
+                                <th class="px-4 py-3">Scope</th>
+                                <th class="px-4 py-3 text-right"># Validated</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3">Issues Encountered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pharmacy-sheet-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- DEDICATED TASK DASHBOARD 3: ACCOUNT MERGING Q.A. DASHBOARD     -->
+        <!-- ============================================================== -->
+        <div id="tab-account-merging" class="tab-panel hidden space-y-6">
+            <div class="bg-gradient-to-r from-[#2e1065] via-[#581c87] to-[#7e22ce] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-purple-400/30">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-400/20 text-purple-200 border border-purple-400/30">
+                        <span class="w-2 h-2 rounded-full bg-purple-300 animate-pulse"></span>
+                        <span>1Life Q.A Task Dashboard • Account Merging Module</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-white">Account Merging Q.A. Monitoring Dashboard</h2>
+                    <p class="text-xs text-purple-100 max-w-2xl">
+                        Dedicated dashboard for Account Merging QA checks (`MERGING2026...`) from <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="underline font-bold text-white">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (Account Merging Tab)</a>.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportModuleExcel('account_merging')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+                        Export Account Merging (.xlsx)
+                    </button>
+                    <button onclick="exportModulePDF('account_merging')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow transition">
+                        Export Account Merging (.pdf)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Account Merging KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-purple-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Merging QA Sessions</div>
+                    <div id="am-kpi-sessions" class="text-3xl font-black text-white font-mono mt-2">115</div>
+                    <div class="text-xs text-purple-300 mt-1">Total MERGING2026 Logs</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-teal-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Locations Checked</div>
+                    <div id="am-kpi-locations" class="text-3xl font-black text-teal-300 font-mono mt-2">10,130</div>
+                    <div class="text-xs text-slate-400 mt-1">Barangays / Municipalities Audited</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-emerald-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Hours Worked</div>
+                    <div id="am-kpi-hours" class="text-3xl font-black text-emerald-300 font-mono mt-2">108h 56m</div>
+                    <div class="text-xs text-slate-400 mt-1">Across All Merging Audits</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-amber-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Avg Locations / Hour</div>
+                    <div id="am-kpi-rate" class="text-3xl font-black text-amber-300 font-mono mt-2">93.0</div>
+                    <div class="text-xs text-slate-400 mt-1">Locations Checked per Hour</div>
+                </div>
+            </div>
+
+            <!-- Account Merging Specialist Summary Row -->
+            <div id="am-specialist-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+
+            <!-- Account Merging Full Spreadsheet Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Account Merging Q.A. Monitoring Spreadsheet Data (115 Records)</h3>
+                        <p class="text-xs text-slate-500">Live records from <code class="font-mono text-purple-400">Account Merging</code> tab in <code class="font-mono">1CiVJpYv00...</code></p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <input type="text" id="am-search-input" oninput="renderAccountMergingDashboard()" placeholder="Search MERGING ID, QA, Location..." class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 w-56">
+                        <select id="am-qa-filter" onchange="renderAccountMergingDashboard()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
+                            <option value="ALL">All QA Specialists</option>
+                            <option value="Arabella">Arabella Morales</option>
+                            <option value="Julius">Julius Rod Dayag</option>
+                            <option value="Yesha">Yesha Nicholai Lao</option>
+                            <option value="Janryl">Janryl Jay Canaway</option>
+                            <option value="John Michael">John Michael Francisco</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[520px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-[11px] border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3">Monitoring ID</th>
+                                <th class="px-4 py-3">Q.A. Specialist</th>
+                                <th class="px-4 py-3">Email</th>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3">Time Started - Ended</th>
+                                <th class="px-4 py-3 text-right">Hours</th>
+                                <th class="px-4 py-3">Locations Checked</th>
+                                <th class="px-4 py-3 text-right"># Locations Checked</th>
+                                <th class="px-4 py-3 text-right"># Merged Accounts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="am-table-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- DEDICATED TASK DASHBOARD 4: OUTPUT QA DASHBOARD                -->
+        <!-- ============================================================== -->
+        <div id="tab-output-qa" class="tab-panel hidden space-y-6">
+            <div class="bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#0d9488] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-emerald-400/30">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+                        <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                        <span>1Life Q.A Task Dashboard • Output QA Module</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-white">Output QA — Report & Dashboard Verification Hub</h2>
+                    <p class="text-xs text-emerald-100 max-w-2xl">
+                        Dedicated dashboard for Data Analytics Output QA (`OUTPUTQA2026...` / `TicketNumber`) from <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="underline font-bold text-white">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (Output QA Tab)</a>.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportModuleExcel('output_qa')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+                        Export Output QA (.xlsx)
+                    </button>
+                    <button onclick="exportModulePDF('output_qa')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow transition">
+                        Export Output QA (.pdf)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Output QA KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-emerald-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Reports Audited</div>
+                    <div id="oqa-kpi-total" class="text-3xl font-black text-white font-mono mt-2">184</div>
+                    <div class="text-xs text-emerald-300 mt-1">Tickets & Dashboards Checked</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-teal-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Overall Passed Audits</div>
+                    <div id="oqa-kpi-passed" class="text-3xl font-black text-teal-300 font-mono mt-2">171</div>
+                    <div id="oqa-kpi-pass-rate" class="text-xs text-slate-400 mt-1">92.9% Overall Pass Rate</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-cyan-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Accuracy & Logic Pass</div>
+                    <div id="oqa-kpi-accuracy" class="text-3xl font-black text-cyan-300 font-mono mt-2">97.8%</div>
+                    <div class="text-xs text-slate-400 mt-1">Data Accuracy & Calculation</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-amber-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total QA Audit Hours</div>
+                    <div id="oqa-kpi-hours" class="text-3xl font-black text-amber-300 font-mono mt-2">68h 30m</div>
+                    <div class="text-xs text-slate-400 mt-1">Logged across QA Checkers</div>
+                </div>
+            </div>
+
+            <!-- Output QA Full Spreadsheet Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Output QA Spreadsheet Records (184 Reports & Dashboards)</h3>
+                        <p class="text-xs text-slate-500">TicketNumber, Report / Dashboard, Data Analyst, QA Checker, Accuracy, Completeness, Logic, Formatting & Remarks</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <input type="text" id="oqa-search-input" oninput="renderOutputQADashboard()" placeholder="Search Ticket #, Report, Analyst, Remarks..." class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 w-56">
+                        <select id="oqa-checker-filter" onchange="renderOutputQADashboard()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
+                            <option value="ALL">All QA Checkers</option>
+                            <option value="Arabella">Arabella Morales</option>
+                            <option value="Julius">Julius Rod Dayag</option>
+                            <option value="Yesha">Yesha Nicholai Lao</option>
+                            <option value="Janryl">Janryl Jay Canaway</option>
+                            <option value="John Michael">John Michael Francisco</option>
+                        </select>
+                        <select id="oqa-result-filter" onchange="renderOutputQADashboard()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50">
+                            <option value="ALL">All Results</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed / For Revision</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[540px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-[11px] border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-3">Ticket #</th>
+                                <th class="px-3 py-3">Date</th>
+                                <th class="px-3 py-3">Report / Dashboard</th>
+                                <th class="px-3 py-3">Data Analyst</th>
+                                <th class="px-3 py-3">QA Checker</th>
+                                <th class="px-3 py-3 text-center">Accuracy</th>
+                                <th class="px-3 py-3 text-center">Completeness</th>
+                                <th class="px-3 py-3 text-center">Logic</th>
+                                <th class="px-3 py-3 text-center">Formatting</th>
+                                <th class="px-3 py-3 text-center">Overall Result</th>
+                                <th class="px-3 py-3">Findings / Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="oqa-table-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- DEDICATED TASK DASHBOARD 5: IT SCHEDULE MONITORING DASHBOARD   -->
+        <!-- ============================================================== -->
+        <div id="tab-it-schedule" class="tab-panel hidden space-y-6">
+            <div class="bg-gradient-to-r from-[#78350f] via-[#b45309] to-[#d97706] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-amber-400/30">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400/20 text-amber-100 border border-amber-400/30">
+                        <span class="w-2 h-2 rounded-full bg-amber-300 animate-pulse"></span>
+                        <span>1Life Q.A Task Dashboard • IT Schedule Monitoring Module</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-white">IT Schedule Monitoring Q.A. Dashboard</h2>
+                    <p class="text-xs text-amber-100 max-w-2xl">
+                        Dedicated dashboard for IT Schedule Monitoring QA (`ITSCHED2026...`) from <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="underline font-bold text-white">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (IT Schedule Monitoring Tab)</a>.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportModuleExcel('it_schedule')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+                        Export IT Schedule (.xlsx)
+                    </button>
+                    <button onclick="exportModulePDF('it_schedule')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow transition">
+                        Export IT Schedule (.pdf)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 IT Schedule KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-amber-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">IT Schedule Sessions</div>
+                    <div id="its-kpi-sessions" class="text-3xl font-black text-white font-mono mt-2">54</div>
+                    <div class="text-xs text-amber-300 mt-1">Total ITSCHED2026 Logs</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-teal-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Schedules Checked</div>
+                    <div id="its-kpi-checked" class="text-3xl font-black text-teal-300 font-mono mt-2">10,771</div>
+                    <div class="text-xs text-slate-400 mt-1"># of Checked Runs</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-emerald-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Schedules Linked</div>
+                    <div id="its-kpi-linked" class="text-3xl font-black text-emerald-300 font-mono mt-2">8,953</div>
+                    <div class="text-xs text-slate-400 mt-1"># of Linked Runs</div>
+                </div>
+                <div class="rounded-2xl p-5 bg-[#15181c] border border-[#252a30] border-t-2 border-t-sky-400 text-white">
+                    <div class="text-xs font-semibold text-slate-400 uppercase">Total Hours Logged</div>
+                    <div id="its-kpi-hours" class="text-3xl font-black text-sky-300 font-mono mt-2">45h 00m</div>
+                    <div class="text-xs text-slate-400 mt-1">Across QA Specialists</div>
+                </div>
+            </div>
+
+            <!-- IT Schedule Spreadsheet Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">IT Schedule Monitoring Spreadsheet Records (54 Sessions)</h3>
+                        <p class="text-xs text-slate-500">MonitoringID, Q.A. Specialist, Scope, # Checked, # Linked, Status & Issues Encountered</p>
+                    </div>
+                    <input type="text" id="its-search-input" oninput="renderITScheduleDashboard()" placeholder="Search ITSCHED ID, QA, Scope, Issues..." class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs w-64">
+                </div>
+                <div class="overflow-x-auto max-h-[520px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase text-[11px] border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3">Monitoring ID</th>
+                                <th class="px-4 py-3">Q.A. Specialist</th>
+                                <th class="px-4 py-3">Date</th>
+                                <th class="px-4 py-3">Time Started - Ended</th>
+                                <th class="px-4 py-3 text-right">Hours</th>
+                                <th class="px-4 py-3">Scope</th>
+                                <th class="px-4 py-3 text-right"># of Checked</th>
+                                <th class="px-4 py-3 text-right"># of Linked</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3">Issues Encountered</th>
+                            </tr>
+                        </thead>
+                        <tbody id="its-table-tbody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- FOOTER (Screenshot 1 update: QA Task Monitoring - 1Life Data Analytics) -->
@@ -2203,6 +2885,7 @@
 
     <!-- Scripts -->
     <script src="data.js"></script>
+    <script src="qa_tasks_data.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
