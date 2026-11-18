@@ -7113,6 +7113,513 @@ function renderWorkspaceHome() {
             `;
         }).join('');
     }
+
+    if (typeof initHomeCustomReportControls === 'function') {
+        initHomeCustomReportControls();
+    }
+}
+
+// ============================================================================
+// HOMEPAGE: CUSTOM HOME TASK REPORT BUILDER (PER WEEK / SPECIFIC DATE / TASK / QA)
+// ============================================================================
+
+function getMondayOfWeek(d) {
+    const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const day = dt.getDay();
+    const diff = (day === 0 ? -6 : 1) - day; // Monday start
+    dt.setDate(dt.getDate() + diff);
+    return dt;
+}
+
+function fmtIsoYMD(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function initHomeCustomReportControls() {
+    if (!qaTasksData || qaTasksData.length === 0) buildQATasksDataset();
+
+    const weekSel = document.getElementById('home-cr-week-select');
+    const dateSel = document.getElementById('home-cr-specific-date');
+    const startEl = document.getElementById('home-cr-start-date');
+    const endEl = document.getElementById('home-cr-end-date');
+
+    const dateMap = new Map();
+    const weekMap = new Map();
+
+    (qaTasksData || []).forEach(t => {
+        if (!t.date) return;
+        const dObj = parseSlashDate(t.date);
+        if (!dObj) return;
+        const ymd = fmtIsoYMD(dObj);
+        if (!dateMap.has(ymd)) {
+            dateMap.set(ymd, { ymd, slash: t.date, ts: dObj.getTime(), label: dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
+        }
+        const mon = getMondayOfWeek(dObj);
+        const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+        const wKey = `${fmtIsoYMD(mon)}|${fmtIsoYMD(sun)}`;
+        if (!weekMap.has(wKey)) {
+            const mLbl = mon.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const sLbl = sun.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            weekMap.set(wKey, { key: wKey, ts: mon.getTime(), label: `${mLbl} – ${sLbl}` });
+        }
+    });
+
+    const sortedWeeks = Array.from(weekMap.values()).sort((a, b) => b.ts - a.ts);
+    const sortedDates = Array.from(dateMap.values()).sort((a, b) => b.ts - a.ts);
+
+    if (weekSel && sortedWeeks.length > 0) {
+        const prev = weekSel.value;
+        weekSel.innerHTML = sortedWeeks.map(w => `<option value="${w.key}">${w.label}</option>`).join('');
+        if (prev && sortedWeeks.some(w => w.key === prev)) weekSel.value = prev;
+    }
+
+    if (dateSel && sortedDates.length > 0) {
+        const prev = dateSel.value;
+        dateSel.innerHTML = sortedDates.map(d => `<option value="${d.ymd}">${d.label} (${d.slash})</option>`).join('');
+        if (prev && sortedDates.some(d => d.ymd === prev)) dateSel.value = prev;
+    }
+
+    if (startEl && !startEl.value && sortedDates.length > 0) {
+        startEl.value = sortedDates[Math.min(6, sortedDates.length - 1)].ymd;
+    }
+    if (endEl && !endEl.value && sortedDates.length > 0) {
+        endEl.value = sortedDates[0].ymd;
+    }
+
+    updateHomeCustomReportPreview();
+}
+
+function onHomeCustomDateModeChange() {
+    const mode = document.getElementById('home-cr-date-mode')?.value || 'all';
+    const allHint = document.getElementById('home-cr-all-hint');
+    const weekSel = document.getElementById('home-cr-week-select');
+    const dateSel = document.getElementById('home-cr-specific-date');
+    const rangeWrap = document.getElementById('home-cr-range-wrap');
+    const lbl = document.getElementById('home-cr-date-value-label');
+
+    if (allHint) allHint.classList.toggle('hidden', mode !== 'all');
+    if (weekSel) weekSel.classList.toggle('hidden', mode !== 'week');
+    if (dateSel) dateSel.classList.toggle('hidden', mode !== 'date');
+    if (rangeWrap) rangeWrap.classList.toggle('hidden', mode !== 'range');
+
+    if (lbl) {
+        lbl.textContent = mode === 'week' ? 'Select Week'
+            : mode === 'date' ? 'Select Specific Date'
+            : mode === 'range' ? 'Start & End Date'
+            : 'Period Scope';
+    }
+    updateHomeCustomReportPreview();
+}
+
+function getHomeCustomFilteredDataset() {
+    if (!qaTasksData || qaTasksData.length === 0) buildQATasksDataset();
+
+    const dateMode = document.getElementById('home-cr-date-mode')?.value || 'all';
+    const weekSel = document.getElementById('home-cr-week-select');
+    const dateSel = document.getElementById('home-cr-specific-date');
+    const startVal = document.getElementById('home-cr-start-date')?.value || '';
+    const endVal = document.getElementById('home-cr-end-date')?.value || '';
+    const taskFilter = document.getElementById('home-cr-task')?.value || 'ALL';
+    const qaFilter = document.getElementById('home-cr-qa')?.value || 'ALL';
+
+    let dateLabel = 'All Dates (Overall)';
+    let minYmd = '';
+    let maxYmd = '';
+
+    if (dateMode === 'week' && weekSel && weekSel.value) {
+        const parts = weekSel.value.split('|');
+        minYmd = parts[0] || '';
+        maxYmd = parts[1] || '';
+        dateLabel = `Week: ${weekSel.options[weekSel.selectedIndex]?.text || weekSel.value}`;
+    } else if (dateMode === 'date' && dateSel && dateSel.value) {
+        minYmd = dateSel.value;
+        maxYmd = dateSel.value;
+        dateLabel = `Date: ${dateSel.options[dateSel.selectedIndex]?.text || dateSel.value}`;
+    } else if (dateMode === 'range') {
+        minYmd = startVal;
+        maxYmd = endVal;
+        dateLabel = `Range: ${minYmd || 'Start'} to ${maxYmd || 'End'}`;
+    }
+
+    const filtered = (qaTasksData || []).filter(t => {
+        if (taskFilter !== 'ALL' && t.category !== taskFilter) return false;
+        if (qaFilter !== 'ALL' && t.specialist.toLowerCase() !== qaFilter.toLowerCase()) return false;
+        if (dateMode !== 'all') {
+            const dObj = parseSlashDate(t.date);
+            if (!dObj) return false;
+            const ymd = fmtIsoYMD(dObj);
+            if (minYmd && ymd < minYmd) return false;
+            if (maxYmd && ymd > maxYmd) return false;
+        }
+        return true;
+    });
+
+    let totalHours = 0;
+    let totalItems = 0;
+    const byModule = {};
+    const bySpecialist = {};
+
+    filtered.forEach(t => {
+        const h = Number(t.hours) || 0;
+        const it = Number(t.items) || 0;
+        totalHours += h;
+        totalItems += it;
+
+        const mod = t.category || 'Other';
+        if (!byModule[mod]) byModule[mod] = { name: mod, sessions: 0, hours: 0, items: 0 };
+        byModule[mod].sessions += 1;
+        byModule[mod].hours += h;
+        byModule[mod].items += it;
+
+        const sp = t.specialist || '1Life QA Specialist';
+        if (!bySpecialist[sp]) bySpecialist[sp] = { name: sp, sessions: 0, hours: 0, items: 0 };
+        bySpecialist[sp].sessions += 1;
+        bySpecialist[sp].hours += h;
+        bySpecialist[sp].items += it;
+    });
+
+    return {
+        dateMode,
+        dateLabel,
+        taskFilter,
+        qaFilter,
+        scopeLabel: `${dateLabel}  •  Task: ${taskFilter === 'ALL' ? 'All QA Tasks' : taskFilter}  •  QA: ${qaFilter === 'ALL' ? 'All Specialists' : qaFilter}`,
+        tasks: filtered,
+        totalSessions: filtered.length,
+        totalHours,
+        totalItems,
+        byModule: Object.values(byModule).sort((a, b) => b.hours - a.hours),
+        bySpecialist: Object.values(bySpecialist).sort((a, b) => b.hours - a.hours)
+    };
+}
+
+function updateHomeCustomReportPreview() {
+    const badge = document.getElementById('home-cr-preview-badge');
+    if (!badge) return;
+    const ds = getHomeCustomFilteredDataset();
+    badge.textContent = `${ds.totalSessions.toLocaleString()} sessions • ${ds.totalHours.toFixed(1)} hrs • ${ds.totalItems.toLocaleString()} output`;
+}
+
+function exportHomeCustomReportExcel() {
+    const ds = getHomeCustomFilteredDataset();
+    if (ds.totalSessions === 0) {
+        showNotification('No QA task records match the selected custom filters.', 'warning');
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const iph = ds.totalHours > 0 ? (ds.totalItems / ds.totalHours).toFixed(1) : '0.0';
+
+    const summaryRows = [
+        ['1LIFE DATA ANALYTICS — CUSTOM HOME TASK REPORT'],
+        [`Generated: ${new Date().toLocaleString()}`],
+        [`Filter Scope: ${ds.scopeLabel}`],
+        [''],
+        ['SUMMARY METRICS', 'VALUE'],
+        ['Matched QA Sessions', ds.totalSessions],
+        ['Total Hours Logged', +ds.totalHours.toFixed(2)],
+        ['Total Output / Deliverables', ds.totalItems],
+        ['Average Productivity (Items/Hr)', Number(iph)],
+        [''],
+        ['BREAKDOWN BY OPERATIONAL MODULE', 'SESSIONS', 'HOURS LOGGED', 'OUTPUT / ITEMS', 'ITEMS/HR'],
+        ...ds.byModule.map(m => [m.name, m.sessions, +m.hours.toFixed(2), m.items, m.hours > 0 ? +(m.items / m.hours).toFixed(1) : 0]),
+        [''],
+        ['BREAKDOWN BY QA SPECIALIST', 'SESSIONS', 'HOURS LOGGED', 'OUTPUT / ITEMS', 'ITEMS/HR'],
+        ...ds.bySpecialist.map(s => [s.name, s.sessions, +s.hours.toFixed(2), s.items, s.hours > 0 ? +(s.items / s.hours).toFixed(1) : 0])
+    ];
+    const wsSum = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSum['!cols'] = [{ wch: 34 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Custom_Report_Summary');
+
+    const recordRows = [
+        ['#', 'Date', 'QA Specialist', 'Operational Module', 'Time In', 'Time Out', 'Hours Logged', 'Task Description & Deliverables', 'Output Count', 'Status'],
+        ...ds.tasks.map((t, i) => [
+            i + 1, t.date || '', t.specialist || '', t.category || '',
+            t.time_started || '-', t.time_ended || '-', Number(t.hours) || 0,
+            String(t.description || '').replace(/[\r\n]+/g, ' '), Number(t.items) || 0, t.status || 'Done'
+        ])
+    ];
+    const wsRec = XLSX.utils.aoa_to_sheet(recordRows);
+    wsRec['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 24 }, { wch: 24 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 52 }, { wch: 14 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, wsRec, 'Filtered_Task_Records');
+
+    const slug = `${ds.dateMode}_${ds.taskFilter === 'ALL' ? 'AllTasks' : ds.taskFilter.replace(/[^a-z0-9]/gi, '')}_${ds.qaFilter === 'ALL' ? 'AllQA' : ds.qaFilter.split(' ')[0]}`;
+    const fname = `1Life_Custom_Task_Report_${slug}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    showNotification(`Exported Custom Task Report (${ds.totalSessions} sessions) to ${fname}`, 'success');
+}
+
+function renderHomeCustomChartsForPDF(ds) {
+    // Chart 1: Hours by Module (or Daily Trend if 1 module selected)
+    const c1 = document.createElement('canvas');
+    c1.width = 720;
+    c1.height = 360;
+    const ctx1 = c1.getContext('2d');
+    if (ctx1) {
+        ctx1.fillStyle = '#ffffff';
+        ctx1.fillRect(0, 0, c1.width, c1.height);
+        const palette = ['#2563eb', '#0284c7', '#4f46e5', '#06b6d4', '#f59e0b'];
+
+        if (ds.byModule.length > 1) {
+            ctx1.fillStyle = '#0f172a';
+            ctx1.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.fillText('Filtered Hours by Task Module', 20, 32);
+            ctx1.fillStyle = '#64748b';
+            ctx1.font = '11px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.fillText(ds.dateLabel, 20, 50);
+
+            const maxH = Math.max(...ds.byModule.map(m => m.hours), 1);
+            ds.byModule.slice(0, 5).forEach((m, idx) => {
+                const y = 84 + idx * 50;
+                ctx1.fillStyle = '#1e293b';
+                ctx1.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.textAlign = 'left';
+                ctx1.fillText(m.name.substring(0, 22), 20, y + 18);
+                drawCanvasBarHelper(ctx1, 205, y, 355, m.hours, maxH, 28, 5, palette[idx % palette.length]);
+                ctx1.fillStyle = '#0f172a';
+                ctx1.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.fillText(`${m.hours.toFixed(1)}h (${m.sessions})`, 575, y + 18);
+            });
+        } else {
+            ctx1.fillStyle = '#0f172a';
+            ctx1.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.fillText(`Daily Hours — ${ds.taskFilter === 'ALL' ? 'All Tasks' : ds.taskFilter}`, 20, 32);
+            ctx1.fillStyle = '#64748b';
+            ctx1.font = '11px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.fillText(ds.dateLabel, 20, 50);
+
+            const dayAgg = {};
+            ds.tasks.forEach(t => {
+                dayAgg[t.date] = (dayAgg[t.date] || 0) + (Number(t.hours) || 0);
+            });
+            const dayList = Object.entries(dayAgg).slice(0, 6);
+            const maxH = Math.max(...dayList.map(d => d[1]), 1);
+            dayList.forEach(([dt, hrs], idx) => {
+                const y = 80 + idx * 44;
+                ctx1.fillStyle = '#1e293b';
+                ctx1.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.textAlign = 'left';
+                ctx1.fillText(dt, 20, y + 16);
+                drawCanvasBarHelper(ctx1, 140, y, 420, hrs, maxH, 24, 4, palette[idx % palette.length]);
+                ctx1.fillStyle = '#0f172a';
+                ctx1.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.fillText(`${hrs.toFixed(1)} hrs`, 575, y + 16);
+            });
+        }
+    }
+
+    // Chart 2: Filtered Hours by QA Specialist
+    const c2 = document.createElement('canvas');
+    c2.width = 720;
+    c2.height = 360;
+    const ctx2 = c2.getContext('2d');
+    if (ctx2) {
+        ctx2.fillStyle = '#ffffff';
+        ctx2.fillRect(0, 0, c2.width, c2.height);
+        ctx2.fillStyle = '#0f172a';
+        ctx2.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.fillText('Filtered Workload by QA Specialist', 20, 32);
+        ctx2.fillStyle = '#64748b';
+        ctx2.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.fillText(`${ds.totalSessions} sessions • ${ds.totalHours.toFixed(1)} hrs • ${ds.totalItems.toLocaleString()} output`, 20, 50);
+
+        const maxH = Math.max(...ds.bySpecialist.map(s => s.hours), 1);
+        const colors = ['#0f766e', '#2563eb', '#4f46e5', '#06b6d4', '#f59e0b'];
+        ds.bySpecialist.slice(0, 5).forEach((s, idx) => {
+            const y = 84 + idx * 50;
+            ctx2.fillStyle = '#1e293b';
+            ctx2.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.textAlign = 'left';
+            ctx2.fillText(s.name.substring(0, 22), 20, y + 18);
+            drawCanvasBarHelper(ctx2, 200, y, 360, s.hours, maxH, 28, 5, colors[idx % colors.length]);
+            ctx2.fillStyle = '#0f172a';
+            ctx2.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.fillText(`${s.hours.toFixed(1)}h (${s.items.toLocaleString()})`, 575, y + 18);
+        });
+    }
+    return { c1, c2 };
+}
+
+function exportHomeCustomReportPDF() {
+    const JsPDFClass = getJsPDFConstructor();
+    if (!JsPDFClass) {
+        showNotification('PDF library is still loading. Please try again.', 'error');
+        return;
+    }
+    const ds = getHomeCustomFilteredDataset();
+    if (ds.totalSessions === 0) {
+        showNotification('No QA task records match the selected custom filters.', 'warning');
+        return;
+    }
+
+    const doc = new JsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    const iph = ds.totalHours > 0 ? (ds.totalItems / ds.totalHours).toFixed(1) : '0.0';
+    const cleanCell = (val, maxLen = 44) => String(val || '-').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().substring(0, maxLen);
+
+    draw1LifePDFHeader(
+        doc,
+        '1LIFE QA CUSTOM TASK REPORT',
+        ds.scopeLabel,
+        `Matched Sessions: ${ds.totalSessions.toLocaleString()}  |  Hours: ${ds.totalHours.toFixed(1)} hrs`,
+        `Total Output: ${ds.totalItems.toLocaleString()} (${iph} items/hr)`
+    );
+
+    // 4 KPI Summary Cards
+    const kpis = [
+        { title: 'MATCHED SESSIONS', val: ds.totalSessions.toLocaleString(), sub: ds.dateLabel.substring(0, 32), col: [37, 99, 235] },
+        { title: 'TOTAL HOURS LOGGED', val: `${ds.totalHours.toFixed(1)} hrs`, sub: formatHoursMinutes(ds.totalHours), col: [15, 118, 110] },
+        { title: 'TOTAL DELIVERABLES', val: ds.totalItems.toLocaleString(), sub: `${iph} items / hr`, col: [79, 70, 229] },
+        { title: 'ACTIVE FILTER SCOPE', val: ds.qaFilter === 'ALL' ? `${ds.bySpecialist.length} Specialists` : ds.qaFilter, sub: ds.taskFilter === 'ALL' ? 'All QA Task Modules' : ds.taskFilter, col: [2, 132, 199] }
+    ];
+    kpis.forEach((k, idx) => {
+        const cx = 8 + idx * 71;
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        if (doc.roundedRect) doc.roundedRect(cx, 31, 68, 17, 2, 2, 'FD');
+        else doc.rect(cx, 31, 68, 17, 'FD');
+        doc.setFillColor(k.col[0], k.col[1], k.col[2]);
+        doc.rect(cx, 31, 2.5, 17, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.2);
+        doc.setTextColor(k.col[0], k.col[1], k.col[2]);
+        doc.text(k.title, cx + 5, 35.5);
+        doc.setFontSize(9.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(String(k.val).substring(0, 24), cx + 5, 41.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.8);
+        doc.setTextColor(100, 116, 139);
+        doc.text(String(k.sub).substring(0, 34), cx + 5, 45.8);
+    });
+
+    // Embedded Visual Charts
+    const { c1, c2 } = renderHomeCustomChartsForPDF(ds);
+    doc.setDrawColor(226, 232, 240);
+    if (doc.roundedRect) {
+        doc.roundedRect(8, 50.5, 138, 69, 2, 2, 'D');
+        doc.roundedRect(151, 50.5, 138, 69, 2, 2, 'D');
+    }
+    try { doc.addImage(c1.toDataURL('image/png'), 'PNG', 9, 51.5, 136, 67); } catch (e) {}
+    try { doc.addImage(c2.toDataURL('image/png'), 'PNG', 152, 51.5, 136, 67); } catch (e) {}
+
+    // Section 1 Summary Breakdown Table on Page 1
+    const sumY = 123;
+    doc.setFillColor(30, 58, 138);
+    doc.rect(8, sumY, 281, 6.2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(255, 255, 255);
+    doc.text('QA SPECIALIST BREAKDOWN', 12, sumY + 4.2);
+    doc.text('SESSIONS', 110, sumY + 4.2, { align: 'right' });
+    doc.text('HOURS LOGGED', 160, sumY + 4.2, { align: 'right' });
+    doc.text('OUTPUT / ITEMS', 215, sumY + 4.2, { align: 'right' });
+    doc.text('PRODUCTIVITY', 285, sumY + 4.2, { align: 'right' });
+
+    let sy = sumY + 6.2;
+    ds.bySpecialist.slice(0, 6).forEach((s, idx) => {
+        if (idx % 2 === 1) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(8, sy, 281, 5.8, 'F');
+        }
+        doc.setDrawColor(226, 232, 240);
+        doc.line(8, sy + 5.8, 289, sy + 5.8);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(15, 23, 42);
+        doc.text(s.name, 12, sy + 4.0);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(s.sessions), 110, sy + 4.0, { align: 'right' });
+        doc.setTextColor(37, 99, 235);
+        doc.text(`${s.hours.toFixed(1)} hrs`, 160, sy + 4.0, { align: 'right' });
+        doc.setTextColor(15, 23, 42);
+        doc.text(s.items.toLocaleString(), 215, sy + 4.0, { align: 'right' });
+        doc.setTextColor(5, 150, 105);
+        doc.text(`${s.hours > 0 ? (s.items / s.hours).toFixed(1) : '0.0'} items/hr`, 285, sy + 4.0, { align: 'right' });
+        sy += 5.8;
+    });
+
+    // Page 2+: Filtered Detailed Records
+    doc.addPage();
+    draw1LifePDFHeader(
+        doc,
+        '1LIFE QA CUSTOM TASK REPORT — FILTERED LOG RECORDS',
+        ds.scopeLabel,
+        `Showing ${ds.tasks.length.toLocaleString()} Matched Sessions`,
+        `1Life Data Analytics (1life.ph)`
+    );
+
+    const drawRecHead = (y) => {
+        doc.setFillColor(15, 118, 110);
+        doc.rect(8, y, 281, 6.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(255, 255, 255);
+        doc.text('#', 13, y + 4.5, { align: 'center' });
+        doc.text('DATE', 20, y + 4.5);
+        doc.text('QA SPECIALIST', 44, y + 4.5);
+        doc.text('TASK MODULE', 88, y + 4.5);
+        doc.text('TIME IN', 132, y + 4.5);
+        doc.text('TIME OUT', 152, y + 4.5);
+        doc.text('HOURS', 174, y + 4.5, { align: 'right' });
+        doc.text('DELIVERABLES & SCOPE', 182, y + 4.5);
+        doc.text('OUTPUT', 260, y + 4.5, { align: 'right' });
+        doc.text('STATUS', 285, y + 4.5, { align: 'right' });
+        return y + 6.5;
+    };
+
+    let ry = drawRecHead(32);
+    ds.tasks.forEach((t, idx) => {
+        if (ry + 6.0 > 194) {
+            doc.addPage();
+            draw1LifePDFHeader(doc, '1LIFE QA CUSTOM TASK REPORT (CONTINUED)', ds.scopeLabel, '', '');
+            ry = drawRecHead(32);
+        }
+        if (idx % 2 === 1) {
+            doc.setFillColor(248, 250, 252);
+            doc.rect(8, ry, 281, 5.8, 'F');
+        }
+        doc.setDrawColor(226, 232, 240);
+        doc.line(8, ry + 5.8, 289, ry + 5.8);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.4);
+        doc.setTextColor(148, 163, 184);
+        doc.text(String(idx + 1), 13, ry + 4.1, { align: 'center' });
+        doc.setTextColor(15, 23, 42);
+        doc.text(cleanCell(t.date, 16), 20, ry + 4.1);
+        doc.setFont('helvetica', 'bold');
+        doc.text(cleanCell(t.specialist, 24), 44, ry + 4.1);
+        doc.setTextColor(37, 99, 235);
+        doc.text(cleanCell(t.category, 24), 88, ry + 4.1);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(2, 132, 199);
+        doc.text(cleanCell(t.time_started, 14), 132, ry + 4.1);
+        doc.setTextColor(79, 70, 229);
+        doc.text(cleanCell(t.time_ended, 14), 152, ry + 4.1);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(37, 99, 235);
+        doc.text(formatHoursMinutes(t.hours), 174, ry + 4.1, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        doc.text(cleanCell(t.description, 44), 182, ry + 4.1);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(Number(t.items || 1).toLocaleString(), 260, ry + 4.1, { align: 'right' });
+        doc.setTextColor(5, 150, 105);
+        doc.text(cleanCell(t.status || 'Done', 12), 285, ry + 4.1, { align: 'right' });
+        ry += 5.8;
+    });
+
+    if (typeof stamp1LifePDFFooters === 'function') {
+        stamp1LifePDFFooters(doc, 'QA Custom Task Report');
+    }
+
+    const slug = `${ds.dateMode}_${ds.taskFilter === 'ALL' ? 'AllTasks' : ds.taskFilter.replace(/[^a-z0-9]/gi, '')}_${ds.qaFilter === 'ALL' ? 'AllQA' : ds.qaFilter.split(' ')[0]}`;
+    const fname = `1Life_Custom_Task_Report_${slug}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fname);
+    showNotification(`Exported Custom Task PDF Report (${ds.totalSessions} sessions) to ${fname}`, 'success');
 }
 
 // ============================================================================

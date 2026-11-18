@@ -869,6 +869,80 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Custom Home Task Report Builder -->
+                <div class="mt-4 pt-4 border-t border-slate-200/80">
+                    <div class="rounded-xl p-4 bg-gradient-to-r from-slate-50 via-blue-50/40 to-sky-50/40 border border-blue-200/70 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-600 text-white">Custom Report</span>
+                                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900">Home Task Custom Report Builder</h4>
+                                <span id="home-cr-preview-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white text-blue-700 border border-blue-200 font-mono">Loading scope...</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="exportHomeCustomReportExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Custom Excel (.xlsx)
+                                </button>
+                                <button type="button" onclick="exportHomeCustomReportPDF()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition flex items-center gap-1.5 shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                    Custom PDF (.pdf)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <!-- 1. Date Mode -->
+                            <div>
+                                <label for="home-cr-date-mode" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date Filter</label>
+                                <select id="home-cr-date-mode" onchange="onHomeCustomDateModeChange()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500">
+                                    <option value="all">All Dates (Overall)</option>
+                                    <option value="week">Per Week (Weekly)</option>
+                                    <option value="date">Specific Date</option>
+                                    <option value="range">Custom Date Range</option>
+                                </select>
+                            </div>
+
+                            <!-- 2. Dynamic Date Value (Week / Specific Date / Range) -->
+                            <div id="home-cr-date-value-wrap">
+                                <label id="home-cr-date-value-label" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Period Scope</label>
+                                <div id="home-cr-all-hint" class="px-2.5 py-1.5 rounded-lg bg-slate-100/80 border border-slate-200 text-xs text-slate-500 font-medium">All available dates included</div>
+                                <select id="home-cr-week-select" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500"></select>
+                                <select id="home-cr-specific-date" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500"></select>
+                                <div id="home-cr-range-wrap" class="hidden flex items-center gap-1.5">
+                                    <input type="date" id="home-cr-start-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-800">
+                                    <input type="date" id="home-cr-end-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-800">
+                                </div>
+                            </div>
+
+                            <!-- 3. Task / Module -->
+                            <div>
+                                <label for="home-cr-task" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Task / Module</label>
+                                <select id="home-cr-task" onchange="updateHomeCustomReportPreview()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500">
+                                    <option value="ALL">All QA Tasks (Overall)</option>
+                                    <option value="Waybill / Pharmacy QA">Waybill / Pharmacy QA</option>
+                                    <option value="Dispatch QA">Dispatch Override QA</option>
+                                    <option value="Account Merging">Account Merging QA</option>
+                                    <option value="Output QA">Output QA & Audits</option>
+                                    <option value="IT Schedule Monitoring">IT Schedule Monitoring</option>
+                                </select>
+                            </div>
+
+                            <!-- 4. QA Specialist -->
+                            <div>
+                                <label for="home-cr-qa" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Per QA Specialist</label>
+                                <select id="home-cr-qa" onchange="updateHomeCustomReportPreview()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500">
+                                    <option value="ALL">All QA Specialists</option>
+                                    <option value="Arabella Morales">Arabella Morales</option>
+                                    <option value="Janryl Jay Canaway">Janryl Jay Canaway</option>
+                                    <option value="John Michael Francisco">John Michael Francisco</option>
+                                    <option value="Julius Rod Dayag">Julius Rod Dayag</option>
+                                    <option value="Yesha Nicholai Lao">Yesha Nicholai Lao</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ======================================================================= -->
@@ -2936,8 +3010,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="data.js?v=20261118-4"></script>
-    <script src="qa_tasks_data.js?v=20261118-4"></script>
-    <script src="app.js?v=20261118-4"></script>
+    <script src="data.js?v=20261118-6"></script>
+    <script src="qa_tasks_data.js?v=20261118-6"></script>
+    <script src="app.js?v=20261118-6"></script>
 </body>
 </html>
