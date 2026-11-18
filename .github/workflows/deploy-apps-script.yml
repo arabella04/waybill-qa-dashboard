@@ -22,25 +22,25 @@ jobs:
         id: check_secrets
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
-          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID || '1aYNVl_KXe1b7ms5oulsoZTVkcL3j5KmkKqyPTW4jZtkLMVKk3efQlCoS' }}
         run: |
           if [ -n "$CLASPRC_JSON" ] && [ -n "$APPS_SCRIPT_ID" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping Apps Script push: set CLASPRC_JSON and APPS_SCRIPT_ID in GitHub Repository Secrets."
+            echo "Skipping Apps Script push: set CLASPRC_JSON in GitHub Repository Secrets."
           fi
 
       - name: Pin CDN commit SHA in apps_script/Index.html
         if: steps.check_secrets.outputs.ready == 'true'
         run: |
-          sed -i "s|@493ae34/|@${{ github.sha }}/|g; s|@[a-f0-9]\{7,40\}/|@${{ github.sha }}/|g" apps_script/Index.html
+          sed -i "s|@[a-f0-9]\{7,40\}/|@${{ github.sha }}/|g" apps_script/Index.html
 
       - name: Configure clasp credentials
         if: steps.check_secrets.outputs.ready == 'true'
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
-          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID || '1aYNVl_KXe1b7ms5oulsoZTVkcL3j5KmkKqyPTW4jZtkLMVKk3efQlCoS' }}
         run: |
           echo "$CLASPRC_JSON" > ~/.clasprc.json
           cat > apps_script/.clasp.json <<EOF
