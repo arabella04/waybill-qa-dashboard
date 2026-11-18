@@ -123,6 +123,9 @@
             background-color: #1b2f59 !important;
             border-color: #3b82f6 !important;
         }
+        body.workspace-dark tbody tr:hover {
+            background-color: rgba(30, 58, 138, 0.35) !important;
+        }
         body.workspace-dark .text-slate-900,
         body.workspace-dark .text-slate-800 {
             color: #f1f5f9 !important;
@@ -978,6 +981,9 @@
 
                     <!-- Google Sheet Bottom-Style Tab Bar -->
                     <div class="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5">
+                        <button type="button" onclick="selectHomeSheetTab('all_tasks')" id="sheet-tab-btn-all_tasks" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition whitespace-nowrap">
+                            All Tasks
+                        </button>
                         <button type="button" onclick="selectHomeSheetTab('pharmacy')" id="sheet-tab-btn-pharmacy" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition whitespace-nowrap shadow-xs">
                             Pharmacy (217)
                         </button>

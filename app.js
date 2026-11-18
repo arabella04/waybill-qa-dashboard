@@ -7245,14 +7245,15 @@ function syncCustomReportToSpreadsheetExplorer() {
 
     // 2. Sync Task / Module to the matching tab in Q.A. Monitoring Spreadsheet Explorer (without removing any tabs)
     const tabMap = {
+        'ALL': 'all_tasks',
         'Waybill / Pharmacy QA': 'pharmacy',
         'Dispatch QA': 'dispatch_qa',
         'Account Merging': 'account_merging',
         'Output QA': 'output_qa',
         'IT Schedule Monitoring': 'it_schedule'
     };
-    const targetTab = tabMap[taskFilter];
-    if (targetTab && typeof selectHomeSheetTab === 'function') {
+    const targetTab = tabMap[taskFilter] || 'all_tasks';
+    if (typeof selectHomeSheetTab === 'function') {
         selectHomeSheetTab(targetTab);
     } else if (typeof renderHomeSpreadsheetViewer === 'function') {
         renderHomeSpreadsheetViewer();
@@ -7699,7 +7700,7 @@ function exportHomeCustomReportPDF() {
 
 function selectHomeSheetTab(tabKey) {
     activeHomeSheetTab = tabKey;
-    const tabs = ['pharmacy', 'daily_waybill_log', 'invalid_waybills', 'account_merging', 'it_schedule', 'output_qa', 'dispatch_qa'];
+    const tabs = ['all_tasks', 'pharmacy', 'daily_waybill_log', 'invalid_waybills', 'account_merging', 'it_schedule', 'output_qa', 'dispatch_qa'];
     tabs.forEach(t => {
         const btn = document.getElementById(`sheet-tab-btn-${t}`);
         if (!btn) return;
@@ -7718,8 +7719,14 @@ function renderHomeSpreadsheetViewer() {
     const footerEl = document.getElementById('home-excel-footer-count');
     if (!thead || !tbody) return;
 
+    if (!qaTasksData || qaTasksData.length === 0) buildQATasksDataset();
+    const allTasksBtn = document.getElementById('sheet-tab-btn-all_tasks');
+    if (allTasksBtn && qaTasksData) {
+        allTasksBtn.textContent = `All Tasks (${qaTasksData.length.toLocaleString()})`;
+    }
+
     const sheetData = getQASheetData();
-    const rawList = sheetData[activeHomeSheetTab] || [];
+    const rawList = activeHomeSheetTab === 'all_tasks' ? (qaTasksData || []) : (sheetData[activeHomeSheetTab] || []);
     const q = (document.getElementById('home-excel-search')?.value || '').trim().toLowerCase();
     const qaFilter = (document.getElementById('home-excel-qa-filter')?.value || 'ALL').toLowerCase();
     const { dateMode, minYmd, maxYmd, dateLabel } = typeof getHomeCustomDateBounds === 'function'
@@ -7729,7 +7736,9 @@ function renderHomeSpreadsheetViewer() {
 
     const filtered = rawList.filter(r => {
         if (qaFilter !== 'all') {
-            const rowStr = JSON.stringify(r).toLowerCase();
+            const rowStr = activeHomeSheetTab === 'all_tasks'
+                ? String(r.specialist || '').toLowerCase()
+                : JSON.stringify(r).toLowerCase();
             if (!rowStr.includes(qaFilter)) return false;
         }
         if (dateMode !== 'all') {
@@ -7754,7 +7763,30 @@ function renderHomeSpreadsheetViewer() {
         footerEl.textContent = `Showing ${slice.length.toLocaleString()} of ${sortedFiltered.length.toLocaleString()} records in [${activeHomeSheetTab.toUpperCase()}] tab (Latest First)${dateNote}`;
     }
 
-    if (activeHomeSheetTab === 'pharmacy') {
+    if (activeHomeSheetTab === 'all_tasks') {
+        thead.innerHTML = `<tr>
+            <th class="px-3 py-2.5">Date</th>
+            <th class="px-3 py-2.5">Q.A. Specialist</th>
+            <th class="px-3 py-2.5">Task Module</th>
+            <th class="px-3 py-2.5">Time In</th>
+            <th class="px-3 py-2.5">Time Out</th>
+            <th class="px-3 py-2.5 text-right">Hours</th>
+            <th class="px-3 py-2.5">Task Description & Deliverables</th>
+            <th class="px-3 py-2.5 text-right">Output</th>
+            <th class="px-3 py-2.5 text-center">Status</th>
+        </tr>`;
+        tbody.innerHTML = slice.map(r => `<tr class="transition">
+            <td class="px-3 py-2 font-mono text-slate-700 whitespace-nowrap">${escapeHtml(r.date)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-900 whitespace-nowrap">${escapeHtml(r.specialist)}</td>
+            <td class="px-3 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">${escapeHtml(r.category)}</span></td>
+            <td class="px-3 py-2 font-mono text-xs text-sky-700 font-semibold whitespace-nowrap">${escapeHtml(r.time_started || '-')}</td>
+            <td class="px-3 py-2 font-mono text-xs text-indigo-700 font-semibold whitespace-nowrap">${escapeHtml(r.time_ended || '-')}</td>
+            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold whitespace-nowrap">${formatHoursMinutes(r.hours)}</td>
+            <td class="px-3 py-2 text-slate-600 max-w-md truncate" title="${escapeHtml(r.description)}">${escapeHtml(r.description)}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-slate-900">${Number(r.items || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status || 'Done')}</span></td>
+        </tr>`).join('');
+    } else if (activeHomeSheetTab === 'pharmacy') {
         thead.innerHTML = `<tr>
             <th class="px-3 py-2.5">Monitoring ID</th>
             <th class="px-3 py-2.5">Q.A.</th>
@@ -8465,10 +8497,12 @@ function exportModulePDF(moduleKey) {
 }
 
 function exportActiveSheetTabExcel() {
+    if (activeHomeSheetTab === 'all_tasks') return exportHomeCustomReportExcel();
     exportModuleExcel(activeHomeSheetTab);
 }
 
 function exportActiveSheetTabPDF() {
+    if (activeHomeSheetTab === 'all_tasks') return exportHomeCustomReportPDF();
     exportModulePDF(activeHomeSheetTab);
 }
 
