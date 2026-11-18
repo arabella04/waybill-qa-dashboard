@@ -6272,14 +6272,24 @@ let shiftClockTimerId = null;
 let qaTasksData = [];
 let customLoggedTasks = [];
 
+function safeGetStorage(key, fallback = '') {
+    try { const v = localStorage.getItem(key); return v !== null ? v : fallback; } catch (e) { return fallback; }
+}
+function safeSetStorage(key, val) {
+    try { localStorage.setItem(key, val); } catch (e) {}
+}
+function safeRemoveStorage(key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+}
+
 function getGoogleOAuthClientId() {
     const urlParams = new URLSearchParams(window.location.search);
     const paramId = (urlParams.get('google_client_id') || '').trim();
     if (paramId && paramId.includes('.apps.googleusercontent.com')) {
-        localStorage.setItem('1life_google_client_id', paramId);
+        safeSetStorage('1life_google_client_id', paramId);
         return paramId;
     }
-    const storedId = (localStorage.getItem('1life_google_client_id') || '').trim();
+    const storedId = (safeGetStorage('1life_google_client_id', '') || '').trim();
     return storedId || DEFAULT_1LIFE_GOOGLE_CLIENT_ID;
 }
 
@@ -6320,7 +6330,7 @@ function saveGoogleOAuthClientId() {
         }
         return;
     }
-    localStorage.setItem('1life_google_client_id', val);
+    safeSetStorage('1life_google_client_id', val);
     if (errEl) errEl.classList.add('hidden');
     updateGoogleClientStatusUI();
     showNotification('Google OAuth Client ID saved! Launching Google Sign-In (@1life.ph)...', 'success');
@@ -6382,7 +6392,7 @@ function completeGoogle1LifeLogin(userinfo) {
         verified_at: new Date().toISOString()
     };
 
-    localStorage.setItem('1life_auth_user', JSON.stringify(current1LifeUser));
+    safeSetStorage('1life_auth_user', JSON.stringify(current1LifeUser));
 
     const modal = document.getElementById('one-life-auth-modal');
     if (modal) modal.classList.add('hidden');
@@ -6461,20 +6471,20 @@ function trigger1LifeGoogleSignIn() {
 
 function init1LifeWorkspace() {
     // 1. Load saved theme preference (defaults to Corporate Blue 'light' mode)
-    const savedTheme = localStorage.getItem('1life_workspace_theme') || 'light';
+    const savedTheme = safeGetStorage('1life_workspace_theme', 'light') || 'light';
     setWorkspaceTheme(savedTheme, false);
     updateGoogleClientStatusUI();
 
     // 2. Enforce Verified Google OAuth @1life.ph Auth Session
     // Rejects any old unverified/manual localStorage logins (e.g. hatfog@1life.ph without Google OAuth proof)
-    const savedUserJson = localStorage.getItem('1life_auth_user');
+    const savedUserJson = safeGetStorage('1life_auth_user', '');
     let validSession = false;
     if (window.APPS_SCRIPT_USER && String(window.APPS_SCRIPT_USER.email || '').toLowerCase().endsWith('@1life.ph')) {
         current1LifeUser = window.APPS_SCRIPT_USER;
         validSession = true;
-        try { localStorage.setItem('1life_auth_user', JSON.stringify(current1LifeUser)); } catch (e) {}
+        safeSetStorage('1life_auth_user', JSON.stringify(current1LifeUser));
     }
-    if (savedUserJson) {
+    if (!validSession && savedUserJson) {
         try {
             const parsed = JSON.parse(savedUserJson);
             if (
@@ -6494,14 +6504,14 @@ function init1LifeWorkspace() {
     if (validSession) {
         apply1LifeUserProfileUI();
     } else {
-        localStorage.removeItem('1life_auth_user');
+        safeRemoveStorage('1life_auth_user');
         open1LifeLoginModal();
         apply1LifeUserProfileUI();
     }
 
     // 3. Load custom logged tasks from localStorage
     try {
-        const savedTasks = localStorage.getItem('1life_custom_qa_tasks');
+        const savedTasks = safeGetStorage('1life_custom_qa_tasks', '');
         if (savedTasks) customLoggedTasks = JSON.parse(savedTasks) || [];
     } catch (e) {
         customLoggedTasks = [];
@@ -6545,7 +6555,7 @@ function open1LifeLoginModal() {
 }
 
 function handle1LifeLogout() {
-    localStorage.removeItem('1life_auth_user');
+    safeRemoveStorage('1life_auth_user');
     current1LifeUser = {
         email: '',
         name: '1Life QA User',
@@ -6620,7 +6630,7 @@ document.addEventListener('click', (e) => {
 
 function setWorkspaceTheme(mode, notify = true) {
     workspaceThemeMode = mode;
-    localStorage.setItem('1life_workspace_theme', mode);
+    safeSetStorage('1life_workspace_theme', mode);
 
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const useDark = mode === 'dark' || (mode === 'system' && prefersDark);

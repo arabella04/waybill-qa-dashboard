@@ -1,0 +1,58 @@
+name: Deploy to Google Apps Script
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check Apps Script secrets
+        id: check_secrets
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+        run: |
+          if [ -n "$CLASPRC_JSON" ] && [ -n "$APPS_SCRIPT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping Apps Script push: set CLASPRC_JSON and APPS_SCRIPT_ID in GitHub Repository Secrets."
+          fi
+
+      - name: Pin CDN commit SHA in apps_script/Index.html
+        if: steps.check_secrets.outputs.ready == 'true'
+        run: |
+          sed -i "s|@493ae34/|@${{ github.sha }}/|g; s|@[a-f0-9]\{7,40\}/|@${{ github.sha }}/|g" apps_script/Index.html
+
+      - name: Configure clasp credentials
+        if: steps.check_secrets.outputs.ready == 'true'
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+        run: |
+          echo "$CLASPRC_JSON" > ~/.clasprc.json
+          cat > apps_script/.clasp.json <<EOF
+          {
+            "scriptId": "$APPS_SCRIPT_ID",
+            "rootDir": "."
+          }
+          EOF
+
+      - name: Push and Deploy to Google Apps Script
+        if: steps.check_secrets.outputs.ready == 'true'
+        working-directory: apps_script
+        run: |
+          npx -y @google/clasp push -f
+          npx -y @google/clasp deploy -d "GitHub Auto-Deploy (${GITHUB_SHA::7})"
