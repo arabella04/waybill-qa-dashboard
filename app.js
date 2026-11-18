@@ -72,9 +72,17 @@ const FALLBACK_PALETTE = [
     '#9333ea', '#db2777', '#ea580c', '#0284c7', '#475569'
 ];
 
-document.addEventListener('DOMContentLoaded', () => {
+function boot1LifeDashboard() {
+    if (window.__1lifeDashboardBooted) return;
+    window.__1lifeDashboardBooted = true;
     initData();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot1LifeDashboard);
+} else {
+    boot1LifeDashboard();
+}
 
 function initData() {
     // 1. Immediately render cached records so page loads instantly (under 1 second) on any connection
@@ -6461,6 +6469,11 @@ function init1LifeWorkspace() {
     // Rejects any old unverified/manual localStorage logins (e.g. hatfog@1life.ph without Google OAuth proof)
     const savedUserJson = localStorage.getItem('1life_auth_user');
     let validSession = false;
+    if (window.APPS_SCRIPT_USER && String(window.APPS_SCRIPT_USER.email || '').toLowerCase().endsWith('@1life.ph')) {
+        current1LifeUser = window.APPS_SCRIPT_USER;
+        validSession = true;
+        try { localStorage.setItem('1life_auth_user', JSON.stringify(current1LifeUser)); } catch (e) {}
+    }
     if (savedUserJson) {
         try {
             const parsed = JSON.parse(savedUserJson);
