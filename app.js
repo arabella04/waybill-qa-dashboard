@@ -7189,7 +7189,74 @@ function initHomeCustomReportControls() {
         endEl.value = sortedDates[0].ymd;
     }
 
-    updateHomeCustomReportPreview();
+    updateHomeCustomReportPreview(false);
+}
+
+function getHomeCustomDateBounds() {
+    const dateMode = document.getElementById('home-cr-date-mode')?.value || 'all';
+    const weekSel = document.getElementById('home-cr-week-select');
+    const dateSel = document.getElementById('home-cr-specific-date');
+    const startVal = document.getElementById('home-cr-start-date')?.value || '';
+    const endVal = document.getElementById('home-cr-end-date')?.value || '';
+
+    let dateLabel = 'All Dates (Overall)';
+    let minYmd = '';
+    let maxYmd = '';
+
+    if (dateMode === 'week' && weekSel && weekSel.value) {
+        const parts = weekSel.value.split('|');
+        minYmd = parts[0] || '';
+        maxYmd = parts[1] || '';
+        dateLabel = `Week: ${weekSel.options[weekSel.selectedIndex]?.text || weekSel.value}`;
+    } else if (dateMode === 'date' && dateSel && dateSel.value) {
+        minYmd = dateSel.value;
+        maxYmd = dateSel.value;
+        dateLabel = `Date: ${dateSel.options[dateSel.selectedIndex]?.text || dateSel.value}`;
+    } else if (dateMode === 'range') {
+        minYmd = startVal;
+        maxYmd = endVal;
+        dateLabel = `Range: ${minYmd || 'Start'} to ${maxYmd || 'End'}`;
+    }
+
+    return { dateMode, minYmd, maxYmd, dateLabel };
+}
+
+function syncCustomReportToSpreadsheetExplorer() {
+    const taskFilter = document.getElementById('home-cr-task')?.value || 'ALL';
+    const qaFilter = document.getElementById('home-cr-qa')?.value || 'ALL';
+
+    // 1. Sync QA Specialist dropdown in Q.A. Monitoring Spreadsheet Explorer (keeping all choices intact)
+    const expQaEl = document.getElementById('home-excel-qa-filter');
+    if (expQaEl) {
+        if (qaFilter === 'ALL') {
+            expQaEl.value = 'ALL';
+        } else if (qaFilter.includes('Arabella')) {
+            expQaEl.value = 'Arabella';
+        } else if (qaFilter.includes('Julius')) {
+            expQaEl.value = 'Julius';
+        } else if (qaFilter.includes('Yesha')) {
+            expQaEl.value = 'Yesha';
+        } else if (qaFilter.includes('Janryl')) {
+            expQaEl.value = 'Janryl';
+        } else if (qaFilter.includes('John Michael')) {
+            expQaEl.value = 'John Michael';
+        }
+    }
+
+    // 2. Sync Task / Module to the matching tab in Q.A. Monitoring Spreadsheet Explorer (without removing any tabs)
+    const tabMap = {
+        'Waybill / Pharmacy QA': 'pharmacy',
+        'Dispatch QA': 'dispatch_qa',
+        'Account Merging': 'account_merging',
+        'Output QA': 'output_qa',
+        'IT Schedule Monitoring': 'it_schedule'
+    };
+    const targetTab = tabMap[taskFilter];
+    if (targetTab && typeof selectHomeSheetTab === 'function') {
+        selectHomeSheetTab(targetTab);
+    } else if (typeof renderHomeSpreadsheetViewer === 'function') {
+        renderHomeSpreadsheetViewer();
+    }
 }
 
 function onHomeCustomDateModeChange() {
@@ -7211,7 +7278,7 @@ function onHomeCustomDateModeChange() {
             : mode === 'range' ? 'Start & End Date'
             : 'Period Scope';
     }
-    updateHomeCustomReportPreview();
+    updateHomeCustomReportPreview(true);
 }
 
 function getHomeCustomFilteredDataset() {
@@ -7296,11 +7363,15 @@ function getHomeCustomFilteredDataset() {
     };
 }
 
-function updateHomeCustomReportPreview() {
+function updateHomeCustomReportPreview(syncExplorer = true) {
     const badge = document.getElementById('home-cr-preview-badge');
-    if (!badge) return;
-    const ds = getHomeCustomFilteredDataset();
-    badge.textContent = `${ds.totalSessions.toLocaleString()} sessions • ${ds.totalHours.toFixed(1)} hrs • ${ds.totalItems.toLocaleString()} output`;
+    if (badge) {
+        const ds = getHomeCustomFilteredDataset();
+        badge.textContent = `${ds.totalSessions.toLocaleString()} sessions • ${ds.totalHours.toFixed(1)} hrs • ${ds.totalItems.toLocaleString()} output`;
+    }
+    if (syncExplorer) {
+        syncCustomReportToSpreadsheetExplorer();
+    }
 }
 
 function exportHomeCustomReportExcel() {
@@ -7651,11 +7722,23 @@ function renderHomeSpreadsheetViewer() {
     const rawList = sheetData[activeHomeSheetTab] || [];
     const q = (document.getElementById('home-excel-search')?.value || '').trim().toLowerCase();
     const qaFilter = (document.getElementById('home-excel-qa-filter')?.value || 'ALL').toLowerCase();
+    const { dateMode, minYmd, maxYmd, dateLabel } = typeof getHomeCustomDateBounds === 'function'
+        ? getHomeCustomDateBounds()
+        : { dateMode: 'all', minYmd: '', maxYmd: '', dateLabel: '' };
+    const dateField = activeHomeSheetTab === 'invalid_waybills' ? 'date_validated' : 'date';
 
     const filtered = rawList.filter(r => {
         if (qaFilter !== 'all') {
             const rowStr = JSON.stringify(r).toLowerCase();
             if (!rowStr.includes(qaFilter)) return false;
+        }
+        if (dateMode !== 'all') {
+            const norm = normalizeDateStr(r[dateField] || r.date || '');
+            const dObj = parseSlashDate(norm);
+            if (!dObj) return false;
+            const ymd = fmtIsoYMD(dObj);
+            if (minYmd && ymd < minYmd) return false;
+            if (maxYmd && ymd > maxYmd) return false;
         }
         if (q) {
             const rowStr = JSON.stringify(r).toLowerCase();
@@ -7664,10 +7747,11 @@ function renderHomeSpreadsheetViewer() {
         return true;
     });
 
-    const sortedFiltered = sortByLatestDateDesc(filtered, activeHomeSheetTab === 'invalid_waybills' ? 'date_validated' : 'date');
+    const sortedFiltered = sortByLatestDateDesc(filtered, dateField);
     const slice = sortedFiltered.slice(0, 100);
     if (footerEl) {
-        footerEl.textContent = `Showing ${slice.length.toLocaleString()} of ${sortedFiltered.length.toLocaleString()} records in [${activeHomeSheetTab.toUpperCase()}] tab (Latest First)`;
+        const dateNote = dateMode !== 'all' ? ` • Previewing ${dateLabel}` : '';
+        footerEl.textContent = `Showing ${slice.length.toLocaleString()} of ${sortedFiltered.length.toLocaleString()} records in [${activeHomeSheetTab.toUpperCase()}] tab (Latest First)${dateNote}`;
     }
 
     if (activeHomeSheetTab === 'pharmacy') {
