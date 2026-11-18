@@ -7623,6 +7623,126 @@ function exportModuleExcel(moduleKey) {
     showNotification(`Downloaded ${fname}`, 'success');
 }
 
+function renderModuleChartsForPDF(moduleKey, rows) {
+    // Left: Specialist Sessions/Output Horizontal Bar Chart
+    const c1 = document.createElement('canvas');
+    c1.width = 720;
+    c1.height = 340;
+    const ctx1 = c1.getContext('2d');
+    if (ctx1) {
+        ctx1.fillStyle = '#ffffff';
+        ctx1.fillRect(0, 0, c1.width, c1.height);
+        ctx1.fillStyle = '#0f172a';
+        ctx1.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+        ctx1.fillText('Specialist Activity & Volume Breakdown', 20, 32);
+        ctx1.fillStyle = '#64748b';
+        ctx1.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx1.fillText(`Records logged per QA team member (${rows.length.toLocaleString()} total entries)`, 20, 50);
+
+        const counts = {};
+        rows.forEach(r => {
+            const rawName = r.qa || r.qa_checker || r.logged_by || 'Team';
+            const name = typeof normalize1LifeQAName === 'function' ? normalize1LifeQAName(rawName) : String(rawName);
+            counts[name] = (counts[name] || 0) + 1;
+        });
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+        const maxVal = Math.max(...sorted.map(s => s[1]), 1);
+        const colors = ['#1e40af', '#0284c7', '#0f766e', '#4f46e5', '#06b6d4', '#f59e0b'];
+
+        sorted.forEach(([name, cnt], idx) => {
+            const y = 74 + idx * 40;
+            ctx1.fillStyle = '#1e293b';
+            ctx1.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.textAlign = 'left';
+            ctx1.fillText(name.substring(0, 24), 20, y + 15);
+
+            ctx1.fillStyle = '#f1f5f9';
+            if (ctx1.roundRect) ctx1.roundRect(200, y, 390, 22, 4);
+            else ctx1.rect(200, y, 390, 22);
+            ctx1.fill();
+
+            const bw = Math.max(16, (cnt / maxVal) * 390);
+            ctx1.fillStyle = colors[idx % colors.length];
+            if (ctx1.roundRect) ctx1.roundRect(200, y, bw, 22, 4);
+            else ctx1.rect(200, y, bw, 22);
+            ctx1.fill();
+
+            ctx1.fillStyle = '#0f172a';
+            ctx1.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.fillText(cnt.toLocaleString(), 605, y + 15);
+        });
+    }
+
+    // Right: Status / Category Distribution Donut Chart
+    const c2 = document.createElement('canvas');
+    c2.width = 720;
+    c2.height = 340;
+    const ctx2 = c2.getContext('2d');
+    if (ctx2) {
+        ctx2.fillStyle = '#ffffff';
+        ctx2.fillRect(0, 0, c2.width, c2.height);
+        ctx2.fillStyle = '#0f172a';
+        ctx2.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.fillText('Status & Outcome Distribution', 20, 32);
+        ctx2.fillStyle = '#64748b';
+        ctx2.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.fillText('Breakdown of verification outcomes across all module entries', 20, 50);
+
+        const stCounts = {};
+        rows.forEach(r => {
+            let st = r.overall_result || r.status || r.issue || 'Completed';
+            st = String(st).replace(/[\r\n]+/g, ' ').trim().substring(0, 22) || 'Completed';
+            stCounts[st] = (stCounts[st] || 0) + 1;
+        });
+        const topSt = Object.entries(stCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        const total = topSt.reduce((s, d) => s + d[1], 0) || 1;
+        const palette = ['#0f766e', '#2563eb', '#f59e0b', '#ef4444', '#6366f1'];
+
+        const cx = 165, cy = 195, outerR = 95, innerR = 55;
+        let angle = -Math.PI / 2;
+        topSt.forEach(([lbl, val], idx) => {
+            const slice = (val / total) * Math.PI * 2;
+            ctx2.beginPath();
+            ctx2.arc(cx, cy, outerR, angle, angle + slice);
+            ctx2.arc(cx, cy, innerR, angle + slice, angle, true);
+            ctx2.closePath();
+            ctx2.fillStyle = palette[idx % palette.length];
+            ctx2.fill();
+            ctx2.strokeStyle = '#ffffff';
+            ctx2.lineWidth = 3;
+            ctx2.stroke();
+            angle += slice;
+        });
+
+        ctx2.fillStyle = '#0f172a';
+        ctx2.font = 'bold 20px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.textAlign = 'center';
+        ctx2.textBaseline = 'middle';
+        ctx2.fillText(rows.length.toLocaleString(), cx, cy - 6);
+        ctx2.fillStyle = '#64748b';
+        ctx2.font = '10px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.fillText('TOTAL RECORDS', cx, cy + 14);
+
+        ctx2.textAlign = 'left';
+        ctx2.textBaseline = 'alphabetic';
+        topSt.forEach(([lbl, val], idx) => {
+            const ly = 100 + idx * 42;
+            const pct = ((val / total) * 100).toFixed(1);
+            ctx2.fillStyle = palette[idx % palette.length];
+            if (ctx2.roundRect) ctx2.roundRect(320, ly - 10, 14, 14, 3);
+            else ctx2.rect(320, ly - 10, 14, 14);
+            ctx2.fill();
+            ctx2.fillStyle = '#1e293b';
+            ctx2.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.fillText(lbl, 344, ly);
+            ctx2.fillStyle = '#64748b';
+            ctx2.font = '11px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.fillText(`${val.toLocaleString()} (${pct}%)`, 344, ly + 15);
+        });
+    }
+    return { c1, c2 };
+}
+
 function exportModulePDF(moduleKey) {
     const JsPDFClass = getJsPDFConstructor();
     if (!JsPDFClass) {
@@ -7637,6 +7757,7 @@ function exportModulePDF(moduleKey) {
     }
 
     const doc = new JsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    const cleanCell = (val, maxLen = 28) => String(val ?? '-').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().substring(0, maxLen);
     const titleMap = {
         pharmacy: 'PHARMACY WAYBILL Q.A. MONITORING REPORT',
         daily_waybill_log: 'DAILY WAYBILL QUOTA & SPECIALIST LOG REPORT',
@@ -7649,43 +7770,73 @@ function exportModulePDF(moduleKey) {
     const reportTitle = titleMap[moduleKey] || `1LIFE Q.A. ${moduleKey.toUpperCase()} REPORT`;
     const keys = Object.keys(rows[0]).slice(0, 8);
     const colW = Math.floor(278 / keys.length);
+    const totalHrs = rows.reduce((s, r) => s + (Number(r.hours) || 0), 0);
 
     draw1LifePDFHeader(
         doc,
         reportTitle,
         `Source Sheet: 1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg (${moduleKey})  •  Total Records: ${rows.length.toLocaleString()}`,
-        `Total Rows: ${rows.length.toLocaleString()}`,
+        `Total Rows: ${rows.length.toLocaleString()}${totalHrs > 0 ? `  |  Hours: ${totalHrs.toFixed(1)}h` : ''}`,
         `1Life Data Analytics (1life.ph)`
     );
+
+    // RTH-Style Section 1 Banner + Embedded Charts on Page 1
+    doc.setFillColor(15, 118, 110);
+    doc.roundedRect(8, 31, 281, 6.5, 1.2, 1.2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`SECTION 1: VISUAL ANALYTICS & BREAKDOWN (${rows.length.toLocaleString()} RECORDS)`, 12, 35.4);
+
+    const { c1, c2 } = renderModuleChartsForPDF(moduleKey, rows);
+    doc.setDrawColor(226, 232, 240);
+    if (doc.roundedRect) {
+        doc.roundedRect(8, 39.5, 138, 65, 2, 2, 'D');
+        doc.roundedRect(151, 39.5, 138, 65, 2, 2, 'D');
+    }
+    try { doc.addImage(c1.toDataURL('image/png'), 'PNG', 9, 40.5, 136, 63); } catch (e) {}
+    try { doc.addImage(c2.toDataURL('image/png'), 'PNG', 152, 40.5, 136, 63); } catch (e) {}
+
+    // Section 2 Table
+    doc.setFillColor(30, 58, 138);
+    doc.roundedRect(8, 107, 281, 6.5, 1.2, 1.2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`SECTION 2: DETAILED AUDIT RECORDS (${rows.length.toLocaleString()} TOTAL)`, 12, 111.4);
 
     const drawHead = (y) => {
         doc.setFillColor(15, 118, 110);
         doc.rect(8, y, 281, 6.5, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6.8);
+        doc.setFontSize(6.6);
         doc.setTextColor(255, 255, 255);
         keys.forEach((k, i) => {
-            doc.text(k.replace(/_/g, ' ').toUpperCase().substring(0, 20), 10 + i * colW, y + 4.5);
+            doc.text(k.replace(/_/g, ' ').toUpperCase().substring(0, 18), 10 + i * colW, y + 4.5);
         });
         return y + 6.5;
     };
 
-    let y = drawHead(33);
-    rows.slice(0, 300).forEach((r, idx) => {
+    let y = drawHead(115);
+    const maxExportRows = Math.min(rows.length, 600);
+    rows.slice(0, maxExportRows).forEach((r, idx) => {
         if (y + 5.6 > 195) {
             doc.addPage();
-            draw1LifePDFHeader(doc, `${reportTitle} (CONTINUED)`, '', '', '');
+            draw1LifePDFHeader(doc, `${reportTitle} (CONTINUED)`, `Records 1 - ${maxExportRows.toLocaleString()} of ${rows.length.toLocaleString()}`, '', '');
             y = drawHead(33);
         }
         if (idx % 2 === 1) {
             doc.setFillColor(248, 250, 252);
             doc.rect(8, y, 281, 5.5, 'F');
         }
+        doc.setDrawColor(235, 240, 245);
+        doc.line(8, y + 5.5, 289, y + 5.5);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.5);
+        doc.setFontSize(6.4);
         doc.setTextColor(30, 41, 59);
+        const maxChars = Math.max(12, Math.floor(colW * 0.46));
         keys.forEach((k, i) => {
-            doc.text(String(r[k] ?? '-').substring(0, Math.max(14, Math.floor(colW * 0.55))), 10 + i * colW, y + 3.9);
+            doc.text(cleanCell(r[k], maxChars), 10 + i * colW, y + 3.9);
         });
         y += 5.5;
     });
@@ -8502,80 +8653,89 @@ function exportAllTasksSummaryPDF() {
         `1Life QA Monitoring System (1life.ph)`
     );
 
-    const logHeadY = 32;
-    doc.setFillColor(30, 58, 138); // #1e3a8a
-    doc.rect(8, logHeadY, 281, 6.5, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(255, 255, 255);
-    doc.text('#', 13, logHeadY + 4.5, { align: 'center' });
-    doc.text('DATE', 20, logHeadY + 4.5);
-    doc.text('QA SPECIALIST', 44, logHeadY + 4.5);
-    doc.text('OPERATIONAL STREAM', 88, logHeadY + 4.5);
-    doc.text('TIME IN', 132, logHeadY + 4.5);
-    doc.text('TIME OUT', 152, logHeadY + 4.5);
-    doc.text('HOURS', 174, logHeadY + 4.5, { align: 'right' });
-    doc.text('TASK DELIVERABLES & SCOPE', 182, logHeadY + 4.5);
-    doc.text('OUTPUT', 260, logHeadY + 4.5, { align: 'right' });
-    doc.text('STATUS', 285, logHeadY + 4.5, { align: 'right' });
+    const drawLogHead = (y) => {
+        doc.setFillColor(30, 58, 138); // #1e3a8a
+        doc.rect(8, y, 281, 6.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(255, 255, 255);
+        doc.text('#', 13, y + 4.5, { align: 'center' });
+        doc.text('DATE', 20, y + 4.5);
+        doc.text('QA SPECIALIST', 44, y + 4.5);
+        doc.text('OPERATIONAL STREAM', 88, y + 4.5);
+        doc.text('TIME IN', 132, y + 4.5);
+        doc.text('TIME OUT', 152, y + 4.5);
+        doc.text('HOURS', 174, y + 4.5, { align: 'right' });
+        doc.text('TASK DELIVERABLES & SCOPE', 182, y + 4.5);
+        doc.text('OUTPUT', 260, y + 4.5, { align: 'right' });
+        doc.text('STATUS', 285, y + 4.5, { align: 'right' });
+        return y + 6.5;
+    };
 
     const cleanPDFText = (val, maxLen = 48) => String(val || '-').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().substring(0, maxLen);
 
-    let curLogY = logHeadY + 6.5;
-    const sampleLog = qaTasksData.slice(0, 24);
-    sampleLog.forEach((t, idx) => {
+    let curLogY = drawLogHead(32);
+    qaTasksData.forEach((t, idx) => {
+        if (curLogY + 6.0 > 194) {
+            doc.addPage();
+            draw1LifePDFHeader(
+                doc,
+                '1LIFE QA OPERATIONAL SUMMARY REPORT — TASK SESSIONS (CONTINUED)',
+                'Chronological Master Audit Trail of Verified QA Sessions with Sanitized Time In / Time Out',
+                `Total Sessions: ${qaTasksData.length.toLocaleString()}`,
+                `1Life QA Monitoring System (1life.ph)`
+            );
+            curLogY = drawLogHead(32);
+        }
         if (idx % 2 === 1) {
             doc.setFillColor(248, 250, 252);
-            doc.rect(8, curLogY, 281, 6.0, 'F');
+            doc.rect(8, curLogY, 281, 5.8, 'F');
         }
         doc.setDrawColor(226, 232, 240);
-        doc.line(8, curLogY + 6.0, 289, curLogY + 6.0);
+        doc.line(8, curLogY + 5.8, 289, curLogY + 5.8);
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(6.5);
         doc.setTextColor(148, 163, 184);
-        doc.text(String(idx + 1), 13, curLogY + 4.2, { align: 'center' });
+        doc.text(String(idx + 1), 13, curLogY + 4.1, { align: 'center' });
 
         doc.setTextColor(15, 23, 42);
-        doc.text(cleanPDFText(t.date, 16), 20, curLogY + 4.2);
+        doc.text(cleanPDFText(t.date, 16), 20, curLogY + 4.1);
 
         doc.setFont('helvetica', 'bold');
-        doc.text(cleanPDFText(t.specialist, 24), 44, curLogY + 4.2);
+        doc.text(cleanPDFText(t.specialist, 24), 44, curLogY + 4.1);
 
         doc.setTextColor(37, 99, 235);
-        doc.text(cleanPDFText(t.category, 24), 88, curLogY + 4.2);
+        doc.text(cleanPDFText(t.category, 24), 88, curLogY + 4.1);
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(2, 132, 199);
-        doc.text(cleanPDFText(t.time_started, 14), 132, curLogY + 4.2);
+        doc.text(cleanPDFText(t.time_started, 14), 132, curLogY + 4.1);
 
         doc.setTextColor(79, 70, 229);
-        doc.text(cleanPDFText(t.time_ended, 14), 152, curLogY + 4.2);
+        doc.text(cleanPDFText(t.time_ended, 14), 152, curLogY + 4.1);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(37, 99, 235);
-        doc.text(formatHoursMinutes(t.hours), 174, curLogY + 4.2, { align: 'right' });
+        doc.text(formatHoursMinutes(t.hours), 174, curLogY + 4.1, { align: 'right' });
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
-        doc.text(cleanPDFText(t.description, 44), 182, curLogY + 4.2);
+        doc.text(cleanPDFText(t.description, 44), 182, curLogY + 4.1);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(15, 23, 42);
-        doc.text(Number(t.items || 1).toLocaleString(), 260, curLogY + 4.2, { align: 'right' });
+        doc.text(Number(t.items || 1).toLocaleString(), 260, curLogY + 4.1, { align: 'right' });
 
         doc.setTextColor(5, 150, 105);
-        doc.text(cleanPDFText(t.status || 'Done', 12), 285, curLogY + 4.2, { align: 'right' });
+        doc.text(cleanPDFText(t.status || 'Done', 12), 285, curLogY + 4.1, { align: 'right' });
 
-        curLogY += 6.0;
+        curLogY += 5.8;
     });
 
-    // Page 3 Footer
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.5);
-    doc.setTextColor(148, 163, 184);
-    doc.text('1Life Data Analytics QA Operations • Strictly Confidential • Unified Task Sessions Master Log', 12, 203);
-    doc.text('Page 3 of 3 — Verified Task Sessions Master Trail', 285, 203, { align: 'right' });
+    if (typeof stamp1LifePDFFooters === 'function') {
+        stamp1LifePDFFooters(doc, 'QA Operational Summary Report');
+    }
 
     const fname = `1Life_QA_Operational_Summary_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(fname);

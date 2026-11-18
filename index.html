@@ -508,18 +508,6 @@
                         Sync Sheets
                     </button>
 
-                    <!-- Export Excel Menu -->
-                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border border-emerald-500 transition whitespace-nowrap" title="Download Full Report as Excel (.xlsx)">
-                        <svg class="w-3.5 h-3.5 mr-1 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Excel (.xlsx)
-                    </button>
-
-                    <!-- Export PDF Menu -->
-                    <button onclick="exportProgressReportPDF()" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-rose-500 hover:bg-rose-600 text-white shadow-sm border border-rose-400 transition whitespace-nowrap" title="Download Full Report as PDF (.pdf)">
-                        <svg class="w-3.5 h-3.5 mr-1 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        PDF (.pdf)
-                    </button>
-
                     <!-- Notification Bell Badge -->
                     <button type="button" onclick="switchWorkspaceNav('my-shift')" class="relative inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition shrink-0" title="Active QA Tasks & Notifications">
                         <svg class="w-4 h-4 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -641,14 +629,6 @@
             <!-- Top Subtitle Row -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
                 <span class="font-medium">Workspace overview — Q.A. task monitoring summary, daily output & live spreadsheet metrics</span>
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="exportQATasksExcel()" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-2xs">
-                        Tasks (.xlsx)
-                    </button>
-                    <button type="button" onclick="exportQATasksPDF()" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition shadow-2xs">
-                        Tasks (.pdf)
-                    </button>
-                </div>
             </div>
 
             <!-- 1Life Corporate Blue Greeting Banner -->
@@ -1161,21 +1141,6 @@
                             <span>•</span>
                             <span>Team: <strong class="text-white">QA – Data and Analytics Team • 1Life Inc. Philippines (1life.ph)</strong></span>
                         </div>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" onclick="syncQATasksSheet(true)" class="inline-flex items-center px-3.5 py-2 rounded-xl font-bold text-xs bg-white/15 hover:bg-white/25 text-white border border-white/25 transition">
-                            <svg class="w-4 h-4 mr-1.5 text-sky-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            Sync Task Log
-                        </button>
-                        <button type="button" onclick="exportQATasksExcel()" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Export Task Log (.xlsx)
-                        </button>
-                        <button type="button" onclick="exportQATasksPDF()" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-md transition">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                            Export Task Log (.pdf)
-                        </button>
                     </div>
                 </div>
             </div>
@@ -2971,8 +2936,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="data.js?v=20261118-3"></script>
-    <script src="qa_tasks_data.js?v=20261118-3"></script>
-    <script src="app.js?v=20261118-3"></script>
+    <script src="data.js?v=20261118-4"></script>
+    <script src="qa_tasks_data.js?v=20261118-4"></script>
+    <script src="app.js?v=20261118-4"></script>
 </body>
 </html>
