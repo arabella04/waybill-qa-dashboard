@@ -8519,6 +8519,8 @@ function exportAllTasksSummaryPDF() {
     doc.text('OUTPUT', 260, logHeadY + 4.5, { align: 'right' });
     doc.text('STATUS', 285, logHeadY + 4.5, { align: 'right' });
 
+    const cleanPDFText = (val, maxLen = 48) => String(val || '-').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().substring(0, maxLen);
+
     let curLogY = logHeadY + 6.5;
     const sampleLog = qaTasksData.slice(0, 24);
     sampleLog.forEach((t, idx) => {
@@ -8535,20 +8537,20 @@ function exportAllTasksSummaryPDF() {
         doc.text(String(idx + 1), 13, curLogY + 4.2, { align: 'center' });
 
         doc.setTextColor(15, 23, 42);
-        doc.text(String(t.date || '-'), 20, curLogY + 4.2);
+        doc.text(cleanPDFText(t.date, 16), 20, curLogY + 4.2);
 
         doc.setFont('helvetica', 'bold');
-        doc.text(String(t.specialist || '-').substring(0, 24), 44, curLogY + 4.2);
+        doc.text(cleanPDFText(t.specialist, 24), 44, curLogY + 4.2);
 
         doc.setTextColor(37, 99, 235);
-        doc.text(String(t.category || '-').substring(0, 26), 88, curLogY + 4.2);
+        doc.text(cleanPDFText(t.category, 24), 88, curLogY + 4.2);
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(2, 132, 199);
-        doc.text(String(t.time_started || '-'), 132, curLogY + 4.2);
+        doc.text(cleanPDFText(t.time_started, 14), 132, curLogY + 4.2);
 
         doc.setTextColor(79, 70, 229);
-        doc.text(String(t.time_ended || '-'), 152, curLogY + 4.2);
+        doc.text(cleanPDFText(t.time_ended, 14), 152, curLogY + 4.2);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(37, 99, 235);
@@ -8556,15 +8558,14 @@ function exportAllTasksSummaryPDF() {
 
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
-        const descText = String(t.description || '-').substring(0, 48);
-        doc.text(descText, 182, curLogY + 4.2);
+        doc.text(cleanPDFText(t.description, 44), 182, curLogY + 4.2);
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(15, 23, 42);
         doc.text(Number(t.items || 1).toLocaleString(), 260, curLogY + 4.2, { align: 'right' });
 
         doc.setTextColor(5, 150, 105);
-        doc.text(String(t.status || 'Done').substring(0, 12), 285, curLogY + 4.2, { align: 'right' });
+        doc.text(cleanPDFText(t.status || 'Done', 12), 285, curLogY + 4.2, { align: 'right' });
 
         curLogY += 6.0;
     });
@@ -9276,10 +9277,12 @@ function exportQATasksPDF() {
     }
     if (!qaTasksData || qaTasksData.length === 0) buildQATasksDataset();
 
+    const sheetData = getQASheetData();
     const doc = new JsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
     const totalItems = qaTasksData.reduce((s, t) => s + (Number(t.items) || 0), 0);
     const totalHrs = qaTasksData.reduce((s, t) => s + (Number(t.hours) || 0), 0);
     const avgIph = totalHrs > 0 ? (totalItems / totalHrs).toFixed(1) : '42.4';
+    const cleanCell = (val, maxLen = 44) => String(val || '-').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().substring(0, maxLen);
 
     draw1LifePDFHeader(
         doc,
@@ -9289,25 +9292,40 @@ function exportQATasksPDF() {
         `Total Items Output: ${totalItems.toLocaleString()} (${avgIph} items/hr)`
     );
 
+    // Embed Visual Charts on Page 1
+    const cHours = renderSummaryHoursChartCanvas(sheetData);
+    const cSpec = renderSummarySpecialistsChartCanvas(sheetData);
+    if (cHours) {
+        try {
+            doc.addImage(cHours.toDataURL('image/png'), 'PNG', 8, 31, 138, 62);
+        } catch (e) { console.warn('Could not embed hours chart:', e); }
+    }
+    if (cSpec) {
+        try {
+            doc.addImage(cSpec.toDataURL('image/png'), 'PNG', 151, 31, 138, 62);
+        } catch (e) { console.warn('Could not embed specialists chart:', e); }
+    }
+
     const drawHeaders = (y) => {
-        doc.setFillColor(15, 118, 110);
+        doc.setFillColor(30, 58, 138);
         doc.rect(8, y, 281, 6.8, 'F');
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
+        doc.setFontSize(6.8);
         doc.setTextColor(255, 255, 255);
         doc.text('#', 13, y + 4.6, { align: 'center' });
-        doc.text('DATE', 22, y + 4.6);
-        doc.text('QA SPECIALIST', 46, y + 4.6);
-        doc.text('TASK STREAM / MODULE', 96, y + 4.6);
-        doc.text('TASK DESCRIPTION & DELIVERABLES', 146, y + 4.6);
-        doc.text('ITEMS', 236, y + 4.6, { align: 'right' });
-        doc.text('HOURS', 256, y + 4.6, { align: 'right' });
-        doc.text('ITEMS/HR', 274, y + 4.6, { align: 'right' });
-        doc.text('STATUS', 287, y + 4.6, { align: 'right' });
+        doc.text('DATE', 20, y + 4.6);
+        doc.text('QA SPECIALIST', 42, y + 4.6);
+        doc.text('TASK STREAM / MODULE', 82, y + 4.6);
+        doc.text('TIME IN', 120, y + 4.6);
+        doc.text('TIME OUT', 139, y + 4.6);
+        doc.text('HOURS', 166, y + 4.6, { align: 'right' });
+        doc.text('TASK DESCRIPTION & DELIVERABLES', 172, y + 4.6);
+        doc.text('ITEMS', 256, y + 4.6, { align: 'right' });
+        doc.text('STATUS', 286, y + 4.6, { align: 'right' });
         return y + 6.8;
     };
 
-    let curY = drawHeaders(33);
+    let curY = drawHeaders(96);
     qaTasksData.slice(0, 250).forEach((t, idx) => {
         if (curY + 6 > 195) {
             doc.addPage();
@@ -9322,27 +9340,31 @@ function exportQATasksPDF() {
         doc.line(8, curY + 5.8, 289, curY + 5.8);
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
+        doc.setFontSize(6.5);
         doc.setTextColor(100, 116, 139);
         doc.text(String(idx + 1), 13, curY + 4.1, { align: 'center' });
         doc.setTextColor(15, 23, 42);
-        doc.text(String(t.date || '-'), 22, curY + 4.1);
+        doc.text(cleanCell(t.date, 14), 20, curY + 4.1);
         doc.setFont('helvetica', 'bold');
-        doc.text(String(t.specialist || '-').substring(0, 26), 46, curY + 4.1);
-        doc.setTextColor(15, 118, 110);
-        doc.text(String(t.category || '-').substring(0, 26), 96, curY + 4.1);
+        doc.text(cleanCell(t.specialist, 22), 42, curY + 4.1);
+        doc.setTextColor(37, 99, 235);
+        doc.text(cleanCell(t.category, 22), 82, curY + 4.1);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(2, 132, 199);
+        doc.text(cleanCell(t.time_started, 12), 120, curY + 4.1);
+        doc.setTextColor(79, 70, 229);
+        doc.text(cleanCell(t.time_ended, 12), 139, curY + 4.1);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(37, 99, 235);
+        doc.text(formatHoursMinutes(t.hours), 166, curY + 4.1, { align: 'right' });
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(51, 65, 85);
-        doc.text(String(t.description || '-').substring(0, 48), 146, curY + 4.1);
+        doc.text(cleanCell(t.description, 44), 172, curY + 4.1);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(15, 23, 42);
-        doc.text(Number(t.items || 0).toLocaleString(), 236, curY + 4.1, { align: 'right' });
-        doc.setTextColor(15, 118, 110);
-        doc.text(formatHoursMinutes(t.hours), 256, curY + 4.1, { align: 'right' });
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 65, 85);
-        doc.text(String(t.iph || '-'), 274, curY + 4.1, { align: 'right' });
-        doc.text(String(t.status || 'Done'), 287, curY + 4.1, { align: 'right' });
+        doc.text(Number(t.items || 0).toLocaleString(), 256, curY + 4.1, { align: 'right' });
+        doc.setTextColor(5, 150, 105);
+        doc.text(cleanCell(t.status || 'Done', 14), 286, curY + 4.1, { align: 'right' });
         curY += 5.8;
     });
 
