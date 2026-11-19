@@ -261,6 +261,39 @@
             padding-left: 0.5rem !important;
             padding-right: 0.5rem !important;
         }
+    
+        /* Concept 2: Modular Bento-Grid Enhancements */
+        .bento-box {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .bento-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 180, 216, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+        body.workspace-dark .bento-box:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 180, 216, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+        }
+        /* Hover-expanding compact rail sidebar */
+        #workspace-sidebar.sidebar-collapsed {
+            width: 4.5rem !important;
+            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        #workspace-sidebar.sidebar-collapsed:hover {
+            width: 16rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+        }
+        #workspace-sidebar.sidebar-collapsed:hover .sidebar-label,
+        #workspace-sidebar.sidebar-collapsed:hover .sidebar-badge,
+        #workspace-sidebar.sidebar-collapsed:hover .sidebar-section-title,
+        #workspace-sidebar.sidebar-collapsed:hover .sidebar-sublinks,
+        #workspace-sidebar.sidebar-collapsed:hover #dq-module-chevron {
+            display: inline-flex !important;
+        }
+        #workspace-sidebar.sidebar-collapsed:hover .sidebar-item {
+            justify-content: flex-start !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex">
@@ -583,6 +616,45 @@
         </div>
     </header>
 
+    <!-- TOP HORIZONTAL SUB-NAVIGATION BAR (Modern SaaS Command Center) -->
+    <nav id="workspace-top-nav-bar" class="bg-[#0e272c]/95 border-b border-[#1b434b] px-4 sm:px-6 py-2 flex items-center justify-between gap-3 overflow-x-auto select-none backdrop-blur sticky top-16 z-30 shadow-xs">
+        <!-- Segmented Workspace Navigation Tabs -->
+        <div class="flex items-center gap-1.5 min-w-max">
+            <button type="button" onclick="switchTaskDashboard('home')" id="top-nav-home" class="top-nav-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] text-white transition shadow-xs">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span>Overview</span>
+            </button>
+            <button type="button" onclick="switchWorkspaceNav('my-shift')" id="top-nav-my-shift" class="top-nav-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Task Log</span>
+            </button>
+            <button type="button" onclick="scrollToCustomReport()" id="top-nav-custom-report" class="top-nav-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Custom Reports</span>
+            </button>
+            <button type="button" onclick="scrollToExplorer()" id="top-nav-explorer" class="top-nav-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>Spreadsheet Explorer</span>
+            </button>
+            <span class="w-px h-4 bg-teal-800/80 mx-1"></span>
+            <!-- Module Direct Tabs -->
+            <button type="button" onclick="switchTaskDashboard('waybill')" id="top-nav-task-waybill" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Waybill</button>
+            <button type="button" onclick="switchTaskDashboard('dispatch')" id="top-nav-task-dispatch" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Dispatch</button>
+            <button type="button" onclick="switchTaskDashboard('merging')" id="top-nav-task-merging" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Merging</button>
+            <button type="button" onclick="switchTaskDashboard('output-qa')" id="top-nav-task-output-qa" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Output QA</button>
+            <button type="button" onclick="switchTaskDashboard('it-schedule')" id="top-nav-task-it-schedule" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">IT Sched</button>
+            <button type="button" onclick="switchWorkspaceNav('documentation')" id="top-nav-documentation" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Docs</button>
+        </div>
+        <!-- Right: Sidebar Dock Toggle Button -->
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="toggleSidebarCollapse()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 hover:bg-white/15 text-slate-200 border border-white/15 transition" title="Toggle Sidebar">
+                <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                <span id="top-sidebar-toggle-text">Sidebar</span>
+            </button>
+        </div>
+    </nav>
+
+
     <!-- FILTER BAR (Shown on Waybill & Dispatch Dashboards) -->
     <section id="waybill-filter-bar" class="bg-white border-b border-slate-200/80 shadow-xs sticky top-16 z-30 hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -795,162 +867,162 @@
                 </div>
             </div>
 
+
             <!-- ======================================================================= -->
-            <!-- HOMEPAGE: ALL SUMMARIZED Q.A. TASKS (CLICK TO OPEN DEDICATED DASHBOARD) -->
+            <!-- CONCEPT 2: MODULAR BENTO-GRID DASHBOARD ARCHITECTURE                   -->
             <!-- ======================================================================= -->
-            <div class="ws-card rounded-2xl p-5 bg-white border border-slate-200/90 shadow-xs space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-[#00b4d8] animate-pulse"></span>
-                            <h3 class="text-base font-extrabold text-slate-900">1Life Q.A. Task Dashboards — Summarized Overview</h3>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-0.5">
-                            Live summary of all QA tasks from <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-[#00b4d8] hover:text-[#0096c7] underline font-semibold">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg</a>. Click any task below or in the left sidebar to open its dedicated dashboard.
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="exportAllTasksSummaryExcel()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#0d9488] hover:bg-[#0f766e] text-white transition flex items-center gap-1.5 shadow-xs">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Export All Sheets (.xlsx)
-                        </button>
-                        <button type="button" onclick="exportAllTasksSummaryPDF()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white transition flex items-center gap-1.5 shadow-xs">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                            Export Summary (.pdf)
-                        </button>
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-                <!-- 5 Dedicated QA Task Summary Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                    <!-- 1. WAYBILL TASK -->
-                    <div onclick="switchTaskDashboard('waybill')" class="ws-subcard cursor-pointer group rounded-xl p-4 bg-slate-50 border border-slate-200 hover:border-[#00b4d8] transition flex flex-col justify-between space-y-3">
+                <!-- BENTO BOX 1: OPERATIONAL STREAMS PERFORMANCE HUB (7 COLS) -->
+                <div class="lg:col-span-7 ws-card bento-box rounded-2xl p-5 bg-white border border-teal-100/90 shadow-xs flex flex-col justify-between space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                         <div>
-                            <div class="flex items-center justify-between">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#00b4d8]/15 text-[#0096c7] border border-[#00b4d8]/30">1. Waybill QA</span>
-                                <span class="text-xs text-[#00b4d8] font-bold group-hover:translate-x-0.5 transition">Open →</span>
-                            </div>
-                            <div id="sum-card-waybill-main" class="text-2xl font-black text-slate-900 font-mono mt-2">21,124</div>
-                            <div class="text-[11px] text-slate-500">Master Waybills Validated</div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-200 space-y-1 text-[11px] text-slate-600">
-                                <div class="flex justify-between"><span>Pharmacy Sheet:</span><strong id="sum-card-pharma-count" class="text-[#0096c7] font-mono">217 sessions</strong></div>
-                                <div class="flex justify-between"><span>Daily Waybill Log:</span><strong id="sum-card-dailylog-count" class="text-[#0d9488] font-mono">70 days</strong></div>
-                                <div class="flex justify-between"><span>Invalid Waybills:</span><strong id="sum-card-invalid-count" class="text-rose-600 font-mono">3,610 logged</strong></div>
-                            </div>
-                        </div>
-                        <div class="text-[11px] font-bold text-[#00b4d8] flex items-center justify-between pt-1">
-                            <span>Waybill Dashboard</span>
-                            <span>View Task →</span>
-                        </div>
-                    </div>
-
-                    <!-- 2. DISPATCH TASK -->
-                    <div onclick="switchTaskDashboard('dispatch')" class="ws-subcard cursor-pointer group rounded-xl p-4 bg-slate-50 border border-slate-200 hover:border-[#0d9488] transition flex flex-col justify-between space-y-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-teal-100/80 text-teal-800 border border-teal-200">2. Dispatch QA</span>
-                                <span class="text-xs text-[#0d9488] font-bold group-hover:translate-x-0.5 transition">Open →</span>
-                            </div>
-                            <div id="sum-card-dispatch-main" class="text-2xl font-black text-slate-900 font-mono mt-2">46</div>
-                            <div class="text-[11px] text-slate-500">Dispatch Monitoring Sessions</div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-200 space-y-1 text-[11px] text-slate-600">
-                                <div class="flex justify-between"><span>Sheet Overridden:</span><strong id="sum-card-dispatch-overridden" class="text-[#0d9488] font-mono">1,314 waybills</strong></div>
-                                <div class="flex justify-between"><span>Live Overrides:</span><strong id="sum-card-dispatch-live" class="text-emerald-700 font-mono">749 done</strong></div>
-                                <div class="flex justify-between"><span>Hours Logged:</span><strong id="sum-card-dispatch-hours" class="text-slate-800 font-mono">238.3 hrs</strong></div>
-                            </div>
-                        </div>
-                        <div class="text-[11px] font-bold text-[#0d9488] flex items-center justify-between pt-1">
-                            <span>Dispatch Dashboard</span>
-                            <span>View Task →</span>
-                        </div>
-                    </div>
-
-                    <!-- 3. ACCOUNT MERGING TASK -->
-                    <div onclick="switchTaskDashboard('account-merging')" class="ws-subcard cursor-pointer group rounded-xl p-4 bg-slate-50 border border-slate-200 hover:border-[#14b8a6] transition flex flex-col justify-between space-y-3">
-                        <div>
-                            <div class="flex items-center justify-between gap-1">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-100/80 text-emerald-800 border border-emerald-200 whitespace-nowrap">3. Merging</span>
-                                <span class="text-xs text-[#14b8a6] font-bold group-hover:translate-x-0.5 transition whitespace-nowrap">Open →</span>
-                            </div>
-                            <div id="sum-card-merging-main" class="text-2xl font-black text-slate-900 font-mono mt-2">115</div>
-                            <div class="text-[11px] text-slate-500">Account Merging Sessions</div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-200 space-y-1 text-[11px] text-slate-600">
-                                <div class="flex justify-between"><span>Locations Checked:</span><strong id="sum-card-merging-locs" class="text-[#0f766e] font-mono">1,436 locs</strong></div>
-                                <div class="flex justify-between"><span>Hours Worked:</span><strong id="sum-card-merging-hours" class="text-emerald-700 font-mono">429.6 hrs</strong></div>
-                                <div class="flex justify-between"><span>Active QAs:</span><strong class="text-slate-800 font-mono">5 Specialists</strong></div>
-                            </div>
-                        </div>
-                        <div class="text-[11px] font-bold text-[#0f766e] flex items-center justify-between pt-1">
-                            <span>Account Merging Dashboard</span>
-                            <span>View Task →</span>
-                        </div>
-                    </div>
-
-                    <!-- 4. OUTPUT QA TASK -->
-                    <div onclick="switchTaskDashboard('output-qa')" class="ws-subcard cursor-pointer group rounded-xl p-4 bg-slate-50 border border-slate-200 hover:border-[#00b4d8] transition flex flex-col justify-between space-y-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#00b4d8]/15 text-[#0096c7] border border-[#00b4d8]/30">4. Output QA</span>
-                                <span class="text-xs text-[#00b4d8] font-bold group-hover:translate-x-0.5 transition">Open →</span>
-                            </div>
-                            <div id="sum-card-outputqa-main" class="text-2xl font-black text-slate-900 font-mono mt-2">184</div>
-                            <div class="text-[11px] text-slate-500">Reports & Dashboards Audited</div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-200 space-y-1 text-[11px] text-slate-600">
-                                <div class="flex justify-between"><span>Passed Audits:</span><strong id="sum-card-outputqa-pass" class="text-emerald-700 font-mono">183 Passed</strong></div>
-                                <div class="flex justify-between"><span>Accuracy / Logic:</span><strong class="text-[#0096c7] font-mono">99.5% Pass</strong></div>
-                                <div class="flex justify-between"><span>Analysts Audited:</span><strong class="text-slate-800 font-mono">Data Team</strong></div>
-                            </div>
-                        </div>
-                        <div class="text-[11px] font-bold text-[#00b4d8] flex items-center justify-between pt-1">
-                            <span>Output QA Dashboard</span>
-                            <span>View Task →</span>
-                        </div>
-                    </div>
-
-                    <!-- 5. IT SCHEDULE MONITORING TASK -->
-                    <div onclick="switchTaskDashboard('it-schedule')" class="ws-subcard cursor-pointer group rounded-xl p-4 bg-slate-50 border border-slate-200 hover:border-amber-400 transition flex flex-col justify-between space-y-3">
-                        <div>
-                            <div class="flex items-center justify-between">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-200">5. IT Schedule</span>
-                                <span class="text-xs text-amber-600 font-bold group-hover:translate-x-0.5 transition">Open →</span>
-                            </div>
-                            <div id="sum-card-itsched-main" class="text-2xl font-black text-slate-900 font-mono mt-2">54</div>
-                            <div class="text-[11px] text-slate-500">IT Schedule QA Sessions</div>
-                            <div class="mt-2.5 pt-2 border-t border-slate-200 space-y-1 text-[11px] text-slate-600">
-                                <div class="flex justify-between"><span>Schedules Checked:</span><strong id="sum-card-itsched-checked" class="text-amber-700 font-mono">5,875</strong></div>
-                                <div class="flex justify-between"><span>Schedules Linked:</span><strong id="sum-card-itsched-linked" class="text-emerald-700 font-mono">1,655</strong></div>
-                                <div class="flex justify-between"><span>Hours Logged:</span><strong id="sum-card-itsched-hours" class="text-slate-800 font-mono">163.1 hrs</strong></div>
-                            </div>
-                        </div>
-                        <div class="text-[11px] font-bold text-amber-700 flex items-center justify-between pt-1">
-                            <span>IT Schedule Dashboard</span>
-                            <span>View Task →</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom Home Task Report Builder -->
-                <div class="mt-4 pt-4 border-t border-slate-200/80">
-                    <div class="ws-subcard rounded-xl p-4 bg-teal-50/20 border border-teal-200/80 space-y-3">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#00b4d8] text-white">Custom Report</span>
-                                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900">Home Task Custom Report Builder</h4>
-                                <span id="home-cr-preview-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#00b4d8]/10 text-[#0096c7] border border-[#00b4d8]/30 font-mono">Loading scope...</span>
-                            </div>
                             <div class="flex items-center gap-2">
-                                <button type="button" onclick="exportHomeCustomReportExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0d9488] hover:bg-[#0f766e] text-white transition flex items-center gap-1.5 shadow-2xs">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    Custom Excel (.xlsx)
-                                </button>
-                                <button type="button" onclick="exportHomeCustomReportPDF()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white transition flex items-center gap-1.5 shadow-2xs">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                    Custom PDF (.pdf)
-                                </button>
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#00b4d8] animate-pulse"></span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-teal-50 text-teal-800 border border-teal-200">Bento Stream Hub</span>
+                                <h3 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">QA Operational Stream Performance</h3>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">
+                                Real-time output across all 5 operational streams • Click any tile to launch dedicated dashboard
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button type="button" onclick="exportAllQAExcel()" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#0d9488] hover:bg-[#0f766e] text-white transition flex items-center gap-1 shadow-2xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Export (.xlsx)
+                            </button>
+                            <button type="button" onclick="exportAllTasksSummaryPDF()" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white transition flex items-center gap-1 shadow-2xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                Summary (.pdf)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 5 Dedicated QA Task Summary Cards in Responsive Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                        <!-- 1. WAYBILL TASK -->
+                        <div onclick="switchTaskDashboard('waybill')" class="ws-subcard group p-3.5 rounded-xl border border-teal-200/70 bg-gradient-to-br from-teal-50/40 to-white hover:border-[#00b4d8] transition cursor-pointer flex flex-col justify-between shadow-2xs">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#00b4d8]/15 text-[#0096c7] uppercase">1. Waybill QA</span>
+                                    <span class="text-[11px] font-semibold text-[#00b4d8] group-hover:translate-x-0.5 transition">Open →</span>
+                                </div>
+                                <div id="sum-card-waybill-main" class="text-2xl font-black text-slate-900 font-mono mt-2">21,124</div>
+                                <div class="text-[11px] text-slate-500 font-medium">Master Waybills Validated</div>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] space-y-1 text-slate-600">
+                                <div class="flex justify-between"><span>Pharmacy Sheet:</span><strong id="sum-card-pharma-count" class="font-mono text-slate-800">217 sessions</strong></div>
+                                <div class="flex justify-between"><span>Daily Waybill Log:</span><strong id="sum-card-dailylog-count" class="font-mono text-slate-800">70 logs</strong></div>
+                                <div class="flex justify-between"><span>Invalid Waybills:</span><strong id="sum-card-invalid-count" class="font-mono text-rose-600 font-bold">3,610 tracked</strong></div>
+                            </div>
+                            <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 group-hover:text-[#00b4d8] font-semibold transition">
+                                <span>Waybill Dashboard</span>
+                                <span>View Task →</span>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <!-- 2. DISPATCH TASK -->
+                        <div onclick="switchTaskDashboard('dispatch')" class="ws-subcard group p-3.5 rounded-xl border border-sky-200/70 bg-gradient-to-br from-sky-50/40 to-white hover:border-[#00b4d8] transition cursor-pointer flex flex-col justify-between shadow-2xs">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 uppercase">2. Dispatch QA</span>
+                                    <span class="text-[11px] font-semibold text-[#00b4d8] group-hover:translate-x-0.5 transition">Open →</span>
+                                </div>
+                                <div id="sum-card-dispatch-main" class="text-2xl font-black text-slate-900 font-mono mt-2">46</div>
+                                <div class="text-[11px] text-slate-500 font-medium">Dispatch Monitoring Sessions</div>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] space-y-1 text-slate-600">
+                                <div class="flex justify-between"><span>Sheet Overridden:</span><strong id="sum-card-dispatch-overridden" class="font-mono text-slate-800">1,314 waybills</strong></div>
+                                <div class="flex justify-between"><span>Live Overrides:</span><strong id="sum-card-dispatch-live" class="font-mono text-sky-700 font-bold">699 active</strong></div>
+                                <div class="flex justify-between"><span>Hours Logged:</span><strong id="sum-card-dispatch-hours" class="font-mono text-slate-800">56.2 hrs</strong></div>
+                            </div>
+                            <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 group-hover:text-[#00b4d8] font-semibold transition">
+                                <span>Dispatch Dashboard</span>
+                                <span>View Task →</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. ACCOUNT MERGING TASK -->
+                        <div onclick="switchTaskDashboard('merging')" class="ws-subcard group p-3.5 rounded-xl border border-indigo-200/70 bg-gradient-to-br from-indigo-50/40 to-white hover:border-[#00b4d8] transition cursor-pointer flex flex-col justify-between shadow-2xs">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 uppercase">3. Merging</span>
+                                    <span class="text-[11px] font-semibold text-[#00b4d8] group-hover:translate-x-0.5 transition">Open →</span>
+                                </div>
+                                <div id="sum-card-merging-main" class="text-2xl font-black text-slate-900 font-mono mt-2">115</div>
+                                <div class="text-[11px] text-slate-500 font-medium">Account Merging Sessions</div>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] space-y-1 text-slate-600">
+                                <div class="flex justify-between"><span>Locations Checked:</span><strong id="sum-card-merging-locs" class="font-mono text-slate-800">1,436 locs</strong></div>
+                                <div class="flex justify-between"><span>Hours Worked:</span><strong id="sum-card-merging-hours" class="font-mono text-slate-800">144.3 hrs</strong></div>
+                                <div class="flex justify-between"><span>Accuracy:</span><strong class="font-mono text-emerald-700 font-bold">100% Verified</strong></div>
+                            </div>
+                            <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 group-hover:text-[#00b4d8] font-semibold transition">
+                                <span>Merging Dashboard</span>
+                                <span>View Task →</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. OUTPUT QA TASK -->
+                        <div onclick="switchTaskDashboard('output-qa')" class="ws-subcard group p-3.5 rounded-xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/40 to-white hover:border-[#00b4d8] transition cursor-pointer flex flex-col justify-between shadow-2xs">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">4. Output QA</span>
+                                    <span class="text-[11px] font-semibold text-[#00b4d8] group-hover:translate-x-0.5 transition">Open →</span>
+                                </div>
+                                <div id="sum-card-outputqa-main" class="text-2xl font-black text-slate-900 font-mono mt-2">184</div>
+                                <div class="text-[11px] text-slate-500 font-medium">Reports & Dashboards Audited</div>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] space-y-1 text-slate-600">
+                                <div class="flex justify-between"><span>Passed Audits:</span><strong id="sum-card-outputqa-passed" class="font-mono text-emerald-700 font-bold">183 passed</strong></div>
+                                <div class="flex justify-between"><span>Compliance Rate:</span><strong id="sum-card-outputqa-rate" class="font-mono text-emerald-700 font-bold">99.5%</strong></div>
+                                <div class="flex justify-between"><span>Flagged Items:</span><strong class="font-mono text-slate-800">1 item</strong></div>
+                            </div>
+                            <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 group-hover:text-[#00b4d8] font-semibold transition">
+                                <span>Output QA Dashboard</span>
+                                <span>View Task →</span>
+                            </div>
+                        </div>
+
+                        <!-- 5. IT SCHEDULE MONITORING TASK -->
+                        <div onclick="switchTaskDashboard('it-schedule')" class="ws-subcard group p-3.5 rounded-xl border border-amber-200/70 bg-gradient-to-br from-amber-50/40 to-white hover:border-[#00b4d8] transition cursor-pointer flex flex-col justify-between shadow-2xs">
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 uppercase">5. IT Schedule</span>
+                                    <span class="text-[11px] font-semibold text-[#00b4d8] group-hover:translate-x-0.5 transition">Open →</span>
+                                </div>
+                                <div id="sum-card-itsched-main" class="text-2xl font-black text-slate-900 font-mono mt-2">54</div>
+                                <div class="text-[11px] text-slate-500 font-medium">IT Schedule QA Sessions</div>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] space-y-1 text-slate-600">
+                                <div class="flex justify-between"><span>Schedules Checked:</span><strong id="sum-card-itsched-checked" class="font-mono text-slate-800">5,875</strong></div>
+                                <div class="flex justify-between"><span>Linked Runs:</span><strong id="sum-card-itsched-linked" class="font-mono text-amber-700 font-bold">1,668 linked</strong></div>
+                                <div class="flex justify-between"><span>Active Streams:</span><strong class="font-mono text-slate-800">5 Stations</strong></div>
+                            </div>
+                            <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 group-hover:text-[#00b4d8] font-semibold transition">
+                                <span>IT Schedule Dashboard</span>
+                                <span>View Task →</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BENTO BOX 2: CUSTOM REPORT STUDIO HERO TILE (5 COLS) -->
+                <div id="home-cr-container" class="lg:col-span-5 ws-card bento-box rounded-2xl p-5 bg-white border border-teal-200/90 shadow-xs border-t-4 border-t-[#00b4d8] flex flex-col justify-between space-y-4">
+                    <div>
+                        <!-- Header & Live Preview Badge -->
+                        <div class="flex items-center justify-between gap-2 border-b border-teal-100/80 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#00b4d8] text-white shadow-xs">Bento Studio</span>
+                                <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight">Home Task Custom Report Builder</h4>
+                            </div>
+                            <span id="home-cr-preview-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#00b4d8]/10 text-[#0096c7] border border-[#00b4d8]/30 font-mono truncate max-w-[190px]">
+                                Loading scope...
+                            </span>
+                        </div>
+
+                        <!-- 2x2 Bento Filter Selectors Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                             <!-- 1. Date Mode -->
                             <div>
                                 <label for="home-cr-date-mode" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date Filter</label>
@@ -962,13 +1034,13 @@
                                 </select>
                             </div>
 
-                            <!-- 2. Dynamic Date Value (Week / Specific Date / Range) -->
+                            <!-- 2. Dynamic Date Scope -->
                             <div id="home-cr-date-value-wrap">
                                 <label id="home-cr-date-value-label" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Period Scope</label>
-                                <div id="home-cr-all-hint" class="px-2.5 py-1.5 rounded-lg bg-slate-100/80 border border-slate-200 text-xs text-slate-500 font-medium">All available dates included</div>
+                                <div id="home-cr-all-hint" class="px-2.5 py-1.5 rounded-lg bg-slate-100/80 border border-slate-200 text-xs text-slate-500 font-medium truncate">All available dates included</div>
                                 <select id="home-cr-week-select" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#00b4d8]"></select>
                                 <select id="home-cr-specific-date" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#00b4d8]"></select>
-                                <div id="home-cr-range-wrap" class="hidden flex items-center gap-1.5">
+                                <div id="home-cr-range-inputs" class="hidden flex items-center gap-1">
                                     <input type="date" id="home-cr-start-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-800">
                                     <input type="date" id="home-cr-end-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-800">
                                 </div>
@@ -1001,85 +1073,101 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- ======================================================================= -->
-            <!-- LIVE GOOGLE SPREADSHEET MULTI-TAB DATA VIEWER                           -->
-            <!-- ======================================================================= -->
-            <div class="ws-card rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
-                <!-- Header & Sheet Tab Pills -->
-                <div class="p-4 border-b border-slate-100 space-y-3">
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#00b4d8]/15 text-[#0096c7] border border-[#00b4d8]/30">Live Excel Data</span>
-                                <h3 class="text-sm font-bold text-slate-900">Q.A. Monitoring Spreadsheet Explorer (All 7 Operational Tabs)</h3>
+                    <!-- Bento Studio Action Bar -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                        <button type="button" onclick="scrollToExplorer()" class="text-xs font-bold text-[#0096c7] hover:underline flex items-center gap-1.5 py-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                            Live Table Below ↓
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="exportHomeCustomReportExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0d9488] hover:bg-[#0f766e] text-white transition flex items-center gap-1.5 shadow-2xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Custom Excel (.xlsx)
+                            </button>
+                            <button type="button" onclick="exportHomeCustomReportPDF()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white transition flex items-center gap-1.5 shadow-2xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                Custom PDF (.pdf)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BENTO BOX 3: SPREADSHEET EXPLORER STUDIO (FULL WIDTH 12 COLS) -->
+                <div id="home-excel-preview-container" class="lg:col-span-12 ws-card bento-box rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
+                    <!-- Header & Sheet Tab Pills -->
+                    <div class="p-4 border-b border-slate-100 space-y-3">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-[#00b4d8]/15 text-[#0096c7] border border-[#00b4d8]/30">Live Excel Data</span>
+                                    <h4 class="text-sm font-extrabold text-slate-900 tracking-tight">Q.A. Monitoring Spreadsheet Explorer (All 7 Operational Tabs)</h4>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Directly viewing live records from <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-[#00b4d8] hover:text-[#0096c7] underline font-semibold">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg</a> — select any sheet tab below or search across rows.
+                                </p>
                             </div>
-                            <p class="text-xs text-slate-500 mt-0.5">
-                                Directly viewing live records from <code class="text-[#00b4d8] font-mono font-semibold">1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg</code> — select any sheet tab below or search across rows.
-                            </p>
+
+                            <!-- Right Controls: Search, QA Filter & Export -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <div class="relative">
+                                    <input type="text" id="home-excel-search" oninput="filterHomeExcelTable()" placeholder="Search ID, QA, Waybill #, Ticket, Issue..." class="w-56 sm:w-64 pl-8 pr-3 py-1.5 rounded-lg text-xs bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#00b4d8] text-slate-800">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <select id="home-excel-qa-filter" onchange="filterHomeExcelTable()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none focus:border-[#00b4d8]">
+                                    <option value="ALL">All QA Team Members</option>
+                                </select>
+                                <button type="button" onclick="exportActiveSheetTabExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0d9488] hover:bg-[#0f766e] text-white transition">
+                                    Export Tab (.xlsx)
+                                </button>
+                                <button type="button" onclick="exportActiveSheetTabPDF()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white transition">
+                                    Export Tab (.pdf)
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <input type="text" id="home-excel-search" oninput="renderHomeSpreadsheetViewer()" placeholder="Search ID, QA, Waybill #, Ticket, Issue..." class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#00b4d8] w-56">
-                            <select id="home-excel-qa-filter" onchange="renderHomeSpreadsheetViewer()" class="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800">
-                                <option value="ALL">All QA Team Members</option>
-                                <option value="Arabella">Arabella Morales</option>
-                                <option value="Julius">Julius Rod Dayag</option>
-                                <option value="Yesha">Yesha Nicholai Lao</option>
-                                <option value="Janryl">Janryl Jay Canaway</option>
-                                <option value="John Michael">John Michael Francisco</option>
-                            </select>
-                            <button type="button" onclick="exportActiveSheetTabExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0d9488] hover:bg-[#0f766e] text-white transition">
-                                Export Tab (.xlsx)
+
+                        <!-- Google Sheet Bottom-Style Tab Bar -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5">
+                            <button type="button" onclick="selectHomeSheetTab('all_tasks')" id="sheet-tab-btn-all_tasks" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                All Tasks
                             </button>
-                            <button type="button" onclick="exportActiveSheetTabPDF()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white transition">
-                                Export Tab (.pdf)
+                            <button type="button" onclick="selectHomeSheetTab('pharmacy')" id="sheet-tab-btn-pharmacy" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] text-white transition whitespace-nowrap shadow-xs">
+                                Pharmacy (217)
+                            </button>
+                            <button type="button" onclick="selectHomeSheetTab('daily_waybill_log')" id="sheet-tab-btn-daily_waybill_log" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                Daily Waybill Log (70)
+                            </button>
+                            <button type="button" onclick="selectHomeSheetTab('invalid_waybills')" id="sheet-tab-btn-invalid_waybills" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                Invalid Waybills (3,610)
+                            </button>
+                            <button type="button" onclick="selectHomeSheetTab('account_merging')" id="sheet-tab-btn-account_merging" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                Account Merging (115)
+                            </button>
+                            <button type="button" onclick="selectHomeSheetTab('it_schedule')" id="sheet-tab-btn-it_schedule" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                IT Schedule Monitoring (54)
+                            </button>
+                            <button type="button" onclick="selectHomeSheetTab('output_qa')" id="sheet-tab-btn-output_qa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                Output QA (184)
+                            </button>
+                            <button type="button" onclick="selectHomeSheetTab('dispatch_qa')" id="sheet-tab-btn-dispatch_qa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
+                                Dispatch (46)
                             </button>
                         </div>
                     </div>
 
-                    <!-- Google Sheet Bottom-Style Tab Bar -->
-                    <div class="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5">
-                        <button type="button" onclick="selectHomeSheetTab('all_tasks')" id="sheet-tab-btn-all_tasks" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            All Tasks
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('pharmacy')" id="sheet-tab-btn-pharmacy" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] text-white transition whitespace-nowrap shadow-xs">
-                            Pharmacy (217)
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('daily_waybill_log')" id="sheet-tab-btn-daily_waybill_log" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            Daily Waybill Log (70)
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('invalid_waybills')" id="sheet-tab-btn-invalid_waybills" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            Invalid Waybills (3,610)
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('account_merging')" id="sheet-tab-btn-account_merging" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            Account Merging (115)
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('it_schedule')" id="sheet-tab-btn-it_schedule" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            IT Schedule Monitoring (54)
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('output_qa')" id="sheet-tab-btn-output_qa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            Output QA (184)
-                        </button>
-                        <button type="button" onclick="selectHomeSheetTab('dispatch_qa')" id="sheet-tab-btn-dispatch_qa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition whitespace-nowrap">
-                            Dispatch (46)
-                        </button>
+                    <!-- Dynamic Spreadsheet Table Container -->
+                    <div class="overflow-x-auto max-h-[480px]">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead id="home-excel-thead" class="bg-slate-50 text-slate-600 uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200 font-semibold">
+                            </thead>
+                            <tbody id="home-excel-tbody" class="divide-y divide-slate-100 text-slate-700">
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-
-                <!-- Dynamic Spreadsheet Table Container -->
-                <div class="overflow-x-auto max-h-[460px]">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead id="home-excel-thead" class="bg-slate-50 text-slate-600 uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200 font-semibold">
-                        </thead>
-                        <tbody id="home-excel-tbody" class="divide-y divide-slate-100 text-slate-700">
-                        </tbody>
-                    </table>
-                </div>
-                <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-                    <span id="home-excel-footer-count">Showing live records from Q.A. Monitoring Spreadsheet</span>
-                    <span>Source: 1Life Q.A. Task Monitoring Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)</span>
+                    <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+                        <span id="home-excel-footer-count">Showing live records from Q.A. Monitoring Spreadsheet</span>
+                        <span>Source: 1Life Q.A. Task Monitoring Sheet (1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg)</span>
+                    </div>
                 </div>
             </div>
         </section>

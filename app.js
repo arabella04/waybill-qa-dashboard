@@ -6777,15 +6777,50 @@ function highlightSidebarTaskButton(activeId) {
     ];
     allIds.forEach(id => {
         const el = document.getElementById(id);
-        if (!el) return;
-        if (id === activeId) {
-            el.classList.add('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
-            el.classList.remove('text-blue-100/75', 'text-slate-400');
-        } else {
-            el.classList.remove('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
-            el.classList.add('text-blue-100/75');
+        if (el) {
+            if (id === activeId) {
+                el.classList.add('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
+                el.classList.remove('text-blue-100/75', 'text-slate-400');
+            } else {
+                el.classList.remove('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
+                el.classList.add('text-blue-100/75');
+            }
+        }
+        // Also sync top horizontal bar tabs if present
+        const topId = id.replace('side-nav-', 'top-nav-');
+        const topEl = document.getElementById(topId);
+        if (topEl) {
+            if (id === activeId) {
+                topEl.classList.add('bg-[#00b4d8]', 'text-white', 'font-bold', 'shadow-xs');
+                topEl.classList.remove('text-slate-300', 'text-slate-400', 'hover:bg-white/10', 'hover:bg-white/5');
+            } else {
+                topEl.classList.remove('bg-[#00b4d8]', 'text-white', 'font-bold', 'shadow-xs');
+                topEl.classList.add('text-slate-300', 'hover:bg-white/10');
+            }
         }
     });
+}
+
+function scrollToExplorer() {
+    const homeSec = document.getElementById('workspace-home-section');
+    if (homeSec && homeSec.classList.contains('hidden')) {
+        if (typeof switchTaskDashboard === 'function') switchTaskDashboard('home');
+    }
+    const el = document.getElementById('home-excel-preview-container');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function scrollToCustomReport() {
+    const homeSec = document.getElementById('workspace-home-section');
+    if (homeSec && homeSec.classList.contains('hidden')) {
+        if (typeof switchTaskDashboard === 'function') switchTaskDashboard('home');
+    }
+    const el = document.getElementById('home-cr-container');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function switchWorkspaceNav(target) {
