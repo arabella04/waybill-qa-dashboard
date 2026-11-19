@@ -6779,17 +6779,17 @@ function highlightSidebarTaskButton(activeId) {
         const el = document.getElementById(id);
         if (el) {
             if (id === activeId) {
-                el.classList.add('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
-                el.classList.remove('text-blue-100/75', 'text-slate-400');
+                el.classList.add('bg-[#00b4d8]', 'text-white', 'font-bold', 'shadow-xs');
+                el.classList.remove('text-slate-300', 'text-slate-400', 'hover:bg-white/10', 'hover:bg-white/5');
             } else {
-                el.classList.remove('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
-                el.classList.add('text-blue-100/75');
+                el.classList.remove('bg-[#00b4d8]', 'text-white', 'font-bold', 'shadow-xs');
+                el.classList.add('text-slate-300', 'hover:bg-white/10');
             }
         }
-        // Also sync top horizontal bar tabs if present
+        // Also check if there is a separate top-nav-* element
         const topId = id.replace('side-nav-', 'top-nav-');
         const topEl = document.getElementById(topId);
-        if (topEl) {
+        if (topEl && topEl !== el) {
             if (id === activeId) {
                 topEl.classList.add('bg-[#00b4d8]', 'text-white', 'font-bold', 'shadow-xs');
                 topEl.classList.remove('text-slate-300', 'text-slate-400', 'hover:bg-white/10', 'hover:bg-white/5');

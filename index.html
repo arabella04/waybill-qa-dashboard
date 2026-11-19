@@ -296,7 +296,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
     <!-- ================================================================= -->
     <!-- GOOGLE WORKSPACE (@1LIFE.PH) OAUTH SECURITY LOGIN GATE            -->
@@ -356,207 +356,7 @@
     <!-- ================================================================= -->
     <!-- LEFT SIDEBAR: 1LIFE GALIM DEEP SPRUCE TEAL WORKSPACE SIDEBAR      -->
     <!-- ================================================================= -->
-    <aside id="workspace-sidebar" class="w-64 shrink-0 bg-[#0d2125] border-r border-[#193e45] text-slate-200 flex flex-col justify-between sticky top-0 h-screen z-50 select-none transition-all duration-200 shadow-xl">
-        <!-- Top Brand & Navigation -->
-        <div class="p-3.5 space-y-5 overflow-y-auto flex-1">
-            <!-- 1Life Brand Header -->
-            <div class="flex items-center gap-3 px-1.5 py-1">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b4d8] to-[#0d9488] flex items-center justify-center text-white font-black text-base shadow-[0_0_18px_rgba(0,180,216,0.4)] shrink-0">
-                    1L
-                </div>
-                <div class="sidebar-label min-w-0">
-                    <div class="text-sm font-extrabold text-white leading-tight truncate" title="1Life Q.A Task Dashboard">1Life Q.A Task Dashboard</div>
-                    <div class="text-[11px] text-teal-300 font-medium truncate">1Life Data Analytics</div>
-                </div>
-            </div>
-
-            <!-- WORKSPACE SECTION -->
-            <div class="space-y-1">
-                <div class="sidebar-section-title px-2.5 text-[10px] font-bold uppercase tracking-wider text-teal-200/60 mb-1.5">
-                    WORKSPACE
-                </div>
-                <button type="button" onclick="switchTaskDashboard('home')" id="side-nav-home" class="sidebar-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-[#00b4d8]/20 border border-[#00b4d8]/40 text-white transition">
-                    <span class="flex items-center gap-3 truncate">
-                        <svg class="w-4 h-4 text-cyan-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                        <span class="sidebar-label truncate">Home (All Tasks)</span>
-                    </span>
-                    <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#00b4d8] text-white">SUMMARY</span>
-                </button>
-                <button type="button" onclick="switchWorkspaceNav('my-shift')" id="side-nav-my-shift" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="sidebar-label truncate">Task Log</span>
-                </button>
-                <button type="button" onclick="switchWorkspaceNav('notes')" id="side-nav-notes" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="sidebar-label truncate">RTH Notes</span>
-                </button>
-                <button type="button" onclick="switchWorkspaceNav('feedback')" id="side-nav-feedback" class="sidebar-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    <span class="sidebar-label truncate">Executive Report</span>
-                </button>
-            </div>
-
-            <!-- MODULES SECTION: DEDICATED Q.A. TASK DASHBOARDS -->
-            <div class="space-y-1">
-                <div class="sidebar-section-title px-2.5 text-[10px] font-bold uppercase tracking-wider text-teal-200/60 mb-1.5">
-                    Q.A. TASK DASHBOARDS
-                </div>
-
-                <!-- Data Quality Collapsible Parent -->
-                <div>
-                    <button type="button" onclick="toggleDataQualityModule()" class="sidebar-item w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold text-white hover:bg-white/10 transition">
-                        <span class="flex items-center gap-2.5">
-                            <svg id="dq-module-chevron" class="w-3.5 h-3.5 text-cyan-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            <svg class="w-4 h-4 text-[#00b4d8] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                            <span class="sidebar-label">Q.A. Tasks</span>
-                        </span>
-                    </button>
-
-                    <!-- Dedicated Task Dashboards List (Clean, no number badges) -->
-                    <div id="dq-module-items" class="mt-1 ml-3 pl-2.5 border-l border-[#193e45] space-y-1">
-                        <!-- 1. WAYBILL DASHBOARD -->
-                        <button type="button" onclick="switchTaskDashboard('waybill')" id="side-nav-task-waybill" class="sidebar-item w-full flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                            <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 text-cyan-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m4 4v10M4 7v10l8 4"></path></svg>
-                                <span class="sidebar-label truncate">Waybill</span>
-                            </span>
-                        </button>
-
-                        <!-- 2. DISPATCH DASHBOARD -->
-                        <button type="button" onclick="switchTaskDashboard('dispatch')" id="side-nav-task-dispatch" class="sidebar-item w-full flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                            <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 text-teal-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                                <span class="sidebar-label truncate">Dispatch</span>
-                            </span>
-                        </button>
-
-                        <!-- 3. ACCOUNT MERGING DASHBOARD -->
-                        <button type="button" onclick="switchTaskDashboard('account-merging')" id="side-nav-task-merging" class="sidebar-item w-full flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                            <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 text-emerald-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                <span class="sidebar-label truncate">Account Merging</span>
-                            </span>
-                        </button>
-
-                        <!-- 4. OUTPUT QA DASHBOARD -->
-                        <button type="button" onclick="switchTaskDashboard('output-qa')" id="side-nav-task-output-qa" class="sidebar-item w-full flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                            <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 text-cyan-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span class="sidebar-label truncate">Output QA</span>
-                            </span>
-                        </button>
-
-                        <!-- 5. IT SCHEDULE MONITORING DASHBOARD -->
-                        <button type="button" onclick="switchTaskDashboard('it-schedule')" id="side-nav-task-it-schedule" class="sidebar-item w-full flex items-center px-2.5 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition">
-                            <span class="flex items-center gap-2.5 truncate">
-                                <svg class="w-3.5 h-3.5 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                                <span class="sidebar-label truncate">IT Schedule</span>
-                            </span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Documentation (Opens interactive in-app guide panel) -->
-                <button type="button" onclick="switchWorkspaceNav('documentation')" id="side-nav-documentation" class="sidebar-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/10 transition">
-                    <span class="flex items-center gap-3 truncate">
-                        <svg class="w-4 h-4 text-cyan-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                        <span class="sidebar-label truncate">Documentation</span>
-                    </span>
-                    <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#133238] text-cyan-200 border border-[#00b4d8]/30">GUIDE</span>
-                </button>
-
-                <!-- Automation (Closed / Coming Soon) -->
-                <button type="button" onclick="switchWorkspaceNav('automation')" id="side-nav-automation" class="sidebar-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-400/50 opacity-60 cursor-not-allowed transition" title="Automations module is currently closed">
-                    <span class="flex items-center gap-3 truncate">
-                        <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        <span class="sidebar-label truncate">Automation</span>
-                    </span>
-                    <span class="sidebar-badge px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#102428] text-slate-400 border border-[#18383e]">CLOSED</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Bottom Profile & Collapse Menu -->
-        <div class="p-3 border-t border-[#183e45] space-y-2 relative">
-            <!-- Upward Profile Popover Card -->
-            <div id="sidebar-profile-popover" class="hidden fixed bottom-20 left-3 w-64 bg-[#0e252a] border border-[#1b434b] rounded-2xl shadow-2xl p-3.5 z-[80] space-y-3 text-xs text-slate-100">
-                <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-[#1b434b]">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div id="popover-user-initials" class="w-9 h-9 rounded-full bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-                            1L
-                        </div>
-                        <div class="min-w-0">
-                            <div id="popover-user-name" class="font-bold text-white truncate">1Life Google Auth</div>
-                            <div id="popover-user-email" class="text-[11px] text-teal-200/80 truncate">Sign in with @1life.ph</div>
-                        </div>
-                    </div>
-                    <span id="popover-user-role-badge" class="px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-[#00b4d8]/25 text-cyan-200 border border-[#00b4d8]/40 shrink-0">
-                        @1LIFE.PH
-                    </span>
-                </div>
-
-                <!-- APPEARANCE SWITCHER -->
-                <div>
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-teal-300/80 mb-1.5">APPEARANCE</div>
-                    <div class="grid grid-cols-3 gap-1 bg-[#09181b] p-1 rounded-xl border border-[#1b434b]">
-                        <button type="button" id="theme-btn-dark" onclick="setWorkspaceTheme('dark')" class="flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-400 hover:text-white font-medium text-[11px] transition">
-                            <svg class="w-3.5 h-3.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                            Dark
-                        </button>
-                        <button type="button" id="theme-btn-light" onclick="setWorkspaceTheme('light')" class="flex flex-col items-center justify-center py-1.5 rounded-lg bg-[#00b4d8] text-white font-semibold text-[11px] transition shadow-xs">
-                            <svg class="w-3.5 h-3.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                            Light
-                        </button>
-                        <button type="button" id="theme-btn-system" onclick="setWorkspaceTheme('system')" class="flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-400 hover:text-white font-medium text-[11px] transition">
-                            <svg class="w-3.5 h-3.5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                            System
-                        </button>
-                    </div>
-                </div>
-
-                <div class="space-y-1 pt-1 border-t border-[#1b434b]">
-                    <button type="button" onclick="open1LifeLoginModal()" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-200 hover:bg-white/10 transition font-medium">
-                        <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        Switch Google Account
-                    </button>
-                    <button type="button" onclick="switchWorkspaceNav('documentation')" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-200 hover:bg-white/10 transition font-medium">
-                        <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                        Help & documentation
-                    </button>
-                    <button type="button" onclick="handle1LifeLogout()" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-rose-300 hover:bg-rose-500/20 transition font-semibold">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        Log out
-                    </button>
-                </div>
-            </div>
-
-            <!-- What's new -->
-            <button type="button" onclick="showNotification('Galim Deep Slate-Teal & Turquoise Theme active! With Plus Jakarta Sans typography.', 'success')" class="sidebar-item w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
-                <svg class="w-4 h-4 text-cyan-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
-                <span class="sidebar-label">What's new</span>
-            </button>
-
-            <!-- Profile Pill Button -->
-            <button type="button" id="sidebar-profile-btn" onclick="toggleProfilePopover(event)" class="sidebar-item w-full flex items-center justify-between p-2 rounded-xl bg-[#133238] hover:bg-[#183e46] border border-[#1f4b53] transition">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div id="sidebar-user-initials" class="w-8 h-8 rounded-full bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
-                        1L
-                    </div>
-                    <div class="sidebar-label text-left min-w-0">
-                        <div id="sidebar-user-name" class="text-xs font-bold text-white truncate">1Life QA User</div>
-                        <div id="sidebar-user-role" class="text-[10px] text-teal-200/80 truncate">Google @1life.ph</div>
-                    </div>
-                </div>
-                <svg class="sidebar-label w-4 h-4 text-cyan-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
-            </button>
-
-            <!-- Collapse Menu Button -->
-            <button type="button" onclick="toggleSidebarCollapse()" class="sidebar-item w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-teal-200/75 hover:text-white transition">
-                <span id="sidebar-collapse-icon" class="font-mono text-xs">«</span>
-                <span class="sidebar-label">Collapse menu</span>
-            </button>
-        </div>
-    </aside>
+    
 
     <!-- ================================================================= -->
     <!-- RIGHT MAIN WORKSPACE CONTAINER                                    -->
@@ -567,19 +367,22 @@
     <header id="workspace-main-header" class="bg-gradient-to-r from-[#0d2226] via-[#14353c] to-[#1c444d] text-white shadow-md sticky top-0 z-40 border-b border-[#1c444d]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 gap-3">
-                <!-- Brand Title / Workspace Breadcrumb -->
-                <div class="flex items-center gap-3 min-w-0">
-                    <div>
+                <!-- 1Life Brand Logo & Title on Left Side -->
+                <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b4d8] to-[#0d9488] flex items-center justify-center text-white font-black text-base shadow-[0_0_18px_rgba(0,180,216,0.4)] shrink-0">
+                        1L
+                    </div>
+                    <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h1 id="main-header-dashboard-title" class="text-sm sm:text-base font-bold tracking-tight text-white">1Life Q.A Task Dashboard — All Tasks Summary</h1>
+                            <h1 id="main-header-dashboard-title" class="text-sm sm:text-base font-extrabold tracking-tight text-white">1Life Q.A Task Dashboard</h1>
                             <span id="live-sheet-status-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#00b4d8]/20 text-cyan-100 border border-[#00b4d8]/30">
                                 <span class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] mr-1.5 animate-pulse"></span> Live Ready • 21,124 records
                             </span>
                         </div>
-                        <p class="text-[11px] text-teal-100 flex items-center gap-2 flex-wrap">
-                            <span>QA Tasks Sheet: <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-cyan-200 hover:text-white underline font-semibold">1CiVJpYv00... (9 Tabs)</a></span>
+                        <p class="text-[11px] text-teal-200/90 flex items-center gap-2 flex-wrap font-medium">
+                            <span>QA Tasks: <a href="https://docs.google.com/spreadsheets/d/1CiVJpYv00UzioljKZx9WTgYWPPEmNU3S8bR_dUxeoMg/edit?usp=sharing" target="_blank" class="text-cyan-200 hover:text-white underline font-semibold">1CiVJpYv00... (9 Tabs)</a></span>
                             <span>•</span>
-                            <span>Waybills Sheet: <a href="https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/edit?usp=sharing" target="_blank" class="text-teal-200 hover:text-white underline">1l_WgHYJno...</a></span>
+                            <span>Waybills: <a href="https://docs.google.com/spreadsheets/d/1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A/edit?usp=sharing" target="_blank" class="text-teal-200 hover:text-white underline">1l_WgHYJno...</a></span>
                             <span>•</span>
                             <span id="kpi-total-records-header">21,124 Total Records</span>
                         </p>
@@ -616,40 +419,54 @@
         </div>
     </header>
 
-    <!-- TOP HORIZONTAL SUB-NAVIGATION BAR (Modern SaaS Command Center) -->
+        <!-- ALL BUTTONS IN UP SIDE (Full Top Segmented Command Bar) -->
     <nav id="workspace-top-nav-bar" class="bg-[#0e272c]/95 border-b border-[#1b434b] px-4 sm:px-6 py-2 flex items-center justify-between gap-3 overflow-x-auto select-none backdrop-blur sticky top-16 z-30 shadow-xs">
-        <!-- Segmented Workspace Navigation Tabs -->
+        <!-- Main Navigation Pills -->
         <div class="flex items-center gap-1.5 min-w-max">
-            <button type="button" onclick="switchTaskDashboard('home')" id="top-nav-home" class="top-nav-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] text-white transition shadow-xs">
+            <!-- Workspace Group -->
+            <button type="button" onclick="switchTaskDashboard('home')" id="side-nav-home" class="top-nav-btn active flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] text-white transition shadow-xs">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span>Overview</span>
+                <span>Home (All Tasks)</span>
             </button>
-            <button type="button" onclick="switchWorkspaceNav('my-shift')" id="top-nav-my-shift" class="top-nav-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+            <button type="button" onclick="switchWorkspaceNav('my-shift')" id="side-nav-my-shift" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>Task Log</span>
             </button>
-            <button type="button" onclick="scrollToCustomReport()" id="top-nav-custom-report" class="top-nav-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span>Custom Reports</span>
-            </button>
-            <button type="button" onclick="scrollToExplorer()" id="top-nav-explorer" class="top-nav-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+            <button type="button" onclick="scrollToExplorer()" id="top-nav-explorer" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 <span>Spreadsheet Explorer</span>
             </button>
-            <span class="w-px h-4 bg-teal-800/80 mx-1"></span>
-            <!-- Module Direct Tabs -->
-            <button type="button" onclick="switchTaskDashboard('waybill')" id="top-nav-task-waybill" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Waybill</button>
-            <button type="button" onclick="switchTaskDashboard('dispatch')" id="top-nav-task-dispatch" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Dispatch</button>
-            <button type="button" onclick="switchTaskDashboard('merging')" id="top-nav-task-merging" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Merging</button>
-            <button type="button" onclick="switchTaskDashboard('output-qa')" id="top-nav-task-output-qa" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Output QA</button>
-            <button type="button" onclick="switchTaskDashboard('it-schedule')" id="top-nav-task-it-schedule" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">IT Sched</button>
-            <button type="button" onclick="switchWorkspaceNav('documentation')" id="top-nav-documentation" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition">Docs</button>
+            <button type="button" onclick="scrollToCustomReport()" id="top-nav-custom-report" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Custom Reports</span>
+            </button>
+            <button type="button" onclick="switchWorkspaceNav('notes')" id="side-nav-notes" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>RTH Notes</span>
+            </button>
+            <button type="button" onclick="switchWorkspaceNav('feedback')" id="side-nav-feedback" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span>Executive</span>
+            </button>
+
+            <span class="w-px h-4 bg-teal-800 mx-1"></span>
+
+            <!-- Q.A. Tasks Module Group -->
+            <button type="button" onclick="switchTaskDashboard('waybill')" id="side-nav-task-waybill" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-white/10 transition">Waybill</button>
+            <button type="button" onclick="switchTaskDashboard('dispatch')" id="side-nav-task-dispatch" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-white/10 transition">Dispatch</button>
+            <button type="button" onclick="switchTaskDashboard('merging')" id="side-nav-task-merging" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-white/10 transition">Merging</button>
+            <button type="button" onclick="switchTaskDashboard('output-qa')" id="side-nav-task-output-qa" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-white/10 transition">Output QA</button>
+            <button type="button" onclick="switchTaskDashboard('it-schedule')" id="side-nav-task-it-schedule" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-white/10 transition">IT Sched</button>
+            <button type="button" onclick="switchWorkspaceNav('documentation')" id="side-nav-documentation" class="top-nav-btn px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-cyan-300 hover:bg-white/10 transition">Docs</button>
         </div>
-        <!-- Right: Sidebar Dock Toggle Button -->
+
+        <!-- Right Quick Actions: Theme Switcher & What's New -->
         <div class="flex items-center gap-2 shrink-0">
-            <button type="button" onclick="toggleSidebarCollapse()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 hover:bg-white/15 text-slate-200 border border-white/15 transition" title="Toggle Sidebar">
-                <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                <span id="top-sidebar-toggle-text">Sidebar</span>
+            <button type="button" id="theme-btn-light" onclick="setWorkspaceTheme('light')" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-slate-200 hover:bg-white/20 transition flex items-center gap-1" title="Light Mode">
+                <span>☀️</span><span class="hidden sm:inline">Light</span>
+            </button>
+            <button type="button" id="theme-btn-dark" onclick="setWorkspaceTheme('dark')" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-slate-200 hover:bg-white/20 transition flex items-center gap-1" title="Dark Mode">
+                <span>🌙</span><span class="hidden sm:inline">Dark</span>
             </button>
         </div>
     </nav>
@@ -3163,5 +2980,50 @@
     <script src="data.js?v=20261118-6"></script>
     <script src="qa_tasks_data.js?v=20261118-6"></script>
     <script src="app.js?v=20261118-6"></script>
+
+    <!-- ================================================================= -->
+    <!-- FLOATING USER ACCOUNT PILL & PROFILE POPOVER (Bottom-Right)       -->
+    <!-- ================================================================= -->
+    <div id="floating-user-dock" class="fixed bottom-5 right-5 z-50 flex flex-col items-end select-none">
+        <!-- Floating Profile Popover (opens upward) -->
+        <div id="sidebar-profile-popover" class="hidden mb-3 w-72 rounded-2xl bg-[#0e272c] border border-teal-500/30 text-white shadow-2xl p-4 space-y-3 backdrop-blur-md">
+            <div class="flex items-center gap-3 pb-3 border-b border-teal-800/60">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                    1L
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div id="sidebar-user-name" class="font-bold text-sm text-white truncate">1Life QA User</div>
+                    <div id="sidebar-user-role" class="text-xs text-teal-300 truncate">QA Specialist • @1life.ph</div>
+                </div>
+            </div>
+            <div class="space-y-1 text-xs">
+                <button type="button" onclick="switchWorkspaceNav('my-shift')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-white/10 transition font-medium">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Shift & Task Log
+                </button>
+                <button type="button" onclick="switchWorkspaceNav('documentation')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-white/10 transition font-medium">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Help & Documentation
+                </button>
+                <button type="button" onclick="handle1LifeLogout()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-300 hover:bg-rose-500/20 transition font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Sign Out / Switch Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Floating Avatar Pill Button -->
+        <button type="button" id="sidebar-profile-btn" onclick="toggleProfilePopover(event)" class="group flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-full bg-[#0d2226]/90 hover:bg-[#153840] text-white border border-[#00b4d8]/40 shadow-2xl backdrop-blur-md transition-all duration-200 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,180,216,0.3)]">
+            <div id="sidebar-user-initials" class="w-8 h-8 rounded-full bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                1L
+            </div>
+            <div class="text-left pr-1 hidden sm:block">
+                <div id="sidebar-user-name" class="text-xs font-bold text-white leading-tight truncate max-w-[130px]">1Life QA User</div>
+                <div id="sidebar-user-role" class="text-[10px] text-teal-300 font-medium truncate max-w-[130px]">QA Specialist</div>
+            </div>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0d2226] mr-1 animate-pulse" title="Online & Connected"></span>
+        </button>
+    </div>
+
 </body>
 </html>
