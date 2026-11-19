@@ -1,3 +1,5 @@
+// Chart.js Default Font: Galim Plus Jakarta Sans
+if(typeof Chart!=='undefined') Chart.defaults.font.family = "Plus Jakarta Sans, system-ui, -apple-system, sans-serif";
 /**
  * Waybill QA & Dispatch Operational Dashboard - Application Logic
  * Professional Blue & Light Blue Theme
@@ -54,11 +56,11 @@ const dispTrendState = {
 
 // Corporate Brand Palettes for Specialist Multi-Line Graphs
 const QA_COLORS = {
-    'Julius Rod Dayag': '#2563eb',       // Royal Blue
-    'Yesha Nicholai Lao': '#0284c7',     // Sky Blue
-    'Arabella Morales': '#059669',       // Emerald
-    'Janryl Jay Canaway': '#7c3aed',     // Purple / Violet
-    'John Michael Francisco': '#d97706'  // Amber
+  'Arabella Morales': '#00b4d8',
+  'Janryl Jay Canaway': '#0d9488',
+  'John Michael Francisco': '#10b981',
+  'Julius Rod Dayag': '#f59e0b',
+  'Yesha Nicholai Lao': '#14b8a6'
 };
 
 const DISPATCH_COLORS = {
@@ -67,10 +69,7 @@ const DISPATCH_COLORS = {
     'Kim Novero': '#0d9488'              // Teal
 };
 
-const FALLBACK_PALETTE = [
-    '#e11d48', '#0891b2', '#4f46e5', '#ca8a04', '#16a34a',
-    '#9333ea', '#db2777', '#ea580c', '#0284c7', '#475569'
-];
+const FALLBACK_PALETTE = ['#00b4d8','#0d9488','#10b981','#f59e0b','#14b8a6','#06b6d4','#84cc16','#f97316'];
 
 function boot1LifeDashboard() {
     if (window.__1lifeDashboardBooted) return;
@@ -257,7 +256,7 @@ function renderDateDropdown() {
         const isAll = filters.date === 'ALL';
         btnAll.className = `px-2.5 py-1 text-xs font-semibold rounded-lg border transition shadow-xs ${
             isAll
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'bg-[#00b4d8] text-white border-[#00b4d8]'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:bg-sky-50'
         }`;
     }
@@ -442,7 +441,7 @@ function switchTab(tabId) {
 
     document.querySelectorAll('.nav-tab').forEach(btn => {
         if (btn.dataset.tab === tabId) {
-            btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-semibold text-sm border-blue-600 text-blue-700 bg-blue-50/70 rounded-t-lg whitespace-nowrap';
+            btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-semibold text-sm border-[#00b4d8] text-[#0f766e] bg-teal-50/60 rounded-t-lg whitespace-nowrap';
         } else {
             btn.className = 'nav-tab flex items-center gap-2 py-3 px-4 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 whitespace-nowrap';
         }
@@ -786,7 +785,7 @@ function renderOverviewCharts() {
                 plugins: {
                     legend: {
                         position: 'top',
-                        labels: { font: { family: "'Inter', sans-serif", size: 11 } }
+                        labels: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } }
                     },
                     tooltip: {
                         padding: 10,
@@ -990,7 +989,7 @@ function renderQAReportTable() {
         html += `
         <tr class="hover:bg-sky-50/50 transition-colors border-b border-slate-100">
             <td class="px-4 py-3 font-semibold text-slate-800 flex items-center gap-2">
-                <div class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+                <div class="w-7 h-7 rounded-full bg-blue-100 text-[#0f766e] flex items-center justify-center text-xs font-bold">
                     ${escapeHtml(qa.split(' ').map(n=>n[0]).join('').slice(0, 2))}
                 </div>
                 <span>${escapeHtml(qa)}</span>
@@ -1000,7 +999,7 @@ function renderQAReportTable() {
             <td class="px-4 py-3 text-right text-rose-600 font-medium">${initInvalid.toLocaleString()}</td>
             <td class="px-4 py-3 text-right text-slate-400">${initPending.toLocaleString()}</td>
             <td class="px-4 py-3 text-right">
-                <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+                <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-teal-50 text-[#0f766e] font-semibold border border-blue-200">
                     ${initValidPct}%
                 </span>
             </td>
@@ -1012,7 +1011,7 @@ function renderQAReportTable() {
                     ${finalHandled > 0 ? finalValidPct + '%' : '-'}
                 </span>
             </td>
-            <td class="px-4 py-3 text-right font-bold text-blue-700">${combined.toLocaleString()}</td>
+            <td class="px-4 py-3 text-right font-bold text-[#0f766e]">${combined.toLocaleString()}</td>
             <td class="px-4 py-3 text-center">
                 <button onclick="filterByQA('${escapeHtml(qa)}')" class="text-xs px-2.5 py-1 bg-white hover:bg-sky-100 text-sky-700 font-medium rounded border border-sky-200 transition">
                     View Records
@@ -1131,7 +1130,7 @@ function setQATrendMetric(metric) {
         const btn = document.getElementById(`btn-qa-metric-${m}`);
         if (!btn) return;
         if (m === metric) {
-            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition';
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-[#0f766e] shadow-xs transition';
         } else {
             btn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition';
         }
@@ -1148,7 +1147,7 @@ function setQATrendGrouping(grouping) {
         const btn = document.getElementById(`btn-qa-group-${g}`);
         if (!btn) return;
         if (g === grouping) {
-            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition';
+            btn.className = 'px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-[#0f766e] shadow-xs transition';
         } else {
             btn.className = 'px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition';
         }
@@ -1484,7 +1483,7 @@ function renderDispatchReportTable() {
                 <span>${escapeHtml(name)}</span>
             </td>
             <td class="px-4 py-3 text-right font-semibold text-slate-700">${actions.toLocaleString()}</td>
-            <td class="px-4 py-3 text-right text-blue-700 font-bold">${done.toLocaleString()}</td>
+            <td class="px-4 py-3 text-right text-[#0f766e] font-bold">${done.toLocaleString()}</td>
             <td class="px-4 py-3 text-right text-amber-600 font-medium">${pending.toLocaleString()}</td>
             <td class="px-4 py-3 text-right text-slate-400">${noAction.toLocaleString()}</td>
             <td class="px-4 py-3 text-right">
@@ -1881,11 +1880,11 @@ function renderWaybillTable() {
                     </span>
                 </td>
                 <td class="px-3 py-2.5 whitespace-nowrap">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200" title="Initial QA Validation Date">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-[#0f766e] border border-blue-200" title="Initial QA Validation Date">
                         ${escapeHtml(r.initial_val_date || '-')}
                     </span>
                 </td>
-                <td class="px-3 py-2.5 font-bold text-blue-700 whitespace-nowrap font-mono hover:underline">
+                <td class="px-3 py-2.5 font-bold text-[#0f766e] whitespace-nowrap font-mono hover:underline">
                     ${escapeHtml(r.waybill_no)}
                 </td>
                 <td class="px-3 py-2.5 text-slate-700 font-medium whitespace-nowrap max-w-[130px] truncate" title="${escapeHtml(r.rider)}">
@@ -1957,7 +1956,7 @@ function getStatusBadge(status, isFinal = false) {
         return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">For Validation</span>`;
     }
     if (status === 'Override Done') {
-        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Override Done</span>`;
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-[#0f766e] border border-blue-200">Override Done</span>`;
     }
     if (status === 'Pending') {
         return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Pending</span>`;
@@ -2726,12 +2725,12 @@ function renderCustomReportDateCheckboxes() {
 
     // Option: "All Dates (Full Dataset)"
     let html = `
-        <label class="flex items-center justify-between p-1.5 rounded-lg ${isAll ? 'bg-blue-50/80 border-blue-200 text-blue-900 font-semibold' : 'bg-white hover:bg-slate-100/80 text-slate-700'} border border-slate-200/80 cursor-pointer select-none transition text-xs">
+        <label class="flex items-center justify-between p-1.5 rounded-lg ${isAll ? 'bg-teal-50/80 border-blue-200 text-blue-900 font-semibold' : 'bg-white hover:bg-slate-100/80 text-slate-700'} border border-slate-200/80 cursor-pointer select-none transition text-xs">
             <div class="flex items-center gap-2">
                 <input type="checkbox" ${isAll ? 'checked' : ''} onchange="toggleCustomReportDate('ALL', this.checked)" class="rounded text-blue-600 focus:ring-0">
                 <span>All Dates (Full Dataset)</span>
             </div>
-            <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700">${allData.length.toLocaleString()}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100 text-[#0f766e]">${allData.length.toLocaleString()}</span>
         </label>
     `;
 
@@ -2746,7 +2745,7 @@ function renderCustomReportDateCheckboxes() {
         const isYesterday = dStr === secondLatestDate;
 
         html += `
-            <label class="flex items-center justify-between p-1.5 rounded-lg ${isChecked ? 'bg-blue-50/50 border-blue-200' : 'bg-white hover:bg-slate-100/60'} border border-slate-200/70 cursor-pointer select-none transition text-xs">
+            <label class="flex items-center justify-between p-1.5 rounded-lg ${isChecked ? 'bg-teal-50/50 border-blue-200' : 'bg-white hover:bg-slate-100/60'} border border-slate-200/70 cursor-pointer select-none transition text-xs">
                 <div class="flex items-center gap-2">
                     <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCustomReportDate('${escapeHtml(dStr)}', this.checked)" class="rounded text-blue-600 focus:ring-0">
                     <span class="font-medium text-slate-800">${escapeHtml(dStr)}</span>
@@ -2754,7 +2753,7 @@ function renderCustomReportDateCheckboxes() {
                     ${isToday ? '<span class="text-[9px] px-1 py-0.2 rounded font-extrabold uppercase bg-emerald-100 text-emerald-800">Today</span>' : ''}
                     ${isYesterday ? '<span class="text-[9px] px-1 py-0.2 rounded font-semibold bg-slate-200 text-slate-700">Yesterday</span>' : ''}
                 </div>
-                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isChecked ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">${count.toLocaleString()}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isChecked ? 'bg-blue-100 text-[#0f766e]' : 'bg-slate-100 text-slate-500'}">${count.toLocaleString()}</span>
             </label>
         `;
     });
@@ -2768,7 +2767,7 @@ function renderCustomReportDateCheckboxes() {
         if (isAll) {
             summaryEl.textContent = `All Dates Selected (${allValDates.length} dates)`;
             badgeEl.textContent = 'All';
-            badgeEl.className = 'px-2 py-0.2 rounded-full font-bold bg-blue-100 text-blue-700 text-[10px]';
+            badgeEl.className = 'px-2 py-0.2 rounded-full font-bold bg-blue-100 text-[#0f766e] text-[10px]';
         } else if (crSelectedDates.size > 0) {
             const arr = Array.from(crSelectedDates);
             summaryEl.textContent = arr.join(', ');
@@ -2852,7 +2851,7 @@ function renderCustomReportColumnCheckboxes() {
                     ${cols.map(col => {
                         const isChecked = crSelectedColumns.has(col.id) ? 'checked' : '';
                         return `
-                            <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200/70 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer select-none transition text-xs">
+                            <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200/70 hover:border-blue-300 hover:bg-teal-50/30 cursor-pointer select-none transition text-xs">
                                 <input type="checkbox" value="${escapeHtml(col.id)}" ${isChecked} onchange="toggleCustomReportColumn('${escapeHtml(col.id)}', this.checked)" class="rounded text-blue-600 focus:ring-0">
                                 <span class="font-medium text-slate-700 truncate" title="${escapeHtml(col.label)}">${escapeHtml(col.label)}</span>
                             </label>
@@ -2947,7 +2946,7 @@ function onCustomReportConfigChange() {
         if (matchCount === 0) {
             matchPill.className = 'text-xs font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200';
         } else {
-            matchPill.className = 'text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200';
+            matchPill.className = 'text-xs font-bold text-[#0f766e] bg-teal-50 px-2.5 py-1 rounded-full border border-blue-200';
         }
     }
 
@@ -3009,7 +3008,7 @@ function renderCustomReportPreview() {
                 else if (rawVal === 'Invalid') cellContent = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Invalid</span>';
                 else if (rawVal === 'For Validation') cellContent = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">For Validation</span>';
             } else if (c.id === 'dispatch_status') {
-                if (rawVal === 'Override Done') cellContent = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Override Done</span>';
+                if (rawVal === 'Override Done') cellContent = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-[#0f766e] border border-blue-200">Override Done</span>';
                 else if (rawVal === 'Pending') cellContent = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Pending</span>';
                 else cellContent = `<span class="text-slate-400">${escapeHtml(rawVal || 'No Action')}</span>`;
             } else if (c.id === 'final_val_status') {
@@ -3017,7 +3016,7 @@ function renderCustomReportPreview() {
                 else if (rawVal === 'Invalid') cellContent = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Invalid</span>';
                 else cellContent = `<span class="text-slate-400">Pending</span>`;
             } else if (c.id === 'waybill_no') {
-                cellContent = `<span class="font-mono font-bold text-blue-700">${cellContent}</span>`;
+                cellContent = `<span class="font-mono font-bold text-[#0f766e]">${cellContent}</span>`;
             } else if (c.id === 'rider') {
                 cellContent = `<span class="font-semibold text-slate-800">${cellContent}</span>`;
             } else if (c.id === 'initial_validated_by' || c.id === 'overridden_by' || c.id === 'final_validated_by') {
@@ -3028,7 +3027,7 @@ function renderCustomReportPreview() {
         }).join('');
 
         return `
-            <tr class="hover:bg-blue-50/30 transition-colors border-b border-slate-100">
+            <tr class="hover:bg-teal-50/30 transition-colors border-b border-slate-100">
                 <td class="px-3 py-2 text-center text-slate-400 text-xs font-mono">${idx + 1}</td>
                 ${cells}
             </tr>
@@ -4360,7 +4359,7 @@ function renderRTHMatrixTable(records) {
     ];
 
     tbody.innerHTML = docData.map(d => `
-        <tr class="hover:bg-blue-50/40 transition-colors">
+        <tr class="hover:bg-teal-50/40 transition-colors">
             <td class="px-3 py-2.5 font-bold text-slate-800 flex items-center gap-1.5">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${d.badge}">${d.code}</span>
                 <span class="text-xs text-slate-800">${escapeHtml(d.name)}</span>
@@ -4370,7 +4369,7 @@ function renderRTHMatrixTable(records) {
             <td class="px-3 py-2.5 text-slate-500 text-[11px]">${escapeHtml(d.issues)}</td>
         </tr>
     `).join('') + `
-        <tr class="bg-blue-50/70 font-bold text-slate-900 border-t-2 border-blue-200">
+        <tr class="bg-teal-50/60 font-bold text-slate-900 border-t-2 border-blue-200">
             <td class="px-3 py-2.5">TOTAL INVALID WAYBILLS (Exact Unique Waybill Count)</td>
             <td class="px-3 py-2.5 text-right font-mono text-blue-800">${records.length.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-right font-mono text-blue-800">100.0%</td>
@@ -6641,9 +6640,9 @@ function setWorkspaceTheme(mode, notify = true) {
         const btn = document.getElementById(`theme-btn-${m}`);
         if (btn) {
             if (m === mode) {
-                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-[11px] transition shadow-xs';
+                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg bg-[#00b4d8] text-white font-semibold text-[11px] transition shadow-xs';
             } else {
-                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg text-blue-200/70 hover:text-white font-medium text-[11px] transition';
+                btn.className = 'flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-400 hover:text-white font-medium text-[11px] transition';
             }
         }
     });
@@ -6780,10 +6779,10 @@ function highlightSidebarTaskButton(activeId) {
         const el = document.getElementById(id);
         if (!el) return;
         if (id === activeId) {
-            el.classList.add('bg-blue-600/30', 'border', 'border-blue-400/30', 'text-white', 'font-semibold');
-            el.classList.remove('text-blue-100/75', 'text-blue-200/70');
+            el.classList.add('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
+            el.classList.remove('text-blue-100/75', 'text-slate-400');
         } else {
-            el.classList.remove('bg-blue-600/30', 'border', 'border-blue-400/30', 'text-white', 'font-semibold');
+            el.classList.remove('bg-[#00b4d8]/20', 'border', 'border-[#00b4d8]/40', 'text-white', 'font-semibold');
             el.classList.add('text-blue-100/75');
         }
     });
@@ -7437,30 +7436,30 @@ function renderHomeCustomChartsForPDF(ds) {
 
         if (ds.byModule.length > 1) {
             ctx1.fillStyle = '#0f172a';
-            ctx1.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx1.fillText('Filtered Hours by Task Module', 20, 32);
             ctx1.fillStyle = '#64748b';
-            ctx1.font = '11px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx1.fillText(ds.dateLabel, 20, 50);
 
             const maxH = Math.max(...ds.byModule.map(m => m.hours), 1);
             ds.byModule.slice(0, 5).forEach((m, idx) => {
                 const y = 84 + idx * 50;
                 ctx1.fillStyle = '#1e293b';
-                ctx1.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
                 ctx1.textAlign = 'left';
                 ctx1.fillText(m.name.substring(0, 22), 20, y + 18);
                 drawCanvasBarHelper(ctx1, 205, y, 355, m.hours, maxH, 28, 5, palette[idx % palette.length]);
                 ctx1.fillStyle = '#0f172a';
-                ctx1.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.font = 'bold 11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
                 ctx1.fillText(`${m.hours.toFixed(1)}h (${m.sessions})`, 575, y + 18);
             });
         } else {
             ctx1.fillStyle = '#0f172a';
-            ctx1.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx1.fillText(`Daily Hours — ${ds.taskFilter === 'ALL' ? 'All Tasks' : ds.taskFilter}`, 20, 32);
             ctx1.fillStyle = '#64748b';
-            ctx1.font = '11px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx1.fillText(ds.dateLabel, 20, 50);
 
             const dayAgg = {};
@@ -7472,12 +7471,12 @@ function renderHomeCustomChartsForPDF(ds) {
             dayList.forEach(([dt, hrs], idx) => {
                 const y = 80 + idx * 44;
                 ctx1.fillStyle = '#1e293b';
-                ctx1.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
                 ctx1.textAlign = 'left';
                 ctx1.fillText(dt, 20, y + 16);
                 drawCanvasBarHelper(ctx1, 140, y, 420, hrs, maxH, 24, 4, palette[idx % palette.length]);
                 ctx1.fillStyle = '#0f172a';
-                ctx1.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+                ctx1.font = 'bold 11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
                 ctx1.fillText(`${hrs.toFixed(1)} hrs`, 575, y + 16);
             });
         }
@@ -7492,10 +7491,10 @@ function renderHomeCustomChartsForPDF(ds) {
         ctx2.fillStyle = '#ffffff';
         ctx2.fillRect(0, 0, c2.width, c2.height);
         ctx2.fillStyle = '#0f172a';
-        ctx2.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx2.fillText('Filtered Workload by QA Specialist', 20, 32);
         ctx2.fillStyle = '#64748b';
-        ctx2.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx2.fillText(`${ds.totalSessions} sessions • ${ds.totalHours.toFixed(1)} hrs • ${ds.totalItems.toLocaleString()} output`, 20, 50);
 
         const maxH = Math.max(...ds.bySpecialist.map(s => s.hours), 1);
@@ -7503,12 +7502,12 @@ function renderHomeCustomChartsForPDF(ds) {
         ds.bySpecialist.slice(0, 5).forEach((s, idx) => {
             const y = 84 + idx * 50;
             ctx2.fillStyle = '#1e293b';
-            ctx2.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx2.textAlign = 'left';
             ctx2.fillText(s.name.substring(0, 22), 20, y + 18);
             drawCanvasBarHelper(ctx2, 200, y, 360, s.hours, maxH, 28, 5, colors[idx % colors.length]);
             ctx2.fillStyle = '#0f172a';
-            ctx2.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.font = 'bold 11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx2.fillText(`${s.hours.toFixed(1)}h (${s.items.toLocaleString()})`, 575, y + 18);
         });
     }
@@ -7543,7 +7542,7 @@ function exportHomeCustomReportPDF() {
     const kpis = [
         { title: 'MATCHED SESSIONS', val: ds.totalSessions.toLocaleString(), sub: ds.dateLabel.substring(0, 32), col: [37, 99, 235] },
         { title: 'TOTAL HOURS LOGGED', val: `${ds.totalHours.toFixed(1)} hrs`, sub: formatHoursMinutes(ds.totalHours), col: [15, 118, 110] },
-        { title: 'TOTAL DELIVERABLES', val: ds.totalItems.toLocaleString(), sub: `${iph} items / hr`, col: [79, 70, 229] },
+        { title: 'TOTAL DELIVERABLES', val: ds.totalItems.toLocaleString(), sub: `${iph} items / hr`, col: [13, 148, 136] },
         { title: 'ACTIVE FILTER SCOPE', val: ds.qaFilter === 'ALL' ? `${ds.bySpecialist.length} Specialists` : ds.qaFilter, sub: ds.taskFilter === 'ALL' ? 'All QA Task Modules' : ds.taskFilter, col: [2, 132, 199] }
     ];
     kpis.forEach((k, idx) => {
@@ -7705,9 +7704,9 @@ function selectHomeSheetTab(tabKey) {
         const btn = document.getElementById(`sheet-tab-btn-${t}`);
         if (!btn) return;
         if (t === tabKey) {
-            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition whitespace-nowrap shadow-xs';
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-[#00b4d8] text-white transition whitespace-nowrap shadow-xs';
         } else {
-            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition whitespace-nowrap';
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-[#0f766e] transition whitespace-nowrap';
         }
     });
     renderHomeSpreadsheetViewer();
@@ -7781,7 +7780,7 @@ function renderHomeSpreadsheetViewer() {
             <td class="px-3 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">${escapeHtml(r.category)}</span></td>
             <td class="px-3 py-2 font-mono text-xs text-sky-700 font-semibold whitespace-nowrap">${escapeHtml(r.time_started || '-')}</td>
             <td class="px-3 py-2 font-mono text-xs text-indigo-700 font-semibold whitespace-nowrap">${escapeHtml(r.time_ended || '-')}</td>
-            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold whitespace-nowrap">${formatHoursMinutes(r.hours)}</td>
+            <td class="px-3 py-2 text-right font-mono text-[#0f766e] font-semibold whitespace-nowrap">${formatHoursMinutes(r.hours)}</td>
             <td class="px-3 py-2 text-slate-600 max-w-md truncate" title="${escapeHtml(r.description)}">${escapeHtml(r.description)}</td>
             <td class="px-3 py-2 text-right font-mono font-bold text-slate-900">${Number(r.items || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status || 'Done')}</span></td>
@@ -7798,12 +7797,12 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Status</th>
             <th class="px-3 py-2.5">Issues Encountered</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
-            <td class="px-3 py-2 font-mono text-blue-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
+            <td class="px-3 py-2 font-mono text-[#0f766e] font-semibold">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-3 py-2 text-slate-700">${escapeHtml(r.scope)}</td>
             <td class="px-3 py-2 text-right font-mono font-bold text-slate-900">${Number(r.validated_count || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
@@ -7823,8 +7822,8 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-right font-bold">Total Validated</th>
             <th class="px-3 py-2.5 text-center">Status</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
-            <td class="px-3 py-2 font-mono text-blue-700 font-semibold">${escapeHtml(r.date)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
+            <td class="px-3 py-2 font-mono text-[#0f766e] font-semibold">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-right font-mono text-slate-800">${Number(r.total_waybills || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono text-slate-500">${escapeHtml(r.quota_pct)}</td>
             <td class="px-3 py-2 text-right font-mono text-slate-700">${Number(r.target_per_qa || 0).toLocaleString()}</td>
@@ -7833,7 +7832,7 @@ function renderHomeSpreadsheetViewer() {
             <td class="px-3 py-2 text-right font-mono">${Number(r.john_michael || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.julius || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.yesha || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-blue-700">${Number(r.total_validated || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-[#0f766e]">${Number(r.total_validated || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">${escapeHtml(r.status)}</span></td>
         </tr>`).join('');
     } else if (activeHomeSheetTab === 'invalid_waybills') {
@@ -7846,11 +7845,11 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5">Assigned Rider</th>
             <th class="px-3 py-2.5">Logged By</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
             <td class="px-3 py-2 font-mono text-rose-600 font-medium">${escapeHtml(r.entry_id)}</td>
             <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date_validated)}</td>
             <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
-            <td class="px-3 py-2 font-mono font-bold text-blue-700">${escapeHtml(r.waybill_no)}</td>
+            <td class="px-3 py-2 font-mono font-bold text-[#0f766e]">${escapeHtml(r.waybill_no)}</td>
             <td class="px-3 py-2 text-rose-700 font-medium">${escapeHtml(r.issue)}</td>
             <td class="px-3 py-2 text-slate-700">${escapeHtml(r.rider)}</td>
             <td class="px-3 py-2 text-slate-500">${escapeHtml(r.logged_by)}</td>
@@ -7866,12 +7865,12 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-right"># Locations Checked</th>
             <th class="px-3 py-2.5 text-right"># Merged Accounts</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
             <td class="px-3 py-2 font-mono text-indigo-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-3 py-2 text-slate-700 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
             <td class="px-3 py-2 text-right font-mono font-bold text-indigo-700">${Number(r.locations_count || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono text-emerald-700 font-semibold">${Number(r.merged_accounts || 0).toLocaleString()}</td>
@@ -7889,12 +7888,12 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Status</th>
             <th class="px-3 py-2.5">Issues Encountered</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
             <td class="px-3 py-2 font-mono text-amber-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-3 py-2 text-slate-700">${escapeHtml(r.scope)}</td>
             <td class="px-3 py-2 text-right font-mono font-bold text-amber-700">${Number(r.checked_count || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono font-bold text-emerald-700">${Number(r.linked_count || 0).toLocaleString()}</td>
@@ -7914,8 +7913,8 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Overall Result</th>
             <th class="px-3 py-2.5">Findings / Remarks</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
-            <td class="px-3 py-2 font-mono text-blue-700 font-semibold">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
+            <td class="px-3 py-2 font-mono text-[#0f766e] font-semibold">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
             <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.report_name)}</td>
             <td class="px-3 py-2 text-slate-700">${escapeHtml(r.data_analyst)}</td>
@@ -7938,12 +7937,12 @@ function renderHomeSpreadsheetViewer() {
             <th class="px-3 py-2.5 text-center">Status</th>
             <th class="px-3 py-2.5">Issues Encountered</th>
         </tr>`;
-        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-blue-50/60 transition">
+        tbody.innerHTML = slice.map(r => `<tr class="hover:bg-teal-50/60 transition">
             <td class="px-3 py-2 font-mono text-sky-700 font-semibold">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-3 py-2 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-3 py-2 font-mono text-slate-700">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-3 py-2 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-3 py-2 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-3 py-2 text-slate-700">${escapeHtml(r.scope)}</td>
             <td class="px-3 py-2 text-right font-mono font-bold text-sky-700">${Number(r.overridden_count || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
@@ -7958,8 +7957,8 @@ function renderPharmacyAndDailyLogTables() {
     const dailyTbody = document.getElementById('daily-waybill-log-tbody');
     if (dailyTbody) {
         const rows = sortByLatestDateDesc(sheetData.daily_waybill_log || [], 'date');
-        dailyTbody.innerHTML = rows.map(r => `<tr class="hover:bg-blue-50/50 transition">
-            <td class="px-3 py-2 font-mono font-semibold text-blue-700">${escapeHtml(r.date)}</td>
+        dailyTbody.innerHTML = rows.map(r => `<tr class="hover:bg-teal-50/50 transition">
+            <td class="px-3 py-2 font-mono font-semibold text-[#0f766e]">${escapeHtml(r.date)}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.total_waybills || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono text-slate-500">${escapeHtml(r.quota_pct)}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.target_per_qa || 0).toLocaleString()}</td>
@@ -7968,7 +7967,7 @@ function renderPharmacyAndDailyLogTables() {
             <td class="px-3 py-2 text-right font-mono">${Number(r.john_michael || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.julius || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-mono">${Number(r.yesha || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-blue-700">${Number(r.total_validated || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-[#0f766e]">${Number(r.total_validated || 0).toLocaleString()}</td>
             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
         </tr>`).join('');
     }
@@ -7977,12 +7976,12 @@ function renderPharmacyAndDailyLogTables() {
     if (pharmaTbody) {
         const q = (document.getElementById('pharmacy-sheet-search')?.value || '').trim().toLowerCase();
         const rows = sortByLatestDateDesc((sheetData.pharmacy || []).filter(r => !q || JSON.stringify(r).toLowerCase().includes(q)), 'date');
-        pharmaTbody.innerHTML = rows.map(r => `<tr class="hover:bg-blue-50/50 transition">
-            <td class="px-4 py-2.5 font-mono font-semibold text-blue-700">${escapeHtml(r.monitoring_id)}</td>
+        pharmaTbody.innerHTML = rows.map(r => `<tr class="hover:bg-teal-50/50 transition">
+            <td class="px-4 py-2.5 font-mono font-semibold text-[#0f766e]">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
             <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold">${Number(r.validated_count || 0).toLocaleString()}</td>
             <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
@@ -8016,12 +8015,12 @@ function renderDispatchQASheetTable() {
 
     const tbody = document.getElementById('dispatch-qa-sheet-tbody');
     if (tbody) {
-        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-blue-50/50 transition">
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-teal-50/50 transition">
             <td class="px-4 py-2.5 font-mono font-semibold text-sky-700">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
             <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold text-sky-700">${Number(r.overridden_count || 0).toLocaleString()}</td>
             <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${escapeHtml(r.status)}</span></td>
@@ -8075,13 +8074,13 @@ function renderAccountMergingDashboard() {
 
     const tbody = document.getElementById('am-table-tbody');
     if (tbody) {
-        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-blue-50/50 transition">
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-teal-50/50 transition">
             <td class="px-4 py-2.5 font-mono font-semibold text-indigo-700">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 text-slate-500 font-mono text-[11px]">${escapeHtml(r.email)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
             <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5 max-w-md truncate" title="${escapeHtml(r.locations_checked)}">${escapeHtml(r.locations_checked)}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold text-indigo-700">${Number(r.locations_count || 0).toLocaleString()}</td>
             <td class="px-4 py-2.5 text-right font-mono text-emerald-700 font-semibold">${Number(r.merged_accounts || 0).toLocaleString()}</td>
@@ -8122,8 +8121,8 @@ function renderOutputQADashboard() {
     if (tbody) {
         tbody.innerHTML = filtered.map(r => {
             const isPass = String(r.overall_result || '').toLowerCase().includes('pass');
-            return `<tr class="hover:bg-blue-50/50 transition">
-                <td class="px-3 py-2.5 font-mono font-semibold text-blue-700">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
+            return `<tr class="hover:bg-teal-50/50 transition">
+                <td class="px-3 py-2.5 font-mono font-semibold text-[#0f766e]">${escapeHtml(r.ticket_no || r.monitoring_id)}</td>
                 <td class="px-3 py-2.5 font-mono">${escapeHtml(r.date)}</td>
                 <td class="px-3 py-2.5 font-semibold text-slate-900">${escapeHtml(r.report_name)}</td>
                 <td class="px-3 py-2.5 text-slate-700">${escapeHtml(r.data_analyst)}</td>
@@ -8238,12 +8237,12 @@ function renderITScheduleDashboard() {
 
     const tbody = document.getElementById('its-table-tbody');
     if (tbody) {
-        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-blue-50/50 transition">
+        tbody.innerHTML = filtered.map(r => `<tr class="hover:bg-teal-50/50 transition">
             <td class="px-4 py-2.5 font-mono font-semibold text-amber-700">${escapeHtml(r.monitoring_id)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-900">${escapeHtml(r.qa)}</td>
             <td class="px-4 py-2.5 font-mono">${escapeHtml(r.date)}</td>
             <td class="px-4 py-2.5 text-slate-500">${escapeHtml(r.time_started)} - ${escapeHtml(r.time_ended)}</td>
-            <td class="px-4 py-2.5 text-right font-mono text-blue-700 font-semibold">${r.hours}h</td>
+            <td class="px-4 py-2.5 text-right font-mono text-[#0f766e] font-semibold">${r.hours}h</td>
             <td class="px-4 py-2.5">${escapeHtml(r.scope)}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-700">${Number(r.checked_count || 0).toLocaleString()}</td>
             <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-700">${Number(r.linked_count || 0).toLocaleString()}</td>
@@ -8279,10 +8278,10 @@ function renderModuleChartsForPDF(moduleKey, rows) {
         ctx1.fillStyle = '#ffffff';
         ctx1.fillRect(0, 0, c1.width, c1.height);
         ctx1.fillStyle = '#0f172a';
-        ctx1.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+        ctx1.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx1.fillText('Specialist Activity & Volume Breakdown', 20, 32);
         ctx1.fillStyle = '#64748b';
-        ctx1.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx1.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx1.fillText(`Records logged per QA team member (${rows.length.toLocaleString()} total entries)`, 20, 50);
 
         const counts = {};
@@ -8298,7 +8297,7 @@ function renderModuleChartsForPDF(moduleKey, rows) {
         sorted.forEach(([name, cnt], idx) => {
             const y = 74 + idx * 40;
             ctx1.fillStyle = '#1e293b';
-            ctx1.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx1.textAlign = 'left';
             ctx1.fillText(name.substring(0, 24), 20, y + 15);
 
@@ -8316,7 +8315,7 @@ function renderModuleChartsForPDF(moduleKey, rows) {
             ctx1.fill();
 
             ctx1.fillStyle = '#0f172a';
-            ctx1.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+            ctx1.font = 'bold 11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx1.fillText(cnt.toLocaleString(), 605, y + 15);
         });
     }
@@ -8330,10 +8329,10 @@ function renderModuleChartsForPDF(moduleKey, rows) {
         ctx2.fillStyle = '#ffffff';
         ctx2.fillRect(0, 0, c2.width, c2.height);
         ctx2.fillStyle = '#0f172a';
-        ctx2.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx2.fillText('Status & Outcome Distribution', 20, 32);
         ctx2.fillStyle = '#64748b';
-        ctx2.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx2.fillText('Breakdown of verification outcomes across all module entries', 20, 50);
 
         const stCounts = {};
@@ -8363,12 +8362,12 @@ function renderModuleChartsForPDF(moduleKey, rows) {
         });
 
         ctx2.fillStyle = '#0f172a';
-        ctx2.font = 'bold 20px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.font = 'bold 20px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx2.textAlign = 'center';
         ctx2.textBaseline = 'middle';
         ctx2.fillText(rows.length.toLocaleString(), cx, cy - 6);
         ctx2.fillStyle = '#64748b';
-        ctx2.font = '10px Inter, system-ui, -apple-system, sans-serif';
+        ctx2.font = '10px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx2.fillText('TOTAL RECORDS', cx, cy + 14);
 
         ctx2.textAlign = 'left';
@@ -8382,10 +8381,10 @@ function renderModuleChartsForPDF(moduleKey, rows) {
             else ctx2.rect(320, ly - 10, 14, 14);
             ctx2.fill();
             ctx2.fillStyle = '#1e293b';
-            ctx2.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx2.fillText(lbl, 344, ly);
             ctx2.fillStyle = '#64748b';
-            ctx2.font = '11px Inter, system-ui, -apple-system, sans-serif';
+            ctx2.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
             ctx2.fillText(`${val.toLocaleString()} (${pct}%)`, 344, ly + 15);
         });
     }
@@ -8522,10 +8521,10 @@ function renderSummaryHoursChartCanvas(sheetData) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('QA Team Hours Allocation by Operational Module', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('Proportional distribution of logged QA hours across the 5 core operational streams', 20, 50);
 
     const calcSum = (arr, prop) => (arr || []).reduce((s, r) => s + (Number(r[prop]) || 0), 0);
@@ -8570,12 +8569,12 @@ function renderSummaryHoursChartCanvas(sheetData) {
     });
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 22px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 22px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${Math.round(totalHours).toLocaleString()}h`, cx, cy - 8);
     ctx.fillStyle = '#64748b';
-    ctx.font = '10px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '10px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('TOTAL QA HOURS', cx, cy + 14);
 
     ctx.textAlign = 'left';
@@ -8593,11 +8592,11 @@ function renderSummaryHoursChartCanvas(sheetData) {
         ctx.fill();
 
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(s.name, legX + 24, legY);
 
         ctx.fillStyle = '#64748b';
-        ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(`${s.hours.toFixed(1)} hrs  •  ${pct}%`, legX + 24, legY + 16);
 
         legY += 46;
@@ -8618,10 +8617,10 @@ function renderSummaryDeliverablesChartCanvas(sheetData, masterWbCount) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('Operational Deliverables & Verified Output Volume', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('Verified records, overrides, merges, and audited deliverables across modules', 20, 50);
 
     const calcSum = (arr, prop) => (arr || []).reduce((s, r) => s + (Number(r[prop]) || 0), 0);
@@ -8654,7 +8653,7 @@ function renderSummaryDeliverablesChartCanvas(sheetData, masterWbCount) {
         const y = barStartY + i * (barHeight + barGap);
 
         ctx.fillStyle = '#334155';
-        ctx.font = '500 11px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = '500 11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(b.label, labelX, y + 14);
 
@@ -8675,7 +8674,7 @@ function renderSummaryDeliverablesChartCanvas(sheetData, masterWbCount) {
         ctx.fill();
 
         ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 11px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(b.value.toLocaleString(), barX + maxBarW + 12, y + 15);
     });
 
@@ -8712,10 +8711,10 @@ function renderSummarySpecialistsChartCanvas(sheetData) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('Overall QA Specialist Productivity & Hours', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('Cumulative logged QA hours across all 5 operational modules', 20, 50);
 
     const specialists = [
@@ -8768,14 +8767,14 @@ function renderSummarySpecialistsChartCanvas(sheetData) {
     specData.forEach((s, idx) => {
         const y = startY + idx * (barHeight + barGap);
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(s.name, labelX, y + 18);
 
         drawCanvasBarHelper(ctx, barX, y, maxBarW, s.hours, maxHrs, barHeight, 5, colors[idx % colors.length]);
 
         ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(`${s.hours.toFixed(1)} hrs`, barX + maxBarW + 14, y + 18);
     });
 
@@ -8794,10 +8793,10 @@ function renderWaybillSummaryChartCanvas(sheetData, totalWb, invCount) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('1. Waybill & Pharmacy QA Breakdown', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText(`Valid vs Invalid Master Waybills (${totalWb.toLocaleString()} total audited)`, 20, 50);
 
     const validWb = Math.max(0, totalWb - invCount);
@@ -8823,12 +8822,12 @@ function renderWaybillSummaryChartCanvas(sheetData, totalWb, invCount) {
 
     const validPct = ((validWb / Math.max(totalWb, 1)) * 100).toFixed(1);
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 21px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 21px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${validPct}%`, cx, cy - 8);
     ctx.fillStyle = '#64748b';
-    ctx.font = '10px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '10px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('VALID RATE', cx, cy + 14);
 
     ctx.textAlign = 'left';
@@ -8843,10 +8842,10 @@ function renderWaybillSummaryChartCanvas(sheetData, totalWb, invCount) {
         const y = 115 + idx * 54;
         drawCanvasRoundedRect(ctx, 330, y - 11, 14, 14, 3, it.color);
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(it.label, 354, y);
         ctx.fillStyle = '#64748b';
-        ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(it.val, 354, y + 17);
     });
     return canvas;
@@ -8866,10 +8865,10 @@ function renderDispatchSummaryChartCanvas(sheetData) {
     const rows = sheetData.dispatch_qa || [];
     const totalOver = rows.reduce((s, r) => s + (Number(r.overridden_count) || 0), 0);
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('2. Dispatch Override QA by Specialist', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText(`${totalOver.toLocaleString()} waybills overridden across ${rows.length} Dispatch sessions`, 20, 50);
 
     const agg = {};
@@ -8884,12 +8883,12 @@ function renderDispatchSummaryChartCanvas(sheetData) {
     sorted.forEach(([name, val], idx) => {
         const y = 84 + idx * 50;
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(name, 20, y + 18);
         drawCanvasBarHelper(ctx, 200, y, 360, val, maxVal, 28, 5, colors[idx % colors.length]);
         ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(`${val.toLocaleString()} wb`, 575, y + 18);
     });
     return canvas;
@@ -8909,10 +8908,10 @@ function renderMergingSummaryChartCanvas(sheetData) {
     const rows = sheetData.account_merging || [];
     const totalLocs = rows.reduce((s, r) => s + (Number(r.locations_count) || 0), 0);
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('3. Account Merging — Locations Checked by Specialist', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText(`${totalLocs.toLocaleString()} locations verified across ${rows.length} Merging sessions`, 20, 50);
 
     const agg = {};
@@ -8927,12 +8926,12 @@ function renderMergingSummaryChartCanvas(sheetData) {
     sorted.forEach(([name, val], idx) => {
         const y = 84 + idx * 50;
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(name, 20, y + 18);
         drawCanvasBarHelper(ctx, 200, y, 360, val, maxVal, 28, 5, colors[idx % colors.length]);
         ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(`${val.toLocaleString()} locs`, 575, y + 18);
     });
     return canvas;
@@ -8953,10 +8952,10 @@ function renderOutputQASummaryChartCanvas(sheetData) {
     const passed = rows.filter(r => String(r.overall_result || '').toLowerCase().includes('pass')).length;
     const failed = Math.max(0, rows.length - passed);
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('4. Output QA — Audits by QA Checker', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText(`${passed} Passed / ${failed} Flagged out of ${rows.length} Report & Dashboard Audits (${((passed / Math.max(1, rows.length)) * 100).toFixed(1)}% Pass Rate)`, 20, 50);
 
     const agg = {};
@@ -8971,12 +8970,12 @@ function renderOutputQASummaryChartCanvas(sheetData) {
     sorted.forEach(([name, val], idx) => {
         const y = 84 + idx * 50;
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(name, 20, y + 18);
         drawCanvasBarHelper(ctx, 200, y, 360, val, maxVal, 28, 5, colors[idx % colors.length]);
         ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 11.5px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 11.5px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(`${val.toLocaleString()} audits`, 575, y + 18);
     });
     return canvas;
@@ -8999,10 +8998,10 @@ function renderITScheduleSummaryChartCanvas(sheetData) {
     const unlinked = Math.max(0, checked - linked);
 
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 16px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 16px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('5. IT Schedule Monitoring — Linked vs Unlinked', 20, 32);
     ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText(`${linked.toLocaleString()} Linked out of ${checked.toLocaleString()} Checked across ${rows.length} sessions`, 20, 50);
 
     const slices = [
@@ -9027,12 +9026,12 @@ function renderITScheduleSummaryChartCanvas(sheetData) {
 
     const linkPct = ((linked / Math.max(checked, 1)) * 100).toFixed(1);
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 21px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = 'bold 21px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${linkPct}%`, cx, cy - 8);
     ctx.fillStyle = '#64748b';
-    ctx.font = '10px Inter, system-ui, -apple-system, sans-serif';
+    ctx.font = '10px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
     ctx.fillText('LINK RATE', cx, cy + 14);
 
     ctx.textAlign = 'left';
@@ -9046,10 +9045,10 @@ function renderITScheduleSummaryChartCanvas(sheetData) {
         const y = 125 + idx * 60;
         drawCanvasRoundedRect(ctx, 330, y - 11, 14, 14, 3, it.color);
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 12px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = 'bold 12px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(it.label, 354, y);
         ctx.fillStyle = '#64748b';
-        ctx.font = '11px Inter, system-ui, -apple-system, sans-serif';
+        ctx.font = '11px Plus Jakarta Sans, system-ui, -apple-system, sans-serif';
         ctx.fillText(it.val, 354, y + 17);
     });
     return canvas;
@@ -9288,7 +9287,7 @@ function exportAllTasksSummaryPDF() {
     const kpis = [
         { title: 'WAYBILL / PHARMACY QA', val: totalWb.toLocaleString(), sub: `${invCount.toLocaleString()} Invalids Logged`, col: [37, 99, 235] },
         { title: 'DISPATCH OVERRIDE QA', val: `${dispOver.toLocaleString()} Overridden`, sub: `${(sheetData.dispatch_qa || []).length} Sessions • ${dispHrs.toFixed(0)}h`, col: [2, 132, 199] },
-        { title: 'ACCOUNT MERGING QA', val: `${amLocs.toLocaleString()} Locations`, sub: `${(sheetData.account_merging || []).length} Sessions • ${amHrs.toFixed(0)}h`, col: [79, 70, 229] },
+        { title: 'ACCOUNT MERGING QA', val: `${amLocs.toLocaleString()} Locations`, sub: `${(sheetData.account_merging || []).length} Sessions • ${amHrs.toFixed(0)}h`, col: [13, 148, 136] },
         { title: 'OUTPUT QA AUDITS', val: `${oqaPass} / ${oqaTotal} Passed`, sub: `${((oqaPass / Math.max(1, oqaTotal)) * 100).toFixed(1)}% Pass Rate • ${oqaHrs.toFixed(0)}h`, col: [6, 182, 212] },
         { title: 'IT SCHEDULE QA', val: `${itsLinked.toLocaleString()} Linked`, sub: `${itsChecked.toLocaleString()} Checked • ${itsHrs.toFixed(0)}h`, col: [245, 158, 11] }
     ];
@@ -9750,7 +9749,7 @@ function renderQATasksTable() {
 
     const displayRows = filtered.slice(0, 700);
     tbody.innerHTML = displayRows.map(t => `
-        <tr class="border-b border-slate-100 hover:bg-blue-50/50 transition">
+        <tr class="border-b border-slate-100 hover:bg-teal-50/50 transition">
             <td class="px-3 py-2.5 font-mono text-xs text-slate-600 whitespace-nowrap">${escapeHtml(t.date)}</td>
             <td class="px-3 py-2.5 font-semibold text-slate-800 whitespace-nowrap">${escapeHtml(t.specialist)}</td>
             <td class="px-3 py-2.5 whitespace-nowrap">
@@ -9760,7 +9759,7 @@ function renderQATasksTable() {
             </td>
             <td class="px-3 py-2.5 font-mono text-xs text-sky-700 font-semibold whitespace-nowrap">${escapeHtml(t.time_started || '-')}</td>
             <td class="px-3 py-2.5 font-mono text-xs text-indigo-700 font-semibold whitespace-nowrap">${escapeHtml(t.time_ended || '-')}</td>
-            <td class="px-3 py-2.5 text-right font-mono text-blue-700 font-semibold whitespace-nowrap">${formatHoursMinutes(t.hours)}</td>
+            <td class="px-3 py-2.5 text-right font-mono text-[#0f766e] font-semibold whitespace-nowrap">${formatHoursMinutes(t.hours)}</td>
             <td class="px-3 py-2.5 text-slate-600 max-w-md truncate" title="${escapeHtml(t.description)}">${escapeHtml(t.description)}</td>
             <td class="px-3 py-2.5 text-right font-mono font-bold text-slate-800">${Number(t.items).toLocaleString()}</td>
             <td class="px-3 py-2.5 text-center">
@@ -9775,9 +9774,9 @@ function renderQATasksTable() {
         tfoot.innerHTML = `
             <tr class="bg-slate-100 font-bold text-slate-900 border-t-2 border-blue-500/40">
                 <td colspan="5" class="px-3 py-3">TOTAL TASK LOG OUTPUT (${filtered.length.toLocaleString()} Sessions)</td>
-                <td class="px-3 py-3 text-right font-mono text-blue-700">${formatHoursMinutes(totalHours)}</td>
+                <td class="px-3 py-3 text-right font-mono text-[#0f766e]">${formatHoursMinutes(totalHours)}</td>
                 <td class="px-3 py-3 text-slate-600 font-medium">Avg Output: ${avgIph} items/hr</td>
-                <td class="px-3 py-3 text-right font-mono text-blue-700">${totalItems.toLocaleString()}</td>
+                <td class="px-3 py-3 text-right font-mono text-[#0f766e]">${totalItems.toLocaleString()}</td>
                 <td class="px-3 py-3 text-center text-emerald-700">100% Synced</td>
             </tr>
         `;
