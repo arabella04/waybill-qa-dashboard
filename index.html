@@ -294,6 +294,36 @@
             padding-left: 0.75rem !important;
             padding-right: 0.75rem !important;
         }
+    
+        /* Page Zoom & Resizable Icons Scaling Engine */
+        :root {
+            --ui-scale: 1;
+        }
+        #workspace-main-content {
+            transition: transform 0.15s ease-out;
+        }
+        .scale-adaptive-icon {
+            width: clamp(14px, 1.15em, 22px);
+            height: clamp(14px, 1.15em, 22px);
+            flex-shrink: 0;
+        }
+        .top-nav-btn {
+            font-size: clamp(11px, 0.72rem + 0.25vw, 13.5px) !important;
+            padding-top: clamp(4px, 0.35rem, 8px) !important;
+            padding-bottom: clamp(4px, 0.35rem, 8px) !important;
+            padding-left: clamp(8px, 0.6rem + 0.2vw, 14px) !important;
+            padding-right: clamp(8px, 0.6rem + 0.2vw, 14px) !important;
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.35rem !important;
+            flex-shrink: 0 !important;
+        }
+        .top-nav-btn svg {
+            width: clamp(13px, 1.1em, 18px) !important;
+            height: clamp(13px, 1.1em, 18px) !important;
+            flex-shrink: 0 !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
@@ -361,7 +391,7 @@
     <!-- ================================================================= -->
     <!-- RIGHT MAIN WORKSPACE CONTAINER                                    -->
     <!-- ================================================================= -->
-    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+    <div id="workspace-main-content" class="flex-1 flex flex-col min-w-0 min-h-screen w-full">
 
     <!-- TOP HEADER (Galim Deep Spruce Teal) -->
     <header id="workspace-main-header" class="bg-gradient-to-r from-[#0d2226] via-[#14353c] to-[#1c444d] text-white shadow-md sticky top-0 z-40 border-b border-[#1c444d]">
@@ -403,10 +433,15 @@
                         Sync Sheets
                     </button>
 
-                    <!-- Notification Bell Badge -->
-                    <button type="button" onclick="switchWorkspaceNav('my-shift')" class="relative inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition shrink-0" title="Active QA Tasks & Notifications">
+                    <!-- Notification Bell: System Updates & Changelog -->
+                    <button type="button" id="btn-header-bell" onclick="openChangelogModal()" class="relative inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition shrink-0" title="What's New & System Updates">
                         <svg class="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                        <span class="absolute -top-1.5 -right-1.5 px-1 py-0.2 rounded-full text-[9px] font-extrabold bg-rose-500 text-white shadow">99+</span>
+                        <span id="bell-badge-count" class="absolute -top-1.5 -right-1.5 px-1 py-0.2 rounded-full text-[9px] font-extrabold bg-rose-500 text-white shadow">99+</span>
+                    </button>
+
+                    <!-- Settings Button (Gear): User Account & Logout -->
+                    <button type="button" id="btn-header-settings" onclick="openSettingsModal()" class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition shrink-0" title="Settings, Account & Logout">
+                        <svg class="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     </button>
 
                     <!-- File Upload Input (Hidden) -->
@@ -2967,6 +3002,216 @@
                 <button onclick="closeWaybillModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition">
                     Close Details
                 </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- ================================================================= -->
+    <!-- WHAT'S NEW & SYSTEM UPDATES MODAL (Changelog)                    -->
+    <!-- ================================================================= -->
+    <div id="changelog-modal" class="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-2xl bg-white border border-teal-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-900">
+            <!-- Top Banner -->
+            <div class="p-5 bg-gradient-to-r from-[#0d2226] via-[#14353c] to-[#1c444d] text-white flex items-center justify-between border-b border-[#1c444d] shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b4d8] to-[#0d9488] flex items-center justify-center text-white font-black text-lg shadow-[0_0_15px_rgba(0,180,216,0.5)] shrink-0">
+                        🔔
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-extrabold text-white">System Updates & Changelog</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#00b4d8] text-white uppercase tracking-wider">v2.4.0 • Live</span>
+                        </div>
+                        <p class="text-xs text-teal-200/80">Complete record of all features, redesigns & improvements made</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeChangelogModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition">✕</button>
+            </div>
+
+            <!-- Scrollable Updates List -->
+            <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 divide-y divide-slate-100">
+                <!-- Update 1 -->
+                <div class="pt-3 first:pt-0 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            🍱 Concept 2: Modular Bento-Grid Dashboard
+                        </span>
+                        <span class="text-[10px] font-mono text-cyan-700 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">Nov 19, 2026</span>
+                    </div>
+                    <p class="text-slate-600">
+                        Complete layout overhaul into an asymmetrical modern Bento Grid design:
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600 pl-1">
+                        <li><strong>Operational Streams Hub (7 cols):</strong> 5 interactive cards with live output metrics, pass rates, and 1-click drilldowns.</li>
+                        <li><strong>Custom Report Studio Hero Tile (5 cols):</strong> High-visibility 2x2 filter controls with instant .xlsx and .pdf exports.</li>
+                        <li><strong>100% Full-Width Spreadsheet Explorer (12 cols):</strong> Multi-sheet tab pills, global search, and sticky table headers.</li>
+                    </ul>
+                </div>
+
+                <!-- Update 2 -->
+                <div class="pt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            🚀 Sidebar Removed & Full-Width Workspace
+                        </span>
+                        <span class="text-[10px] font-mono text-cyan-700 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">Nov 19, 2026</span>
+                    </div>
+                    <p class="text-slate-600">
+                        Eliminated the rigid left sidebar to give tables 100% full screen width. All navigation and task buttons are now located in the top sticky command bar.
+                    </p>
+                </div>
+
+                <!-- Update 3 -->
+                <div class="pt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            👤 Floating User Account Pill & Settings Gear
+                        </span>
+                        <span class="text-[10px] font-mono text-cyan-700 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">Nov 19, 2026</span>
+                    </div>
+                    <p class="text-slate-600">
+                        User profile now floats in the bottom-right corner, and a new Settings gear button provides instant access to user account switching, adding accounts, zoom scaling, and one-click logout.
+                    </p>
+                </div>
+
+                <!-- Update 4 -->
+                <div class="pt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            🎨 Galim Slate-Teal Theme & Plus Jakarta Sans Font
+                        </span>
+                        <span class="text-[10px] font-mono text-cyan-700 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">Nov 19, 2026</span>
+                    </div>
+                    <p class="text-slate-600">
+                        Applied Galim branding with deep spruce surfaces (#0e2429), turquoise buttons (#00b4d8), and geometric Plus Jakarta Sans typography.
+                    </p>
+                </div>
+
+                <!-- Update 5 -->
+                <div class="pt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                            🔍 Zoom & Icon Resizing Engine
+                        </span>
+                        <span class="text-[10px] font-mono text-cyan-700 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">Nov 19, 2026</span>
+                    </div>
+                    <p class="text-slate-600">
+                        Added fluid icon and layout scaling so icons and text remain crisp and proportionate regardless of browser zoom level (75% to 125%).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <span class="text-[11px] text-slate-500 font-medium">1Life QA Task Monitoring System • Auto-Deployed</span>
+                <button type="button" onclick="markChangelogRead()" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white shadow-xs transition">
+                    Mark All as Read ✓
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SETTINGS & ACCOUNT MANAGEMENT MODAL                               -->
+    <!-- ================================================================= -->
+    <div id="settings-modal" class="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-lg bg-white border border-teal-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-900">
+            <!-- Top Banner -->
+            <div class="p-5 bg-gradient-to-r from-[#0d2226] via-[#14353c] to-[#1c444d] text-white flex items-center justify-between border-b border-[#1c444d] shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b4d8] to-[#0d9488] flex items-center justify-center text-white font-black text-lg shadow-[0_0_15px_rgba(0,180,216,0.5)] shrink-0">
+                        ⚙️
+                    </div>
+                    <div>
+                        <h3 class="text-base font-extrabold text-white">Settings & User Accounts</h3>
+                        <p class="text-xs text-teal-200/80">Manage active profile, zoom scaling & system preferences</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition">✕</button>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="p-6 space-y-5 overflow-y-auto max-h-[70vh] text-xs">
+                <!-- 1. Active User Account -->
+                <div class="p-4 rounded-2xl bg-teal-50/50 border border-teal-200/80 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-700">Active User Profile</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-400/30">● Connected (@1life.ph)</span>
+                    </div>
+                    <div class="flex items-center gap-3.5">
+                        <div id="settings-user-initials" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-black text-base flex items-center justify-center shrink-0 shadow-sm">
+                            1L
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div id="settings-user-name" class="font-extrabold text-sm text-slate-900 truncate">Arabella Morales</div>
+                            <div id="settings-user-email" class="text-xs text-teal-700 font-mono truncate">arabella@1life.ph</div>
+                            <div id="settings-user-role" class="text-[11px] text-slate-500 mt-0.5">Lead QA Specialist • 1Life Data Analytics</div>
+                        </div>
+                    </div>
+
+                    <!-- Switch User Account Selector -->
+                    <div class="pt-3 border-t border-teal-200/60 space-y-1.5">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600">Switch QA Team Account</label>
+                        <select id="settings-switch-account-select" onchange="onSwitchAccountSelect(this.value)" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#00b4d8]">
+                            <option value="Arabella Morales|arabella@1life.ph|Lead QA Specialist">Arabella Morales (Lead QA Specialist)</option>
+                            <option value="Janryl Jay Canaway|janryl@1life.ph|QA Specialist">Janryl Jay Canaway (QA Specialist)</option>
+                            <option value="John Michael Francisco|john@1life.ph|QA Specialist">John Michael Francisco (QA Specialist)</option>
+                            <option value="Julius Rod Dayag|julius@1life.ph|QA Specialist">Julius Rod Dayag (QA Specialist)</option>
+                            <option value="Yesha Nicholai Lao|yesha@1life.ph|QA Specialist">Yesha Nicholai Lao (QA Specialist)</option>
+                        </select>
+                    </div>
+
+                    <!-- Add Account Button -->
+                    <button type="button" onclick="openAddAccountGoogleAuth()" class="w-full py-2 px-3 rounded-xl bg-white hover:bg-teal-50 text-[#0096c7] border border-dashed border-[#00b4d8] font-bold text-xs flex items-center justify-center gap-2 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        + Add Another Google Account (@1life.ph)
+                    </button>
+                </div>
+
+                <!-- 2. Zoom & Page Scaling Engine -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                            🔍 Page Zoom & Icon Scale
+                        </label>
+                        <span id="settings-zoom-display" class="font-mono font-bold text-[#0096c7] text-xs">100%</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500">
+                        Adjust icon sizes and layout proportions so the dashboard scales comfortably at any zoom level.
+                    </p>
+                    <div class="grid grid-cols-5 gap-1.5 pt-1">
+                        <button type="button" onclick="setUiZoomScale(0.75)" id="zoom-btn-75" class="py-1.5 px-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:border-[#00b4d8] transition text-center">75%</button>
+                        <button type="button" onclick="setUiZoomScale(0.85)" id="zoom-btn-85" class="py-1.5 px-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:border-[#00b4d8] transition text-center">85%</button>
+                        <button type="button" onclick="setUiZoomScale(1.0)" id="zoom-btn-100" class="py-1.5 px-2 rounded-lg text-xs font-bold border border-[#00b4d8] bg-[#00b4d8] text-white transition text-center">100%</button>
+                        <button type="button" onclick="setUiZoomScale(1.15)" id="zoom-btn-115" class="py-1.5 px-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:border-[#00b4d8] transition text-center">115%</button>
+                        <button type="button" onclick="setUiZoomScale(1.25)" id="zoom-btn-125" class="py-1.5 px-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:border-[#00b4d8] transition text-center">125%</button>
+                    </div>
+                </div>
+
+                <!-- 3. Appearance Theme -->
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                        🎨 Appearance Theme
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="setWorkspaceTheme('light'); closeSettingsModal();" class="p-2.5 rounded-xl border border-slate-200 bg-white flex items-center justify-center gap-2 font-bold text-slate-800 hover:border-[#00b4d8] transition">
+                            <span>☀️</span> Light Galim Theme
+                        </button>
+                        <button type="button" onclick="setWorkspaceTheme('dark'); closeSettingsModal();" class="p-2.5 rounded-xl border border-slate-200 bg-[#0e2429] text-white flex items-center justify-center gap-2 font-bold hover:border-[#00b4d8] transition">
+                            <span>🌙</span> Deep Slate-Teal Dark
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. Logout Action Button -->
+                <div class="pt-3 border-t border-slate-100">
+                    <button type="button" onclick="handle1LifeLogout(); closeSettingsModal();" class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Log Out of 1Life QA Dashboard
+                    </button>
+                    <p class="text-[10px] text-center text-slate-400 mt-1">Clears local session tokens and returns to security login gate.</p>
+                </div>
             </div>
         </div>
     </div>

@@ -74,6 +74,7 @@ const FALLBACK_PALETTE = ['#00b4d8','#0d9488','#10b981','#f59e0b','#14b8a6','#06
 function boot1LifeDashboard() {
     if (window.__1lifeDashboardBooted) return;
     window.__1lifeDashboardBooted = true;
+    initSavedUiZoom();
     initData();
 }
 
@@ -10801,3 +10802,203 @@ function downloadCustomPDFReport() {
     showNotification(`Exported custom PDF report: ${fname}`, 'success');
 }
 
+
+
+// =========================================================================
+// UI ZOOM & PAGE SCALING ENGINE
+// =========================================================================
+window.CURRENT_UI_SCALE = 1.0;
+
+function setUiZoomScale(scale) {
+    scale = parseFloat(scale) || 1.0;
+    window.CURRENT_UI_SCALE = scale;
+    try {
+        localStorage.setItem('1life_ui_scale', String(scale));
+    } catch(e) {}
+
+    // Apply CSS variable and zoom style
+    document.documentElement.style.setProperty('--ui-scale', scale);
+    const mainWorkspace = document.getElementById('workspace-main-content');
+    if (mainWorkspace) {
+        if (scale === 1.0) {
+            mainWorkspace.style.zoom = '';
+        } else {
+            mainWorkspace.style.zoom = scale;
+        }
+    }
+
+    // Update zoom display label
+    const disp = document.getElementById('settings-zoom-display');
+    if (disp) {
+        disp.textContent = Math.round(scale * 100) + '%';
+    }
+
+    // Update active state on zoom buttons
+    [75, 85, 100, 115, 125].forEach(val => {
+        const btn = document.getElementById('zoom-btn-' + val);
+        if (!btn) return;
+        const targetScale = val / 100;
+        if (Math.abs(targetScale - scale) < 0.02) {
+            btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold border border-[#00b4d8] bg-[#00b4d8] text-white transition text-center shadow-xs';
+        } else {
+            btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-[#00b4d8] transition text-center';
+        }
+    });
+
+    // Notify user with brief toast
+    showNotification('Dashboard scale set to ' + Math.round(scale * 100) + '%', 'info');
+
+    // Trigger window resize so Chart.js canvases redraw smoothly
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, 150);
+}
+
+function initSavedUiZoom() {
+    try {
+        const saved = localStorage.getItem('1life_ui_scale');
+        if (saved) {
+            const num = parseFloat(saved);
+            if (num >= 0.7 && num <= 1.5) {
+                setUiZoomScale(num);
+            }
+        }
+    } catch(e) {}
+}
+
+// =========================================================================
+// CHANGELOG & SYSTEM UPDATES MODAL (BELL BUTTON 🔔)
+// =========================================================================
+function openChangelogModal() {
+    const modal = document.getElementById('changelog-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeChangelogModal() {
+    const modal = document.getElementById('changelog-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+function markChangelogRead() {
+    const badge = document.getElementById('bell-badge-count');
+    if (badge) {
+        badge.textContent = '0';
+        badge.classList.remove('bg-rose-500');
+        badge.classList.add('bg-slate-500/80', 'opacity-60');
+    }
+    try {
+        localStorage.setItem('1life_changelog_read', 'v3.5.0');
+    } catch(e) {}
+    closeChangelogModal();
+    showNotification('System updates marked as read.', 'success');
+}
+
+// =========================================================================
+// SETTINGS, USER ACCOUNTS & LOGOUT MODAL (GEAR BUTTON ⚙️)
+// =========================================================================
+function openSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        // Sync active user details
+        const emailEl = document.getElementById('settings-active-email');
+        const nameEl = document.getElementById('settings-active-name');
+        const initialEl = document.getElementById('settings-user-initials');
+        
+        const activeEmail = current1LifeUser?.email || localStorage.getItem('1life_active_user_email') || 'arabella.galim@1life.ph';
+        const activeName = current1LifeUser?.name || 'Arabella Galim';
+        const activeInitials = current1LifeUser?.initials || 'AG';
+
+        if (emailEl) emailEl.textContent = activeEmail;
+        if (nameEl) nameEl.textContent = activeName;
+        if (initialEl) initialEl.textContent = activeInitials;
+
+        // Sync dropdown
+        const selectEl = document.getElementById('settings-user-dropdown');
+        if (selectEl) {
+            selectEl.value = activeEmail;
+        }
+
+        // Sync zoom display
+        const disp = document.getElementById('settings-zoom-display');
+        if (disp) {
+            disp.textContent = Math.round((window.CURRENT_UI_SCALE || 1) * 100) + '%';
+        }
+
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+function onSwitchAccountSelect(selectedEmail) {
+    if (!selectedEmail) return;
+    const nameMap = {
+        'arabella.galim@1life.ph': 'Arabella Galim',
+        'yashanicholai.lao@1life.ph': 'Yasha Nicholai Lao',
+        'charles.marinas@1life.ph': 'Charles Marinas',
+        'erick.delfin@1life.ph': 'Erick Delfin',
+        'christian.dave@1life.ph': 'Christian Dave',
+        'it.specialist@1life.ph': '1Life IT Specialist'
+    };
+    const newName = nameMap[selectedEmail] || selectedEmail.split('@')[0].replace('.', ' ').toUpperCase();
+    const initials = newName.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
+
+    current1LifeUser = {
+        email: selectedEmail,
+        name: newName,
+        initials: initials,
+        role: 'QA Specialist',
+        picture: '',
+        auth_provider: 'Google Workspace',
+        verified_hd: '1life.ph'
+    };
+
+    try {
+        localStorage.setItem('1life_active_user_email', selectedEmail);
+        localStorage.setItem('1life_auth_user', JSON.stringify(current1LifeUser));
+    } catch(e) {}
+
+    // Update popovers and headers
+    apply1LifeUserUI();
+    
+    // Update settings modal display
+    const emailEl = document.getElementById('settings-active-email');
+    const nameEl = document.getElementById('settings-active-name');
+    const initialEl = document.getElementById('settings-user-initials');
+    if (emailEl) emailEl.textContent = selectedEmail;
+    if (nameEl) nameEl.textContent = newName;
+    if (initialEl) initialEl.textContent = initials;
+
+    showNotification('Switched active QA session to ' + newName + ' (' + selectedEmail + ')', 'success');
+}
+
+function openAddAccountGoogleAuth() {
+    showNotification('Connecting new Google Workspace Account (@1life.ph)...', 'info');
+    closeSettingsModal();
+    if (typeof triggerGoogleSSOPrompt === 'function') {
+        triggerGoogleSSOPrompt();
+    } else {
+        showNotification('Please sign in with your target @1life.ph Google account in the popup window.', 'info');
+        window.open('https://accounts.google.com/AddSession?hl=en&continue=' + encodeURIComponent(window.location.href), '_blank', 'width=600,height=700');
+    }
+}
+
+// Make functions globally accessible
+window.setUiZoomScale = setUiZoomScale;
+window.initSavedUiZoom = initSavedUiZoom;
+window.openChangelogModal = openChangelogModal;
+window.closeChangelogModal = closeChangelogModal;
+window.markChangelogRead = markChangelogRead;
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.onSwitchAccountSelect = onSwitchAccountSelect;
+window.openAddAccountGoogleAuth = openAddAccountGoogleAuth;
