@@ -878,23 +878,53 @@
                             <!-- 1. Date Mode -->
                             <div>
                                 <label for="home-cr-date-mode" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Date Filter</label>
-                                <select id="home-cr-date-mode" onchange="onHomeCustomDateModeChange()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#00b4d8]">
+                                <select id="home-cr-date-mode" onchange="onHomeCustomDateModeChange()" class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#00b4d8]">
                                     <option value="all">All Dates (Overall)</option>
+                                    <option value="date" selected>Specific Dates (Checkboxes)</option>
                                     <option value="week">Per Week (Weekly)</option>
-                                    <option value="date">Specific Date</option>
                                     <option value="range">Custom Date Range</option>
                                 </select>
                             </div>
 
-                            <!-- 2. Dynamic Date Scope -->
-                            <div id="home-cr-date-value-wrap">
-                                <label id="home-cr-date-value-label" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Period Scope</label>
-                                <div id="home-cr-all-hint" class="px-2.5 py-1.5 rounded-lg bg-slate-100/80 border border-slate-200 text-xs text-slate-500 font-medium truncate">All available dates included</div>
-                                <select id="home-cr-week-select" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#00b4d8]"></select>
-                                <select id="home-cr-specific-date" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#00b4d8]"></select>
+                            <!-- 2. Dynamic Date Scope with Checkbox Multi-Select (Like RTH Report) -->
+                            <div id="home-cr-date-value-wrap" class="relative">
+                                <label id="home-cr-date-value-label" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Select Dates (Checkboxes)</label>
+                                <div id="home-cr-all-hint" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 font-medium truncate">All available dates included</div>
+                                <select id="home-cr-week-select" onchange="updateHomeCustomReportPreview()" class="hidden w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#00b4d8]"></select>
+                                <select id="home-cr-specific-date" class="hidden"></select>
+
+                                <!-- Multi-select Checkbox Date Picker (Like RTH Report) -->
+                                <div id="home-cr-checkbox-picker" class="relative w-full">
+                                    <button type="button" id="btn-home-cr-date-toggle" onclick="toggleHomeCRDateDropdown(event)" class="w-full px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-semibold flex items-center justify-between text-xs focus:ring-1 focus:ring-[#00b4d8] focus:outline-none transition">
+                                        <span id="home-cr-date-display-label" class="truncate font-semibold text-slate-900 dark:text-white">All Dates (Overall)</span>
+                                        <svg class="w-3.5 h-3.5 ml-1.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+
+                                    <!-- Multi-select Dropdown Panel -->
+                                    <div id="home-cr-date-dropdown-panel" class="hidden absolute z-50 left-0 sm:right-0 sm:left-auto mt-1.5 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
+                                        <div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+                                            <button type="button" onclick="setHomeCRDateQuickMode('ALL')" class="px-2 py-1 rounded bg-[#00b4d8] text-white font-bold text-[10px] hover:bg-[#0096c7] transition">All Time</button>
+                                            <button type="button" onclick="setHomeCRDateQuickMode('LATEST_WEEK')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Latest Week</button>
+                                            <button type="button" onclick="setHomeCRDateQuickMode('NOV_2026')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Nov 2026</button>
+                                            <button type="button" onclick="setHomeCRDateQuickMode('OCT_2026')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Oct 2026</button>
+                                            <button type="button" onclick="clearHomeCRDateSelections()" class="px-2 py-1 rounded text-rose-600 dark:text-rose-400 font-semibold text-[10px] hover:bg-rose-50 dark:hover:bg-rose-950/40 ml-auto transition">Clear</button>
+                                        </div>
+                                        <div class="relative">
+                                            <input type="text" id="home-cr-date-search" oninput="filterHomeCRDateCheckboxes()" placeholder="Search date..." class="w-full px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-[#00b4d8] focus:outline-none">
+                                        </div>
+                                        <div id="home-cr-date-checkbox-list" class="max-h-52 overflow-y-auto space-y-1 pr-1 text-slate-700 dark:text-slate-300">
+                                            <!-- Dynamically populated with date checkboxes -->
+                                        </div>
+                                        <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                                            <span id="home-cr-date-checked-counter" class="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium">All dates selected</span>
+                                            <button type="button" onclick="applyHomeCRDateSelection()" class="px-3 py-1 bg-[#00b4d8] hover:bg-[#0096c7] text-white font-bold rounded-lg text-xs shadow-xs transition">Apply Selection</button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div id="home-cr-range-inputs" class="hidden flex items-center gap-1">
-                                    <input type="date" id="home-cr-start-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-800">
-                                    <input type="date" id="home-cr-end-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-800">
+                                    <input type="date" id="home-cr-start-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-800 dark:text-slate-100">
+                                    <input type="date" id="home-cr-end-date" onchange="updateHomeCustomReportPreview()" class="w-1/2 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-800 dark:text-slate-100">
                                 </div>
                             </div>
 

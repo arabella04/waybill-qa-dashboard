@@ -3576,6 +3576,11 @@ document.addEventListener('click', (e) => {
     if (container && panel && !container.contains(e.target)) {
         panel.classList.add('hidden');
     }
+    const homeContainer = document.getElementById('home-cr-checkbox-picker');
+    const homePanel = document.getElementById('home-cr-date-dropdown-panel');
+    if (homeContainer && homePanel && !homeContainer.contains(e.target)) {
+        homePanel.classList.add('hidden');
+    }
 });
 
 function initRTHPeriodDropdown(preserveSelection = false) {
@@ -7335,6 +7340,171 @@ function fmtIsoYMD(d) {
     return `${y}-${m}-${day}`;
 }
 
+
+// =========================================================================
+// HOME TASK CUSTOM REPORT BUILDER — MULTI-SELECT CHECKBOX DATE PICKER
+// Mirrors the RTH Report checkbox date picker with quick selects & search
+// =========================================================================
+
+let homeCRAvailableDates = [];
+let homeCRSelectedDates = new Set();
+let homeCRDateMode = 'ALL'; // 'ALL' or 'CUSTOM'
+
+function initHomeCRDateCheckboxes() {
+    const listEl = document.getElementById('home-cr-date-checkbox-list');
+    if (!listEl) return;
+
+    if (!homeCRSelectedDates || homeCRSelectedDates.size === 0) {
+        homeCRDateMode = 'ALL';
+    }
+
+    renderHomeCRDateCheckboxes();
+    updateHomeCRDateSummaryUI();
+}
+
+function renderHomeCRDateCheckboxes(filterText = '') {
+    const listEl = document.getElementById('home-cr-date-checkbox-list');
+    if (!listEl) return;
+
+    const q = (filterText || '').toLowerCase().trim();
+    const isAll = homeCRDateMode === 'ALL';
+
+    const filteredDates = (homeCRAvailableDates || []).filter(d => {
+        if (!q) return true;
+        return (d.label && d.label.toLowerCase().includes(q)) ||
+               (d.slash && d.slash.toLowerCase().includes(q)) ||
+               (d.ymd && d.ymd.includes(q));
+    });
+
+    if (filteredDates.length === 0) {
+        listEl.innerHTML = '<div class="py-3 text-center text-slate-400 text-xs">No matching dates found</div>';
+        return;
+    }
+
+    let html = '<div class="space-y-1">';
+    filteredDates.forEach(d => {
+        const isChecked = isAll || homeCRSelectedDates.has(d.ymd);
+        html += `
+            <label class="flex items-center justify-between p-1.5 rounded hover:bg-cyan-50/60 dark:hover:bg-slate-800 cursor-pointer transition text-xs border border-transparent hover:border-[#00b4d8]/30">
+                <span class="flex items-center gap-2">
+                    <input type="checkbox" value="${d.ymd}" onchange="onHomeCRDateCheckboxChange(this, '${d.ymd}')" class="rounded text-[#00b4d8] focus:ring-0" ${isChecked ? 'checked' : ''}>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${d.label} <span class="text-slate-400 text-[10px]">(${d.slash})</span></span>
+                </span>
+                <span class="text-[10px] font-bold text-slate-400">${d.count} sessions</span>
+            </label>
+        `;
+    });
+    html += '</div>';
+
+    listEl.innerHTML = html;
+    updateHomeCRDateSummaryUI();
+}
+
+function onHomeCRDateCheckboxChange(inputEl, ymd) {
+    if (homeCRDateMode === 'ALL') {
+        homeCRDateMode = 'CUSTOM';
+        homeCRSelectedDates = new Set(homeCRAvailableDates.map(d => d.ymd));
+    }
+
+    if (inputEl.checked) {
+        homeCRSelectedDates.add(ymd);
+    } else {
+        homeCRSelectedDates.delete(ymd);
+    }
+
+    if (homeCRSelectedDates.size === homeCRAvailableDates.length) {
+        homeCRDateMode = 'ALL';
+    }
+
+    updateHomeCRDateSummaryUI();
+    updateHomeCustomReportPreview(true);
+}
+
+function updateHomeCRDateSummaryUI() {
+    const labelEl = document.getElementById('home-cr-date-display-label');
+    const counterEl = document.getElementById('home-cr-date-checked-counter');
+
+    const totalAvailable = homeCRAvailableDates.length;
+    const isAll = homeCRDateMode === 'ALL' || homeCRSelectedDates.size === totalAvailable;
+
+    if (isAll) {
+        if (labelEl) labelEl.textContent = `All Dates (${totalAvailable} Available)`;
+        if (counterEl) counterEl.textContent = `All ${totalAvailable} dates selected`;
+    } else if (homeCRSelectedDates.size === 0) {
+        if (labelEl) labelEl.textContent = 'No Dates Selected';
+        if (counterEl) counterEl.textContent = '0 dates selected';
+    } else if (homeCRSelectedDates.size === 1) {
+        const singleYmd = Array.from(homeCRSelectedDates)[0];
+        const match = homeCRAvailableDates.find(d => d.ymd === singleYmd);
+        const text = match ? `${match.label} (${match.slash})` : singleYmd;
+        if (labelEl) labelEl.textContent = text;
+        if (counterEl) counterEl.textContent = '1 date selected';
+    } else {
+        if (labelEl) labelEl.textContent = `${homeCRSelectedDates.size} Dates Selected`;
+        if (counterEl) counterEl.textContent = `${homeCRSelectedDates.size} of ${totalAvailable} dates selected`;
+    }
+}
+
+function setHomeCRDateQuickMode(mode) {
+    if (mode === 'ALL') {
+        homeCRDateMode = 'ALL';
+        homeCRSelectedDates.clear();
+    } else if (mode === 'LATEST_WEEK') {
+        homeCRDateMode = 'CUSTOM';
+        homeCRSelectedDates.clear();
+        (homeCRAvailableDates || []).slice(0, 7).forEach(d => homeCRSelectedDates.add(d.ymd));
+    } else if (mode === 'NOV_2026') {
+        homeCRDateMode = 'CUSTOM';
+        homeCRSelectedDates.clear();
+        (homeCRAvailableDates || []).filter(d => d.ymd.startsWith('2026-11')).forEach(d => homeCRSelectedDates.add(d.ymd));
+    } else if (mode === 'OCT_2026') {
+        homeCRDateMode = 'CUSTOM';
+        homeCRSelectedDates.clear();
+        (homeCRAvailableDates || []).filter(d => d.ymd.startsWith('2026-10')).forEach(d => homeCRSelectedDates.add(d.ymd));
+    }
+    renderHomeCRDateCheckboxes();
+    updateHomeCRDateSummaryUI();
+    updateHomeCustomReportPreview(true);
+}
+
+function clearHomeCRDateSelections() {
+    homeCRDateMode = 'CUSTOM';
+    homeCRSelectedDates.clear();
+    renderHomeCRDateCheckboxes();
+    updateHomeCRDateSummaryUI();
+    updateHomeCustomReportPreview(true);
+}
+
+function filterHomeCRDateCheckboxes() {
+    const searchVal = document.getElementById('home-cr-date-search')?.value || '';
+    renderHomeCRDateCheckboxes(searchVal);
+}
+
+function toggleHomeCRDateDropdown(e) {
+    if (e) e.stopPropagation();
+    const panel = document.getElementById('home-cr-date-dropdown-panel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+}
+
+function applyHomeCRDateSelection() {
+    const panel = document.getElementById('home-cr-date-dropdown-panel');
+    if (panel) panel.classList.add('hidden');
+    updateHomeCRDateSummaryUI();
+    updateHomeCustomReportPreview(true);
+}
+
+// Make functions globally accessible
+window.initHomeCRDateCheckboxes = initHomeCRDateCheckboxes;
+window.renderHomeCRDateCheckboxes = renderHomeCRDateCheckboxes;
+window.onHomeCRDateCheckboxChange = onHomeCRDateCheckboxChange;
+window.updateHomeCRDateSummaryUI = updateHomeCRDateSummaryUI;
+window.setHomeCRDateQuickMode = setHomeCRDateQuickMode;
+window.clearHomeCRDateSelections = clearHomeCRDateSelections;
+window.filterHomeCRDateCheckboxes = filterHomeCRDateCheckboxes;
+window.toggleHomeCRDateDropdown = toggleHomeCRDateDropdown;
+window.applyHomeCRDateSelection = applyHomeCRDateSelection;
+
 function initHomeCustomReportControls() {
     if (!qaTasksData || qaTasksData.length === 0) buildQATasksDataset();
 
@@ -7366,6 +7536,9 @@ function initHomeCustomReportControls() {
 
     const sortedWeeks = Array.from(weekMap.values()).sort((a, b) => b.ts - a.ts);
     const sortedDates = Array.from(dateMap.values()).sort((a, b) => b.ts - a.ts);
+    homeCRAvailableDates = sortedDates;
+    homeCRAvailableWeeks = sortedWeeks;
+    initHomeCRDateCheckboxes();
 
     if (weekSel && sortedWeeks.length > 0) {
         const prev = weekSel.value;
@@ -7462,17 +7635,19 @@ function onHomeCustomDateModeChange() {
     const allHint = document.getElementById('home-cr-all-hint');
     const weekSel = document.getElementById('home-cr-week-select');
     const dateSel = document.getElementById('home-cr-specific-date');
-    const rangeWrap = document.getElementById('home-cr-range-wrap');
+    const checkboxPicker = document.getElementById('home-cr-checkbox-picker');
+    const rangeWrap = document.getElementById('home-cr-range-inputs');
     const lbl = document.getElementById('home-cr-date-value-label');
 
     if (allHint) allHint.classList.toggle('hidden', mode !== 'all');
     if (weekSel) weekSel.classList.toggle('hidden', mode !== 'week');
-    if (dateSel) dateSel.classList.toggle('hidden', mode !== 'date');
+    if (checkboxPicker) checkboxPicker.classList.toggle('hidden', mode !== 'date');
+    if (dateSel) dateSel.classList.add('hidden');
     if (rangeWrap) rangeWrap.classList.toggle('hidden', mode !== 'range');
 
     if (lbl) {
         lbl.textContent = mode === 'week' ? 'Select Week'
-            : mode === 'date' ? 'Select Specific Date'
+            : mode === 'date' ? 'Select Dates (Checkboxes)'
             : mode === 'range' ? 'Start & End Date'
             : 'Period Scope';
     }
@@ -7499,10 +7674,19 @@ function getHomeCustomFilteredDataset() {
         minYmd = parts[0] || '';
         maxYmd = parts[1] || '';
         dateLabel = `Week: ${weekSel.options[weekSel.selectedIndex]?.text || weekSel.value}`;
-    } else if (dateMode === 'date' && dateSel && dateSel.value) {
-        minYmd = dateSel.value;
-        maxYmd = dateSel.value;
-        dateLabel = `Date: ${dateSel.options[dateSel.selectedIndex]?.text || dateSel.value}`;
+    } else if (dateMode === 'date') {
+        const isAll = homeCRDateMode === 'ALL' || (homeCRAvailableDates.length > 0 && homeCRSelectedDates.size === homeCRAvailableDates.length);
+        if (isAll) {
+            dateLabel = 'All Dates (Overall)';
+        } else if (homeCRSelectedDates.size === 0) {
+            dateLabel = 'No Dates Selected';
+        } else if (homeCRSelectedDates.size === 1) {
+            const singleYmd = Array.from(homeCRSelectedDates)[0];
+            const match = homeCRAvailableDates.find(d => d.ymd === singleYmd);
+            dateLabel = match ? `Date: ${match.label} (${match.slash})` : `Date: ${singleYmd}`;
+        } else {
+            dateLabel = `${homeCRSelectedDates.size} Selected Dates`;
+        }
     } else if (dateMode === 'range') {
         minYmd = startVal;
         maxYmd = endVal;
@@ -7512,12 +7696,21 @@ function getHomeCustomFilteredDataset() {
     const filtered = (qaTasksData || []).filter(t => {
         if (taskFilter !== 'ALL' && t.category !== taskFilter) return false;
         if (qaFilter !== 'ALL' && t.specialist.toLowerCase() !== qaFilter.toLowerCase()) return false;
-        if (dateMode !== 'all') {
+        if (dateMode === 'week' || dateMode === 'range') {
             const dObj = parseSlashDate(t.date);
             if (!dObj) return false;
             const ymd = fmtIsoYMD(dObj);
             if (minYmd && ymd < minYmd) return false;
             if (maxYmd && ymd > maxYmd) return false;
+        } else if (dateMode === 'date') {
+            const isAll = homeCRDateMode === 'ALL' || (homeCRAvailableDates.length > 0 && homeCRSelectedDates.size === homeCRAvailableDates.length);
+            if (!isAll) {
+                if (homeCRSelectedDates.size === 0) return false;
+                const dObj = parseSlashDate(t.date);
+                if (!dObj) return false;
+                const ymd = fmtIsoYMD(dObj);
+                if (!homeCRSelectedDates.has(ymd)) return false;
+            }
         }
         return true;
     });
