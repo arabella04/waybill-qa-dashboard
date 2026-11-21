@@ -2213,14 +2213,7 @@ function exportProgressReportExcel() {
 }
 
 function downloadPreGeneratedExcel() {
-    // Works both when uploaded to any web domain and when running locally
-    const link = document.createElement('a');
-    link.href = 'Waybill_QA_Dispatch_Progress_Report.xlsx';
-    link.download = 'Waybill_QA_Dispatch_Progress_Report.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showNotification("Downloading pre-generated Excel progress report...", "info");
+    exportProgressReportExcel();
 }
 
 // ==========================================
@@ -4476,84 +4469,256 @@ function triggerFileDownload(url, filename) {
     document.body.removeChild(link);
 }
 
-async function downloadRTHVisualExcel() {
-    let periodParam = 'ALL';
-    let matchedWeekKey = null;
+// =========================================================================
+// 1LIFE RTH REPORT - DYNAMIC CLIENT-SIDE EXCEL (.XLSX) GENERATION ENGINE
+// Generates multi-tab executive audit workbooks directly via SheetJS (XLSX)
+// Works universally across Google Apps Script, Netlify, and Localhost
+// =========================================================================
 
-    // Detect if current selection matches a specific weekly cycle
-    if (rthFilters.selectedWeeks && rthFilters.selectedWeeks.length === 1) {
-        matchedWeekKey = rthFilters.selectedWeeks[0];
-    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0 && typeof rthAvailableWeeks !== 'undefined') {
-        for (const wk of rthAvailableWeeks) {
-            const wkSet = new Set(wk.dates);
-            if (rthFilters.selectedDates.every(d => wkSet.has(d))) {
-                matchedWeekKey = wk.key;
-                break;
+function generateRTHExcelWorkbook(scope = 'current') {
+    if (typeof XLSX === 'undefined') {
+        showNotification('Excel generator (SheetJS) is loading. Please try again in a moment.', 'error');
+        return;
+    }
+
+    showNotification('Generating official 1Life RTH Excel Report (.xlsx)...', 'info');
+
+    try {
+        const meta = (scope === 'overall')
+            ? {
+                records: allData.filter(r => r.qa_initial_status === 'Invalid'),
+                scopeRecords: allData,
+                periodLabel: 'All Dates (Full Master Dataset)',
+                periodSlug: 'All_Dates_Master',
+                totalInvalids: allData.filter(r => r.qa_initial_status === 'Invalid').length,
+                totalAssigned: allData.length,
+                assignedCounts: (() => {
+                    const ac = {};
+                    allData.forEach(r => {
+                        const rider = (r.rider || '').trim();
+                        if (rider) ac[rider] = (ac[rider] || 0) + 1;
+                    });
+                    return ac;
+                })()
             }
-        }
-    }
+            : getRTHScopeMetadata();
 
-    const isLatestWeek = rthFilters.mode === 'LATEST_WEEK' || (typeof rthAvailableWeeks !== 'undefined' && rthAvailableWeeks.length > 0 && matchedWeekKey === rthAvailableWeeks[0].key);
+        const records = meta.records;
+        const totalInvalids = Math.max(meta.totalInvalids, 1);
+        const totalAssigned = Math.max(meta.totalAssigned, 1);
+        const defectRate = ((records.length / totalAssigned) * 100).toFixed(1);
 
-    if (isLatestWeek) {
-        periodParam = 'latest_week';
-    } else if (matchedWeekKey) {
-        periodParam = `WEEK:${matchedWeekKey}`;
-    } else if (rthFilters.selectedDates && rthFilters.selectedDates.length > 0) {
-        periodParam = `DATES:${rthFilters.selectedDates.join(',')}`;
-    }
-
-    // 1. If running on local server with Python backend available
-    const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalServer) {
-        showNotification("Generating 1Life visual Excel report with embedded charts...", "info");
-        try {
-            const res = await fetch(`/download/rth-excel?period=${encodeURIComponent(periodParam)}`);
-            if (res.ok) {
-                const blob = await res.blob();
-                const disposition = res.headers.get('content-disposition') || '';
-                let filename = 'Waybill_RTH_Report.xlsx';
-                const match = disposition.match(/filename="?([^";]+)"?/);
-                if (match && match[1]) filename = match[1];
-
-                const blobUrl = URL.createObjectURL(blob);
-                triggerFileDownload(blobUrl, filename);
-                URL.revokeObjectURL(blobUrl);
-                showNotification(`Downloaded 1Life visual Excel report: ${filename}`, "success");
-                return;
+        // 1. Rider Breakdown Aggregation
+        const riderCounts = {};
+        const riderDocs = {};
+        records.forEach(r => {
+            const name = (r.rider || 'Unknown Rider').trim();
+            riderCounts[name] = (riderCounts[name] || 0) + 1;
+            if (!riderDocs[name]) {
+                riderDocs[name] = { ID: 0, MDC: 0, RC: 0, LOA: 0 };
             }
-        } catch (e) {
-            console.warn("Local dynamic report generation failed, falling back to static bundles:", e);
-        }
-    }
+            const d = r.document_involved || '';
+            if (d.includes('ID')) riderDocs[name].ID++;
+            if (d.includes('MDC')) riderDocs[name].MDC++;
+            if (d.includes('RC')) riderDocs[name].RC++;
+            if (d.includes('LOA')) riderDocs[name].LOA++;
+        });
 
-    // 2. Static deployment (Netlify / GitHub Pages) bundles:
-    if (isLatestWeek) {
-        triggerFileDownload('Waybill_RTH_Report_Latest_Week.xlsx', 'Waybill_RTH_Report_Latest_Week.xlsx');
-        showNotification("Downloaded Latest Week 1Life RTH Visual Report with embedded charts (.xlsx)", "success");
-    } else if (matchedWeekKey) {
-        const weekFile = `Waybill_RTH_Report_Week_${matchedWeekKey}.xlsx`;
-        triggerFileDownload(weekFile, weekFile);
-        showNotification(`Downloaded 1Life RTH Visual Report with embedded charts (${matchedWeekKey})`, "success");
-    } else if (rthFilters.mode === 'ALL' || !rthFilters.selectedDates || !rthFilters.selectedDates.length) {
-        triggerFileDownload('Waybill_RTH_Invalid_Documents_Report.xlsx', 'Waybill_RTH_Invalid_Documents_Report.xlsx');
-        showNotification("Downloaded Overall Master 1Life RTH Visual Report with embedded charts (.xlsx)", "success");
-    } else {
-        // Fallback for custom selection on static host: supply the latest week visual report
-        triggerFileDownload('Waybill_RTH_Report_Latest_Week.xlsx', 'Waybill_RTH_Report_Latest_Week.xlsx');
-        showNotification("Downloaded 1Life RTH Visual Report with embedded charts (.xlsx)", "success");
+        const allRidersRanked = Object.entries(riderCounts).sort((a, b) => b[1] - a[1]);
+        const uniqueRidersCount = allRidersRanked.length;
+
+        // 2. Aggregate Documents Involved
+        const docCounts = {
+            'ID': { name: 'ID Only (Valid ID / Identification)', code: 'ID', count: 0, desc: 'Single defect: Improper ID, blurred ID, no ID file, inverted ID' },
+            'MDC': { name: 'MDC Only (Medicine Consent Form)', code: 'MDC', count: 0, desc: 'Single defect: Diff signature in MDC, missing MDC, invalid MDC' },
+            'RC': { name: 'RC Only (Received / Receiving Copy)', code: 'RC', count: 0, desc: 'Single defect: Blurred RC, no signature in RC, missing RC copy' },
+            'LOA': { name: 'LOA Only (Letter of Authorization)', code: 'LOA', count: 0, desc: 'Single defect: Missing LOA, expired LOA, blurred LOA copy' },
+            'MULTI': { name: 'Multi-Document Defects', code: 'MULTI', count: 0, desc: '2+ remarks/documents on same waybill (counted as 1 waybill)' },
+            'Other': { name: 'Other / Unspecified Defects', code: 'Other', count: 0, desc: 'System/delivery issue, unclassified remarks' }
+        };
+        records.forEach(r => {
+            const k = classifyInvalidDocCategory(r.document_involved);
+            if (docCounts[k]) docCounts[k].count++;
+            else docCounts['Other'].count++;
+        });
+
+        // 3. Aggregate Defect Issue Categories
+        const catCounts = {
+            'Missing Document': 0,
+            'Signature Discrepancy': 0,
+            'Improper / Orientation': 0,
+            'Blurred / Low Quality': 0,
+            'Other Defect': 0
+        };
+        records.forEach(r => {
+            const cat = classifyRTHDefectIssue(r.document_issue);
+            if (catCounts[cat] !== undefined) catCounts[cat]++;
+            else catCounts['Other Defect']++;
+        });
+
+        const sortedDocs = Object.entries(docCounts).sort((a, b) => b[1].count - a[1].count);
+        const primaryDoc = sortedDocs[0] || ['N/A', { name: '-', count: 0, desc: '-' }];
+        const topRider = allRidersRanked[0] || ['N/A', 0];
+
+        const wb = XLSX.utils.book_new();
+
+        // -----------------------------------------------------------------
+        // TAB 1: Executive_Summary
+        // -----------------------------------------------------------------
+        const execRows = [
+            ['1LIFE TASK MONITORING & QUALITY ASSURANCE — WAYBILL RTH DEFECT & DOCUMENT ANALYSIS REPORT'],
+            [`Scope: ${meta.periodLabel}`],
+            [`Generated: ${new Date().toLocaleString()} | Official QA Monitoring | 1Life Inc. Philippines (1life.ph)`],
+            [''],
+            ['EXECUTIVE KEY PERFORMANCE INDICATORS'],
+            ['Metric Description', 'Value', 'Benchmark / Reference', 'Status'],
+            ['Total Waybills Evaluated in Scope', totalAssigned, 'Full Scope Population', 'EVALUATED'],
+            ['Total Invalid Waybills Logged', records.length, `${defectRate}% Defect Rate`, 'ACTION REQUIRED'],
+            ['Unique Riders Impacted', uniqueRidersCount, 'Active Riders with Defects', 'MONITORED'],
+            ['Primary Defect Document Involved', `${primaryDoc[0]} (${primaryDoc[1].count.toLocaleString()})`, `${((primaryDoc[1].count / totalInvalids) * 100).toFixed(1)}% of all invalid waybills`, 'CRITICAL FOCUS'],
+            ['Highest Defect Rider', `${topRider[0]} (${topRider[1].toLocaleString()} cases)`, `${((topRider[1] / totalInvalids) * 100).toFixed(1)}% share of defects`, 'COACHING QUEUE'],
+            [''],
+            ['SECTION 1: INVALID DOCUMENTS DISTRIBUTION'],
+            ['Document Category', 'Full Description / Criteria', 'Invalid Count', '% Share', 'Primary Detected Issues']
+        ];
+
+        sortedDocs.forEach(([code, d]) => {
+            execRows.push([
+                code,
+                d.name,
+                d.count,
+                `${((d.count / totalInvalids) * 100).toFixed(1)}%`,
+                d.desc
+            ]);
+        });
+        execRows.push(['TOTAL INVALID WAYBILLS', 'All Classified Document Defects', records.length, '100.0%', 'Master Invalids In Scope']);
+        execRows.push(['']);
+        execRows.push(['SECTION 2: PRIMARY DETECTED DEFECT ISSUES']);
+        execRows.push(['Issue Category', 'Invalid Count', '% Share', 'Standard Operating Guidance']);
+        Object.entries(catCounts).forEach(([k, v]) => {
+            execRows.push([
+                k,
+                v,
+                `${((v / totalInvalids) * 100).toFixed(1)}%`,
+                k === 'Missing Document' ? 'Require rider to re-upload clear proof before ticket clearance' :
+                k === 'Signature Discrepancy' ? 'Verify patient signature against medicine consent form' :
+                k === 'Improper / Orientation' ? 'Enforce upright portrait orientation and non-cropped captures' :
+                k === 'Blurred / Low Quality' ? 'Require high-resolution, glare-free document scans' : 'Standard QA verification'
+            ]);
+        });
+
+        const wsExec = XLSX.utils.aoa_to_sheet(execRows);
+        wsExec['!cols'] = [
+            { wch: 32 }, { wch: 45 }, { wch: 18 }, { wch: 16 }, { wch: 55 }
+        ];
+        XLSX.utils.book_append_sheet(wb, wsExec, 'Executive_Summary');
+
+        // -----------------------------------------------------------------
+        // TAB 2: Rider_Defect_Analysis
+        // -----------------------------------------------------------------
+        const riderRows = [
+            ['RIDER DEFECT DISTRIBUTION & PERFORMANCE RANKINGS MATRIX'],
+            [`Scope: ${meta.periodLabel} | Total Invalids: ${records.length.toLocaleString()} | Active Riders: ${uniqueRidersCount}`],
+            [''],
+            ['Rank', 'Rider Name', 'Assigned Waybills', 'Total Invalids', 'Defect Share %', 'ID Defects', 'MDC Defects', 'RC Defects', 'LOA Defects', 'Defect Rate %']
+        ];
+
+        let sumAssigned = 0, sumInvalids = 0, sumID = 0, sumMDC = 0, sumRC = 0, sumLOA = 0;
+        allRidersRanked.forEach(([rName, invCnt], idx) => {
+            const rAssigned = meta.assignedCounts[rName] || invCnt;
+            const rDoc = riderDocs[rName] || { ID: 0, MDC: 0, RC: 0, LOA: 0 };
+            sumAssigned += rAssigned;
+            sumInvalids += invCnt;
+            sumID += rDoc.ID;
+            sumMDC += rDoc.MDC;
+            sumRC += rDoc.RC;
+            sumLOA += rDoc.LOA;
+
+            const rate = rAssigned > 0 ? ((invCnt / rAssigned) * 100).toFixed(1) + '%' : 'N/A';
+            riderRows.push([
+                idx + 1,
+                rName,
+                rAssigned,
+                invCnt,
+                `${((invCnt / totalInvalids) * 100).toFixed(1)}%`,
+                rDoc.ID,
+                rDoc.MDC,
+                rDoc.RC,
+                rDoc.LOA,
+                rate
+            ]);
+        });
+
+        riderRows.push([
+            'TOTAL',
+            'All Active Riders',
+            sumAssigned,
+            sumInvalids,
+            '100.0%',
+            sumID,
+            sumMDC,
+            sumRC,
+            sumLOA,
+            sumAssigned > 0 ? `${((sumInvalids / sumAssigned) * 100).toFixed(1)}%` : '100.0%'
+        ]);
+
+        const wsRider = XLSX.utils.aoa_to_sheet(riderRows);
+        wsRider['!cols'] = [
+            { wch: 8 }, { wch: 34 }, { wch: 18 }, { wch: 16 }, { wch: 15 }, { wch: 13 }, { wch: 14 }, { wch: 13 }, { wch: 13 }, { wch: 15 }
+        ];
+        XLSX.utils.book_append_sheet(wb, wsRider, 'Rider_Defect_Analysis');
+
+        // -----------------------------------------------------------------
+        // TAB 3: Invalid_Waybills_Audit
+        // -----------------------------------------------------------------
+        const auditRows = [
+            ['#', 'Waybill Number', 'Document Involved', 'Document Issue / Full Remarks', 'Rider Name', 'Validation Date', 'Initial Validated By', 'Final Status', 'Final Validated By', 'Final Remarks', 'Pharma Remarks']
+        ];
+
+        records.forEach((r, idx) => {
+            auditRows.push([
+                idx + 1,
+                r.waybill_no || '-',
+                r.document_involved || 'Unspecified',
+                r.document_issue || r.qa_initial_remarks || '-',
+                r.rider || '-',
+                r.initial_val_date || r.date || '-',
+                r.initial_validated_by || '-',
+                r.final_val_status || '-',
+                r.final_validated_by || '-',
+                r.final_qa_remarks || '-',
+                r.pharma_remarks || '-'
+            ]);
+        });
+
+        const wsAudit = XLSX.utils.aoa_to_sheet(auditRows);
+        wsAudit['!cols'] = [
+            { wch: 7 }, { wch: 18 }, { wch: 22 }, { wch: 50 }, { wch: 32 }, { wch: 14 }, { wch: 22 }, { wch: 14 }, { wch: 22 }, { wch: 30 }, { wch: 25 }
+        ];
+        XLSX.utils.book_append_sheet(wb, wsAudit, 'Invalid_Waybills_Audit');
+
+        const fname = scope === 'overall'
+            ? `Waybill_RTH_Master_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+            : `Waybill_RTH_Report_${meta.periodSlug}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        XLSX.writeFile(wb, fname);
+        showNotification(`Downloaded 1Life RTH Excel Report: ${fname}`, 'success');
+    } catch (err) {
+        console.error('RTH Excel generation failed:', err);
+        showNotification('Excel export error: ' + (err.message || err), 'error');
     }
+}
+
+function downloadRTHVisualExcel() {
+    generateRTHExcelWorkbook('current');
 }
 
 function downloadRTHOverallVisualExcel() {
-    triggerFileDownload('Waybill_RTH_Invalid_Documents_Report.xlsx', 'Waybill_RTH_Invalid_Documents_Report.xlsx');
-    const totalInv = allData.filter(r => r.qa_initial_status === 'Invalid').length;
-    showNotification(`Downloaded Overall Master 1Life RTH Report with Visualizations (All ${totalInv.toLocaleString()} Invalids)`, "success");
+    generateRTHExcelWorkbook('overall');
 }
 
 function exportRTHFilteredExcel() {
-    // Page 2 & 4: Ensure all RTH downloads always deliver the official 1Life styled report with charts
-    downloadRTHVisualExcel();
+    generateRTHExcelWorkbook('current');
 }
 
 // =========================================================================
@@ -5663,17 +5828,15 @@ async function exportRTHPDF() {
         const periodSlug = meta.periodSlug || 'Report';
         const filename = `Waybill_RTH_Defect_Report_${periodSlug}.pdf`;
 
-        if (typeof html2pdf === 'undefined') {
-            previewRTHPrintableReport();
+        const JsPDFClass = getJsPDFConstructor();
+        if (!JsPDFClass) {
+            showNotification('PDF library is still loading. Please try again in a moment.', 'error');
             return;
         }
-
-        // Obtain native jsPDF instance from html2pdf bundle
-        const worker = html2pdf().set({
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        });
-        const doc = await new Promise((resolve, reject) => {
-            worker.from(document.createElement('span')).toPdf().get('pdf').then(resolve).catch(reject);
+        const doc = new JsPDFClass({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
         });
 
         // 1. Aggregate Rider Breakdown
@@ -6212,8 +6375,7 @@ async function exportRTHPDF() {
         showNotification(`Successfully exported ${filename} (${totalPages} pages)`, "success");
     } catch (err) {
         console.error("PDF generation failed:", err);
-        showNotification("Direct PDF export encountered an issue; opening printable preview window.", "warning");
-        previewRTHPrintableReport();
+        showNotification("Direct PDF export encountered an issue: " + (err.message || err), "error");
     }
 }
 
