@@ -5,6 +5,59 @@ if(typeof Chart!=='undefined') Chart.defaults.font.family = "Plus Jakarta Sans, 
  * Professional Blue & Light Blue Theme
  */
 
+// =============================================================================
+// GAS-SAFE UNIVERSAL DOWNLOAD HELPER
+// Works inside Google Apps Script iframes where XLSX.writeFile / doc.save fail.
+// Uses data-URI + hidden <a download> click on window.top.document.
+// Falls back to standard method in normal browser context.
+// =============================================================================
+function gasDownloadExcel(wb, filename) {
+    try {
+        // Try standard XLSX.writeFile first (works in normal browser)
+        gasDownloadExcel(wb, fileName);
+    } catch (e) {
+        // GAS iframe fallback: base64 data URI
+        try {
+            const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+            const dataUri = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + b64;
+            const topDoc = (window.top && window.top.document) ? window.top.document : document;
+            const a = topDoc.createElement('a');
+            a.href = dataUri;
+            a.download = filename;
+            a.style.display = 'none';
+            topDoc.body.appendChild(a);
+            a.click();
+            setTimeout(() => { try { topDoc.body.removeChild(a); } catch(_){} }, 2000);
+        } catch (e2) {
+            console.error('Excel download fallback failed:', e2);
+            showNotification('Could not download Excel file. Please try right-clicking and saving.', 'error');
+        }
+    }
+}
+
+function gasDownloadPDF(doc, filename) {
+    try {
+        // jsPDF doc.save works in normal browser; in GAS iframe it may fail
+        // Always use the data-URI approach for consistency across both contexts
+        const dataUri = doc.output('datauristring');
+        const topDoc = (window.top && window.top.document) ? window.top.document : document;
+        const a = topDoc.createElement('a');
+        a.href = dataUri;
+        a.download = filename;
+        a.style.display = 'none';
+        topDoc.body.appendChild(a);
+        a.click();
+        setTimeout(() => { try { topDoc.body.removeChild(a); } catch(_){} }, 2000);
+    } catch (e) {
+        // Last resort: open in new tab if everything else fails
+        try { gasDownloadPDF(doc, filename); } catch (e2) { window.open(doc.output('bloburl'), '_blank'); }
+    }
+}
+
+// Alias wrappers so dashboards/rth.js (and others) can call these directly
+function exportRTHReportExcelDirect() { downloadRTHVisualExcel(); }
+function exportRTHReportPDFDirect() { exportRTHPDF(); }
+
 // Live Google Sheet Configuration
 const GOOGLE_SHEET_ID = "1l_WgHYJnoFJ4MrOpr6NtCwamwo-_cwdgoIb7tZ1Z-7A";
 const GOOGLE_SHEET_GID = "1857013672"; // 'Waybill Record' tab
@@ -2212,7 +2265,7 @@ function exportProgressReportExcel() {
     XLSX.utils.book_append_sheet(wb, wsRecords, "Waybills");
 
     const fileName = `Waybill_QA_Dispatch_Progress_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Excel progress report downloaded: ${fileName}`, "success");
 }
 
@@ -3269,7 +3322,7 @@ function downloadCustomExcelReport() {
     let fileName = (document.getElementById('cr-filename')?.value || 'Custom_Waybill_Report.xlsx').trim();
     if (!fileName.toLowerCase().endsWith('.xlsx')) fileName += '.xlsx';
 
-    XLSX.writeFile(wb, fileName);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Custom Excel report downloaded: ${fileName} (${crMatchingRecords.length.toLocaleString()} rows)`, "success");
 }
 
@@ -4696,7 +4749,7 @@ function generateRTHExcelWorkbook(scope = 'current') {
             ? `Waybill_RTH_Master_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
             : `Waybill_RTH_Report_${meta.periodSlug}_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-        XLSX.writeFile(wb, fname);
+        gasDownloadExcel(wb, fname);
         showNotification(`Downloaded 1Life RTH Excel Report: ${fname}`, 'success');
     } catch (err) {
         console.error('RTH Excel generation failed:', err);
@@ -6366,7 +6419,7 @@ async function exportRTHPDF() {
             doc.text(`Page ${p} of ${totalPages}`, 289, 205.5, { align: 'right' });
         }
 
-        doc.save(filename);
+        gasDownloadPDF(doc, filename);
         showNotification(`Successfully exported ${filename} (${totalPages} pages)`, "success");
     } catch (err) {
         console.error("PDF generation failed:", err);
@@ -7832,7 +7885,7 @@ function exportHomeCustomReportExcel() {
 
     const slug = `${ds.dateMode}_${ds.taskFilter === 'ALL' ? 'AllTasks' : ds.taskFilter.replace(/[^a-z0-9]/gi, '')}_${ds.qaFilter === 'ALL' ? 'AllQA' : ds.qaFilter.split(' ')[0]}`;
     const fname = `1Life_Custom_Task_Report_${slug}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fname);
+    gasDownloadExcel(wb, fname);
     showNotification(`Exported Custom Task Report (${ds.totalSessions} sessions) to ${fname}`, 'success');
 }
 
@@ -8102,7 +8155,7 @@ function exportHomeCustomReportPDF() {
 
     const slug = `${ds.dateMode}_${ds.taskFilter === 'ALL' ? 'AllTasks' : ds.taskFilter.replace(/[^a-z0-9]/gi, '')}_${ds.qaFilter === 'ALL' ? 'AllQA' : ds.qaFilter.split(' ')[0]}`;
     const fname = `1Life_Custom_Task_Report_${slug}_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported Custom Task PDF Report (${ds.totalSessions} sessions) to ${fname}`, 'success');
 }
 
@@ -8677,7 +8730,7 @@ function exportModuleExcel(moduleKey) {
     const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, moduleKey.substring(0, 30));
     const fname = `1Life_QA_${moduleKey}_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fname);
+    gasDownloadExcel(wb, fname);
     showNotification(`Downloaded ${fname}`, 'success');
 }
 
@@ -8917,7 +8970,7 @@ function exportModulePDF(moduleKey) {
 
     stamp1LifePDFFooters(doc, reportTitle);
     const fname = `1Life_QA_${moduleKey}_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported ${fname}`, 'success');
 }
 
@@ -9662,7 +9715,7 @@ function exportAllTasksSummaryExcel() {
     }
 
     const fname = `1Life_QA_Operational_Summary_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fname);
+    gasDownloadExcel(wb, fname);
     showNotification(`Exported Executive QA Summary & All 7 Tabs to ${fname}`, 'success');
 }
 
@@ -10052,7 +10105,7 @@ function exportAllTasksSummaryPDF() {
     }
 
     const fname = `1Life_QA_Operational_Summary_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported Executive Visual QA Summary Report with Charts to ${fname}`, 'success');
 }
 
@@ -10739,7 +10792,7 @@ function exportQATasksExcel() {
     ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 24 }, { wch: 24 }, { wch: 48 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
     XLSX.utils.book_append_sheet(wb, ws, 'QA_Task_Monitoring');
     const fname = `1Life_QA_Task_Monitoring_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fname);
+    gasDownloadExcel(wb, fname);
     showNotification(`Downloaded ${fname}`, 'success');
 }
 
@@ -10844,7 +10897,7 @@ function exportQATasksPDF() {
 
     stamp1LifePDFFooters(doc, 'QA Task Monitoring & Shift Productivity Report');
     const fname = `1Life_QA_Task_Monitoring_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported ${fname}`, 'success');
 }
 
@@ -10971,7 +11024,7 @@ function exportProgressReportPDF() {
 
     stamp1LifePDFFooters(doc, 'Executive Operational Progress Report');
     const fname = `1Life_Executive_Progress_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported ${fname}`, 'success');
 }
 
@@ -11046,7 +11099,7 @@ function exportDispatchReportPDF() {
 
     stamp1LifePDFFooters(doc, 'Dispatch Team Override & Resolution Report');
     const fname = `1Life_Dispatch_Team_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported ${fname}`, 'success');
 }
 
@@ -11120,7 +11173,7 @@ function exportWaybillsExplorerPDF() {
 
     stamp1LifePDFFooters(doc, 'Waybills Explorer Filtered Audit Report');
     const fname = `1Life_Waybills_Filtered_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported ${fname}`, 'success');
 }
 
@@ -11188,7 +11241,7 @@ function downloadCustomPDFReport() {
     stamp1LifePDFFooters(doc, 'Custom Report Builder Export');
     let rawName = (document.getElementById('cr-filename')?.value || 'Custom_Waybill_Report').replace(/\.(xlsx|pdf|csv)$/i, '');
     const fname = `${rawName}.pdf`;
-    doc.save(fname);
+    gasDownloadPDF(doc, fname);
     showNotification(`Exported custom PDF report: ${fname}`, 'success');
 }
 

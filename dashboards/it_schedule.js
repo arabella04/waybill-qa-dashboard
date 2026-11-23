@@ -115,7 +115,7 @@ function exportITScheduleExcel() {
     const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'IT Schedule QA');
     const filename = `1Life_IT_Schedule_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 

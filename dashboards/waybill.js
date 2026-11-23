@@ -75,7 +75,7 @@ function exportWaybillExcel() {
     }
 
     const filename = `1Life_Waybill_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 

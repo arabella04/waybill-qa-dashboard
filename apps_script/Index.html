@@ -3941,7 +3941,7 @@ function exportWaybillExcel() {
     }
 
     const filename = `1Life_Waybill_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 
@@ -4150,7 +4150,7 @@ function exportAccountMergingExcel() {
     const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'Account Merging QA');
     const filename = `1Life_Account_Merging_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 
@@ -4291,7 +4291,7 @@ function exportDispatchExcel() {
     const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'Dispatch QA');
     const filename = `1Life_Dispatch_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 
@@ -4463,7 +4463,7 @@ function exportOutputQAExcel() {
     const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'Output QA Audits');
     const filename = `1Life_Output_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 
@@ -4605,7 +4605,7 @@ function exportITScheduleExcel() {
     const ws = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(wb, ws, 'IT Schedule QA');
     const filename = `1Life_IT_Schedule_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 
@@ -5333,7 +5333,7 @@ function exportComprehensiveQAReportExcel() {
     XLSX.utils.book_append_sheet(wb, ws1, 'Master QA Task Logs');
 
     const filename = `1Life_Comprehensive_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    gasDownloadExcel(wb, fileName);
     showNotification(`Downloaded ${filename}`, 'success');
 }
 
