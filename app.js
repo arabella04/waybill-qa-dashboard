@@ -460,8 +460,12 @@ function switchTab(tabId) {
     } else if (tabId === 'my-shift') {
         if (typeof renderQATasksTable === 'function') renderQATasksTable();
     } else if (tabId === 'qa-report') {
-        renderQACharts();
-        renderQATrendLineChart();
+        if (typeof renderQASpecialistReportCharts === 'function') {
+            renderQASpecialistReportCharts();
+        } else {
+            renderQACharts();
+            renderQATrendLineChart();
+        }
     } else if (tabId === 'dispatch-report') {
         if (typeof renderDispatchQASheetTable === 'function') renderDispatchQASheetTable();
         renderDispatchCharts();
@@ -3563,8 +3567,12 @@ function getSaturdayFridayRange(date) {
 }
 
 // Multi-Date Picker Toggle & Document Listener
+// Multi-Date Picker Toggle & Document Listener
 function toggleRTHDateDropdown(e) {
-    if (e) e.stopPropagation();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     const panel = document.getElementById('rth-date-dropdown-panel');
     if (!panel) return;
     panel.classList.toggle('hidden');
@@ -3573,13 +3581,17 @@ function toggleRTHDateDropdown(e) {
 document.addEventListener('click', (e) => {
     const container = document.getElementById('rth-date-picker-container');
     const panel = document.getElementById('rth-date-dropdown-panel');
-    if (container && panel && !container.contains(e.target)) {
-        panel.classList.add('hidden');
+    if (container && panel && !panel.classList.contains('hidden')) {
+        if (!container.contains(e.target) && !panel.contains(e.target)) {
+            panel.classList.add('hidden');
+        }
     }
     const homeContainer = document.getElementById('home-cr-checkbox-picker');
     const homePanel = document.getElementById('home-cr-date-dropdown-panel');
-    if (homeContainer && homePanel && !homeContainer.contains(e.target)) {
-        homePanel.classList.add('hidden');
+    if (homeContainer && homePanel && !homePanel.classList.contains('hidden')) {
+        if (!homeContainer.contains(e.target) && !homePanel.contains(e.target)) {
+            homePanel.classList.add('hidden');
+        }
     }
 });
 
@@ -3589,7 +3601,7 @@ function initRTHPeriodDropdown(preserveSelection = false) {
 
     const invalidRecs = allData.filter(r => r.qa_initial_status === 'Invalid');
     
-    // Group invalid dates into Saturday-to-Friday weekly cycles
+    // Group invalid dates per day (and also calculate cycle ranges)
     const weekMap = new Map();
     const dateCounts = new Map();
 
@@ -3614,17 +3626,21 @@ function initRTHPeriodDropdown(preserveSelection = false) {
 
     rthAvailableWeeks = Array.from(weekMap.values()).sort((a, b) => b.start - a.start);
     rthAvailableDates = Array.from(dateCounts.entries())
-        .map(([dateStr, count]) => ({ dateStr, count, dt: parseSlashDate(dateStr) }))
+        .map(([dateStr, count]) => {
+            const dt = parseSlashDate(dateStr);
+            const label = dt ? dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : dateStr;
+            return { dateStr, count, dt, label };
+        })
         .sort((a, b) => (b.dt || 0) - (a.dt || 0));
 
     if (!preserveSelection) {
         rthFilters.mode = 'ALL';
         rthFilters.selectedDates = [];
         rthFilters.selectedWeeks = [];
-    } else if (rthFilters.mode === 'LATEST_WEEK' && rthAvailableWeeks.length > 0) {
-        const latest = rthAvailableWeeks[0];
-        rthFilters.selectedWeeks = [latest.key];
-        rthFilters.selectedDates = Array.from(latest.dates);
+    } else if ((rthFilters.mode === 'LATEST_DAY' || rthFilters.mode === 'LATEST_WEEK') && rthAvailableDates.length > 0) {
+        const latest = rthAvailableDates[0];
+        rthFilters.selectedDates = [latest.dateStr];
+        rthFilters.selectedWeeks = [];
     }
 
     renderRTHDateCheckboxes();
@@ -3638,66 +3654,35 @@ function renderRTHDateCheckboxes(filterText = '') {
     const q = filterText.toLowerCase().trim();
     const isAll = rthFilters.mode === 'ALL';
 
-    const filteredWeeks = rthAvailableWeeks.filter(w => !q || w.label.toLowerCase().includes(q));
-    const filteredDates = rthAvailableDates.filter(d => !q || d.dateStr.toLowerCase().includes(q));
+    const filteredDates = rthAvailableDates.filter(d => {
+        if (!q) return true;
+        return (d.label && d.label.toLowerCase().includes(q)) || (d.dateStr && d.dateStr.toLowerCase().includes(q));
+    });
+
+    if (filteredDates.length === 0) {
+        listEl.innerHTML = '<div class="py-3 text-center text-slate-400 text-xs">No matching dates found</div>';
+        return;
+    }
 
     let html = `
-        <div class="space-y-3">
-            <!-- Weekly Cycles Section -->
-            <div>
-                <div class="text-[10px] uppercase font-bold text-teal-800 tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Weekly Cycles (Sat - Fri)</span>
-                    <span class="text-slate-400 font-normal text-[10px]">${filteredWeeks.length} cycles</span>
-                </div>
-                <div class="space-y-1">
+        <div class="space-y-1">
     `;
 
-    filteredWeeks.forEach((w, idx) => {
-        const isChecked = isAll || rthFilters.selectedWeeks.includes(w.key);
+    filteredDates.forEach((d, idx) => {
+        const isChecked = isAll || rthFilters.selectedDates.includes(d.dateStr);
         const tag = idx === 0 ? ' <span class="text-[10px] px-1.5 py-0.2 rounded bg-teal-100 text-teal-800 font-bold">Latest</span>' : '';
         html += `
-            <label class="flex items-center justify-between p-1.5 rounded hover:bg-teal-50/60 cursor-pointer transition text-xs border border-transparent hover:border-teal-100">
+            <label class="flex items-center justify-between p-1.5 rounded hover:bg-teal-50/60 dark:hover:bg-slate-800 cursor-pointer transition text-xs border border-transparent hover:border-teal-200">
                 <span class="flex items-center gap-2">
-                    <input type="checkbox" onchange="onRTHDateCheckboxToggle('week', '${w.key}', this.checked)" ${isChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
-                    <span class="font-medium text-slate-800">${escapeHtml(w.label)}${tag}</span>
+                    <input type="checkbox" data-date="${escapeHtml(d.dateStr)}" onchange="onRTHDateCheckboxChange(this, '${escapeHtml(d.dateStr)}')" ${isChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer">
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHtml(d.label)} <span class="text-slate-400 text-[10px]">(${escapeHtml(d.dateStr)})</span>${tag}</span>
                 </span>
-                <span class="font-mono text-[11px] text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded">${w.count.toLocaleString()}</span>
+                <span class="font-mono text-[11px] text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded">${d.count.toLocaleString()}</span>
             </label>
         `;
     });
 
-    html += `
-                </div>
-            </div>
-
-            <!-- Individual Dates Section -->
-            <div class="border-t border-slate-100 pt-2">
-                <div class="text-[10px] uppercase font-bold text-teal-800 tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Individual Validation Dates</span>
-                    <span class="text-slate-400 font-normal text-[10px]">${filteredDates.length} days</span>
-                </div>
-                <div class="space-y-1">
-    `;
-
-    filteredDates.forEach(d => {
-        const isChecked = isAll || rthFilters.selectedDates.includes(d.dateStr);
-        html += `
-            <label class="flex items-center justify-between p-1.5 rounded hover:bg-teal-50/60 cursor-pointer transition text-xs border border-transparent hover:border-teal-100">
-                <span class="flex items-center gap-2">
-                    <input type="checkbox" onchange="onRTHDateCheckboxToggle('date', '${d.dateStr}', this.checked)" ${isChecked ? 'checked' : ''} class="w-3.5 h-3.5 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
-                    <span class="font-medium text-slate-700">${escapeHtml(d.dateStr)}</span>
-                </span>
-                <span class="font-mono text-[11px] text-slate-600 font-semibold bg-slate-100 px-1.5 py-0.5 rounded">${d.count.toLocaleString()}</span>
-            </label>
-        `;
-    });
-
-    html += `
-                </div>
-            </div>
-        </div>
-    `;
-
+    html += `</div>`;
     listEl.innerHTML = html;
 }
 
@@ -3707,69 +3692,63 @@ function filterRTHDateCheckboxes() {
     renderRTHDateCheckboxes(q);
 }
 
-function onRTHDateCheckboxToggle(type, value, isChecked) {
+function onRTHDateCheckboxChange(inputEl, dateStr) {
     if (rthFilters.mode === 'ALL') {
-        // When user toggles from ALL, start with all selected then toggle this one off, or start custom
         rthFilters.mode = 'CUSTOM';
         rthFilters.selectedDates = rthAvailableDates.map(d => d.dateStr);
-        rthFilters.selectedWeeks = rthAvailableWeeks.map(w => w.key);
+        rthFilters.selectedWeeks = [];
     }
 
-    if (type === 'week') {
-        const targetWeek = rthAvailableWeeks.find(w => w.key === value);
-        if (isChecked) {
-            if (!rthFilters.selectedWeeks.includes(value)) rthFilters.selectedWeeks.push(value);
-            if (targetWeek) {
-                targetWeek.dates.forEach(d => {
-                    if (!rthFilters.selectedDates.includes(d)) rthFilters.selectedDates.push(d);
-                });
-            }
-        } else {
-            rthFilters.selectedWeeks = rthFilters.selectedWeeks.filter(k => k !== value);
-            if (targetWeek) {
-                const datesToRemove = new Set(targetWeek.dates);
-                rthFilters.selectedDates = rthFilters.selectedDates.filter(d => !datesToRemove.has(d));
-            }
+    if (inputEl.checked) {
+        if (!rthFilters.selectedDates.includes(dateStr)) {
+            rthFilters.selectedDates.push(dateStr);
         }
-    } else if (type === 'date') {
-        if (isChecked) {
-            if (!rthFilters.selectedDates.includes(value)) rthFilters.selectedDates.push(value);
-        } else {
-            rthFilters.selectedDates = rthFilters.selectedDates.filter(d => d !== value);
-        }
+    } else {
+        rthFilters.selectedDates = rthFilters.selectedDates.filter(d => d !== dateStr);
+    }
+
+    if (rthFilters.selectedDates.length === rthAvailableDates.length) {
+        rthFilters.mode = 'ALL';
     }
 
     updateRTHDateSummaryUI();
-    renderRTHDateCheckboxes(document.getElementById('rth-date-search')?.value || '');
-    rthFilters.page = 1;
-    renderRTHReport();
+    // Keep focus and scroll: do NOT re-render innerHTML on single checkbox change!
 }
 
 function setRTHDateQuickMode(mode) {
     rthFilters.mode = mode;
+    rthFilters.selectedWeeks = [];
     if (mode === 'ALL') {
         rthFilters.selectedDates = [];
-        rthFilters.selectedWeeks = [];
-    } else if (mode === 'LATEST_WEEK') {
-        if (rthAvailableWeeks.length > 0) {
-            const latest = rthAvailableWeeks[0];
-            rthFilters.selectedWeeks = [latest.key];
-            rthFilters.selectedDates = Array.from(latest.dates);
+    } else if (mode === 'LATEST_DAY' || mode === 'LATEST_WEEK') {
+        rthFilters.mode = 'CUSTOM';
+        if (rthAvailableDates.length > 0) {
+            rthFilters.selectedDates = [rthAvailableDates[0].dateStr];
+        } else {
+            rthFilters.selectedDates = [];
         }
     } else if (mode === 'OCT_2026') {
-        rthFilters.selectedWeeks = [];
+        rthFilters.mode = 'CUSTOM';
         rthFilters.selectedDates = rthAvailableDates
-            .filter(d => d.dateStr.startsWith('10/') || (d.dt && d.dt.getMonth() === 9))
+            .filter(d => d.dateStr.startsWith('10/') || (d.dt && d.dt.getMonth() === 9 && d.dt.getFullYear() === 2026))
             .map(d => d.dateStr);
     } else if (mode === 'NOV_2026') {
-        rthFilters.selectedWeeks = [];
+        rthFilters.mode = 'CUSTOM';
         rthFilters.selectedDates = rthAvailableDates
-            .filter(d => d.dateStr.startsWith('11/') || (d.dt && d.dt.getMonth() === 10))
+            .filter(d => d.dateStr.startsWith('11/') || (d.dt && d.dt.getMonth() === 10 && d.dt.getFullYear() === 2026))
             .map(d => d.dateStr);
     }
 
+    const isAll = rthFilters.mode === 'ALL';
+    const listEl = document.getElementById('rth-date-checkbox-list');
+    if (listEl) {
+        listEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            const val = cb.getAttribute('data-date');
+            cb.checked = isAll || rthFilters.selectedDates.includes(val);
+        });
+    }
+
     updateRTHDateSummaryUI();
-    renderRTHDateCheckboxes(document.getElementById('rth-date-search')?.value || '');
     rthFilters.page = 1;
     renderRTHReport();
 }
@@ -3778,8 +3757,13 @@ function clearRTHDateSelections() {
     rthFilters.mode = 'CUSTOM';
     rthFilters.selectedDates = [];
     rthFilters.selectedWeeks = [];
+    const listEl = document.getElementById('rth-date-checkbox-list');
+    if (listEl) {
+        listEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+    }
     updateRTHDateSummaryUI();
-    renderRTHDateCheckboxes(document.getElementById('rth-date-search')?.value || '');
     rthFilters.page = 1;
     renderRTHReport();
 }
@@ -3787,6 +3771,8 @@ function clearRTHDateSelections() {
 function applyRTHDateSelection() {
     const panel = document.getElementById('rth-date-dropdown-panel');
     if (panel) panel.classList.add('hidden');
+    updateRTHDateSummaryUI();
+    rthFilters.page = 1;
     renderRTHReport();
 }
 
@@ -3796,22 +3782,26 @@ function updateRTHDateSummaryUI() {
     const checkedCounter = document.getElementById('rth-date-checked-counter');
 
     const totalInvalids = allData.filter(r => r.qa_initial_status === 'Invalid').length;
+    const totalDays = rthAvailableDates.length;
 
     if (rthFilters.mode === 'ALL' || (!rthFilters.selectedDates.length && !rthFilters.selectedWeeks.length)) {
         if (summaryBadge) summaryBadge.textContent = `All Dates (${totalInvalids.toLocaleString()})`;
         if (displayLabel) displayLabel.textContent = `All Invalids (${totalInvalids.toLocaleString()} Master Dataset)`;
-        if (checkedCounter) checkedCounter.textContent = `All ${totalInvalids.toLocaleString()} Invalids selected`;
-    } else if (rthFilters.mode === 'LATEST_WEEK' && rthAvailableWeeks.length > 0) {
-        const latest = rthAvailableWeeks[0];
-        if (summaryBadge) summaryBadge.textContent = `Latest Week (${latest.count.toLocaleString()})`;
-        if (displayLabel) displayLabel.textContent = `Latest Week: ${latest.label} (${latest.count.toLocaleString()})`;
-        if (checkedCounter) checkedCounter.textContent = `${latest.count.toLocaleString()} Invalids in Latest Week`;
+        if (checkedCounter) checkedCounter.textContent = `All ${totalDays} dates (${totalInvalids.toLocaleString()} Invalids) selected`;
+    } else if (rthFilters.selectedDates.length === 1) {
+        const dStr = rthFilters.selectedDates[0];
+        const match = rthAvailableDates.find(d => d.dateStr === dStr);
+        const count = match ? match.count : 0;
+        const text = match ? `${match.label} (${match.dateStr})` : dStr;
+        if (summaryBadge) summaryBadge.textContent = `1 Date (${count.toLocaleString()})`;
+        if (displayLabel) displayLabel.textContent = `${text} (${count.toLocaleString()} Invalids)`;
+        if (checkedCounter) checkedCounter.textContent = `1 date (${count.toLocaleString()} Invalids) selected`;
     } else {
         const numDays = rthFilters.selectedDates.length;
         const matchingInvalids = allData.filter(r => r.qa_initial_status === 'Invalid' && rthFilters.selectedDates.includes(r.initial_val_date || r.date)).length;
         if (summaryBadge) summaryBadge.textContent = `${numDays} Dates (${matchingInvalids.toLocaleString()})`;
         if (displayLabel) displayLabel.textContent = `${numDays} Dates Selected (${matchingInvalids.toLocaleString()} Invalids)`;
-        if (checkedCounter) checkedCounter.textContent = `${numDays} Dates, ${matchingInvalids.toLocaleString()} Invalids selected`;
+        if (checkedCounter) checkedCounter.textContent = `${numDays} of ${totalDays} dates (${matchingInvalids.toLocaleString()} Invalids) selected`;
     }
 }
 
@@ -6643,37 +6633,38 @@ function init1LifeWorkspace() {
     updateGoogleClientStatusUI();
 
     // 2. Enforce Verified Google OAuth @1life.ph Auth Session
-    // Rejects any old unverified/manual localStorage logins (e.g. hatfog@1life.ph without Google OAuth proof)
-    const savedUserJson = safeGetStorage('1life_auth_user', '');
-    let validSession = false;
-    if (window.APPS_SCRIPT_USER && String(window.APPS_SCRIPT_USER.email || '').toLowerCase().endsWith('@1life.ph')) {
-        current1LifeUser = window.APPS_SCRIPT_USER;
-        validSession = true;
-        safeSetStorage('1life_auth_user', JSON.stringify(current1LifeUser));
-    }
-    if (!validSession && savedUserJson) {
-        try {
-            const parsed = JSON.parse(savedUserJson);
-            if (
-                parsed &&
-                parsed.auth_provider === 'google_oauth' &&
-                String(parsed.verified_hd || '').toLowerCase() === '1life.ph' &&
-                String(parsed.email || '').toLowerCase().endsWith('@1life.ph')
-            ) {
-                current1LifeUser = parsed;
-                validSession = true;
-            }
-        } catch (e) {
-            validSession = false;
-        }
-    }
-
-    if (validSession) {
-        apply1LifeUserProfileUI();
+    if (typeof init1LifeAuth === 'function') {
+        init1LifeAuth();
     } else {
-        safeRemoveStorage('1life_auth_user');
-        open1LifeLoginModal();
-        apply1LifeUserProfileUI();
+        const savedUserJson = safeGetStorage('1life_auth_user', '');
+        let validSession = false;
+        if (window.APPS_SCRIPT_USER && String(window.APPS_SCRIPT_USER.email || '').toLowerCase().endsWith('@1life.ph')) {
+            current1LifeUser = window.APPS_SCRIPT_USER;
+            validSession = true;
+            safeSetStorage('1life_auth_user', JSON.stringify(current1LifeUser));
+        }
+        if (!validSession && savedUserJson) {
+            try {
+                const parsed = JSON.parse(savedUserJson);
+                if (
+                    parsed &&
+                    String(parsed.email || '').toLowerCase().endsWith('@1life.ph')
+                ) {
+                    current1LifeUser = parsed;
+                    validSession = true;
+                }
+            } catch (e) {
+                validSession = false;
+            }
+        }
+
+        if (validSession) {
+            apply1LifeUserProfileUI();
+        } else {
+            safeRemoveStorage('1life_auth_user');
+            open1LifeLoginModal();
+            apply1LifeUserProfileUI();
+        }
     }
 
     // 3. Load custom logged tasks from localStorage
@@ -6934,12 +6925,25 @@ function switchTaskDashboard(taskKey, subTab = null) {
         switchTab('it-schedule');
         highlightSidebarTaskButton('side-nav-task-it-schedule');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (taskKey === 'qa-report') {
+        toggleEl(homeSec, false);
+        toggleEl(wbFilterBar, false);
+        toggleEl(wbKpiSec, false);
+        toggleEl(wbPipeSec, false);
+        toggleEl(wbTabsBar, false);
+        if (headerTitle) headerTitle.textContent = '1Life Q.A Task Dashboard — QA Specialist Performance Scorecard & Visual Analytics';
+        switchTab('qa-report');
+        highlightSidebarTaskButton('side-nav-qa-report');
+        if (typeof renderQASpecialistReportCharts === 'function') {
+            renderQASpecialistReportCharts();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
 function highlightSidebarTaskButton(activeId) {
     const allIds = [
-        'side-nav-home', 'side-nav-my-shift', 'side-nav-notes', 'side-nav-feedback',
+        'side-nav-home', 'side-nav-my-shift', 'side-nav-qa-report', 'side-nav-notes', 'side-nav-feedback',
         'side-nav-task-waybill', 'side-nav-task-dispatch', 'side-nav-task-merging',
         'side-nav-task-output-qa', 'side-nav-task-it-schedule', 'side-nav-documentation'
     ];
@@ -7382,15 +7386,16 @@ function renderHomeCRDateCheckboxes(filterText = '') {
     }
 
     let html = '<div class="space-y-1">';
-    filteredDates.forEach(d => {
+    filteredDates.forEach((d, idx) => {
         const isChecked = isAll || homeCRSelectedDates.has(d.ymd);
+        const tag = idx === 0 ? ' <span class="text-[10px] px-1.5 py-0.2 rounded bg-teal-100 text-teal-800 font-bold">Latest</span>' : '';
         html += `
             <label class="flex items-center justify-between p-1.5 rounded hover:bg-cyan-50/60 dark:hover:bg-slate-800 cursor-pointer transition text-xs border border-transparent hover:border-[#00b4d8]/30">
                 <span class="flex items-center gap-2">
-                    <input type="checkbox" value="${d.ymd}" onchange="onHomeCRDateCheckboxChange(this, '${d.ymd}')" class="rounded text-[#00b4d8] focus:ring-0" ${isChecked ? 'checked' : ''}>
-                    <span class="font-medium text-slate-800 dark:text-slate-200">${d.label} <span class="text-slate-400 text-[10px]">(${d.slash})</span></span>
+                    <input type="checkbox" value="${d.ymd}" onchange="onHomeCRDateCheckboxChange(this, '${d.ymd}')" class="w-3.5 h-3.5 rounded text-[#00b4d8] border-slate-300 focus:ring-0 cursor-pointer" ${isChecked ? 'checked' : ''}>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${escapeHtml(d.label)} <span class="text-slate-400 text-[10px]">(${escapeHtml(d.slash)})</span>${tag}</span>
                 </span>
-                <span class="text-[10px] font-bold text-slate-400">${d.count} sessions</span>
+                <span class="font-mono text-[11px] text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded">${d.count.toLocaleString()}</span>
             </label>
         `;
     });
@@ -7449,10 +7454,12 @@ function setHomeCRDateQuickMode(mode) {
     if (mode === 'ALL') {
         homeCRDateMode = 'ALL';
         homeCRSelectedDates.clear();
-    } else if (mode === 'LATEST_WEEK') {
+    } else if (mode === 'LATEST_DAY' || mode === 'LATEST_WEEK') {
         homeCRDateMode = 'CUSTOM';
         homeCRSelectedDates.clear();
-        (homeCRAvailableDates || []).slice(0, 7).forEach(d => homeCRSelectedDates.add(d.ymd));
+        if (homeCRAvailableDates.length > 0) {
+            homeCRSelectedDates.add(homeCRAvailableDates[0].ymd);
+        }
     } else if (mode === 'NOV_2026') {
         homeCRDateMode = 'CUSTOM';
         homeCRSelectedDates.clear();
@@ -7462,7 +7469,13 @@ function setHomeCRDateQuickMode(mode) {
         homeCRSelectedDates.clear();
         (homeCRAvailableDates || []).filter(d => d.ymd.startsWith('2026-10')).forEach(d => homeCRSelectedDates.add(d.ymd));
     }
-    renderHomeCRDateCheckboxes();
+    const isAll = homeCRDateMode === 'ALL';
+    const listEl = document.getElementById('home-cr-date-checkbox-list');
+    if (listEl) {
+        listEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = isAll || homeCRSelectedDates.has(cb.value);
+        });
+    }
     updateHomeCRDateSummaryUI();
     updateHomeCustomReportPreview(true);
 }
@@ -7470,7 +7483,12 @@ function setHomeCRDateQuickMode(mode) {
 function clearHomeCRDateSelections() {
     homeCRDateMode = 'CUSTOM';
     homeCRSelectedDates.clear();
-    renderHomeCRDateCheckboxes();
+    const listEl = document.getElementById('home-cr-date-checkbox-list');
+    if (listEl) {
+        listEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+        });
+    }
     updateHomeCRDateSummaryUI();
     updateHomeCustomReportPreview(true);
 }
@@ -7481,7 +7499,10 @@ function filterHomeCRDateCheckboxes() {
 }
 
 function toggleHomeCRDateDropdown(e) {
-    if (e) e.stopPropagation();
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
     const panel = document.getElementById('home-cr-date-dropdown-panel');
     if (!panel) return;
     panel.classList.toggle('hidden');
@@ -7522,8 +7543,9 @@ function initHomeCustomReportControls() {
         if (!dObj) return;
         const ymd = fmtIsoYMD(dObj);
         if (!dateMap.has(ymd)) {
-            dateMap.set(ymd, { ymd, slash: t.date, ts: dObj.getTime(), label: dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
+            dateMap.set(ymd, { ymd, slash: t.date, ts: dObj.getTime(), label: dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), count: 0 });
         }
+        dateMap.get(ymd).count++;
         const mon = getMondayOfWeek(dObj);
         const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
         const wKey = `${fmtIsoYMD(mon)}|${fmtIsoYMD(sun)}`;
@@ -8789,7 +8811,19 @@ function exportModulePDF(moduleKey) {
         return;
     }
     const sheetData = getQASheetData();
-    const rows = sheetData[moduleKey] || [];
+    let rows = sheetData[moduleKey] || [];
+    if (moduleKey === 'qa_reports') {
+        rows = (window.qaTasksData || []).map(t => ({
+            Category: t.category || '',
+            QA: t.specialist || '',
+            Date: t.date || '',
+            Time: `${t.time_started || ''} - ${t.time_ended || ''}`,
+            Hours: Number(t.hours) || 0,
+            Items: Number(t.items) || 0,
+            Status: t.status || '',
+            Details: (t.description || '').substring(0, 32)
+        }));
+    }
     if (rows.length === 0) {
         showNotification(`No records found for ${moduleKey}`, 'error');
         return;
@@ -8804,7 +8838,8 @@ function exportModulePDF(moduleKey) {
         account_merging: 'ACCOUNT MERGING Q.A. MONITORING REPORT',
         output_qa: 'OUTPUT QA — REPORT & DASHBOARD VERIFICATION REPORT',
         dispatch_qa: 'DISPATCH Q.A. MONITORING & OVERRIDE REPORT',
-        it_schedule: 'IT SCHEDULE MONITORING Q.A. REPORT'
+        it_schedule: 'IT SCHEDULE MONITORING Q.A. REPORT',
+        qa_reports: 'QA SPECIALIST PERFORMANCE SCORECARD & SUMMARY REPORT'
     };
     const reportTitle = titleMap[moduleKey] || `1LIFE Q.A. ${moduleKey.toUpperCase()} REPORT`;
     const keys = Object.keys(rows[0]).slice(0, 8);

@@ -156,10 +156,6 @@
             background: linear-gradient(to right, #0a1b1e, #112a2f, #16363d) !important;
             border-bottom: 1px solid #1c464e !important;
         }
-        body.workspace-dark #workspace-sidebar {
-            background-color: #0b1a1d !important;
-            border-color: #183e45 !important;
-        }
         body.workspace-dark .ws-card,
         body.workspace-dark section.bg-white,
         body.workspace-dark .bg-white:not(.keep-light) {
@@ -245,23 +241,6 @@
         .nav-tab {
             white-space: nowrap !important;
         }
-        /* Collapsed Sidebar State */
-        #workspace-sidebar.sidebar-collapsed {
-            width: 4.5rem !important;
-        }
-        #workspace-sidebar.sidebar-collapsed .sidebar-label,
-        #workspace-sidebar.sidebar-collapsed .sidebar-badge,
-        #workspace-sidebar.sidebar-collapsed .sidebar-section-title,
-        #workspace-sidebar.sidebar-collapsed .sidebar-sublinks,
-        #workspace-sidebar.sidebar-collapsed #dq-module-chevron {
-            display: none !important;
-        }
-        #workspace-sidebar.sidebar-collapsed .sidebar-item {
-            justify-content: center !important;
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-        }
-    
         /* Concept 2: Modular Bento-Grid Enhancements */
         .bento-box {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -272,27 +251,6 @@
         }
         body.workspace-dark .bento-box:hover {
             box-shadow: 0 10px 25px -5px rgba(0, 180, 216, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-        }
-        /* Hover-expanding compact rail sidebar */
-        #workspace-sidebar.sidebar-collapsed {
-            width: 4.5rem !important;
-            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-        #workspace-sidebar.sidebar-collapsed:hover {
-            width: 16rem !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
-        }
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-label,
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-badge,
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-section-title,
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-sublinks,
-        #workspace-sidebar.sidebar-collapsed:hover #dq-module-chevron {
-            display: inline-flex !important;
-        }
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-item {
-            justify-content: flex-start !important;
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
         }
     
         /* Page Zoom & Resizable Icons Scaling Engine */
@@ -375,6 +333,36 @@
                     </span>
                     <span>Sign in with Google (@1life.ph)</span>
                 </button>
+
+                <!-- Direct 1Life Team Account & Position Selection -->
+                <div id="direct-1life-login-box" class="pt-3 border-t border-slate-100">
+                    <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">Or Verify with Your 1Life Account:</div>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" onclick="complete1LifeLogin('armorales@1life.ph', 'Arabella Morales')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👩‍💼 Arabella Morales
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('jtcanaway@1life.ph', 'Janryl Jay Canaway')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👨‍💼 Janryl Jay Canaway
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('jofrancisco@1life.ph', 'John Michael Francisco')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👨‍💼 John Michael Francisco
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('jrdayag@1life.ph', 'Julius Rod Dayag')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👨‍💼 Julius Rod Dayag
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('ynlao@1life.ph', 'Yesha Nicholai Lao')" class="col-span-2 px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👩‍💼 Yesha Nicholai Lao
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5 pt-1.5">
+                            <input type="email" id="direct-1life-email" placeholder="yourname@1life.ph" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-[#00b4d8] focus:outline-none">
+                            <button type="button" onclick="handleDirect1LifeSubmit()" class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <p class="text-[11px] text-center text-slate-400">
                     Protected by Google Workspace Organization Auth (<span class="font-mono text-[#00b4d8] font-semibold">@1life.ph</span> only)
@@ -474,6 +462,10 @@
             <button type="button" onclick="scrollToCustomReport()" id="top-nav-custom-report" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Custom Reports</span>
+            </button>
+            <button type="button" onclick="switchTaskDashboard('qa-report')" id="side-nav-qa-report" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>QA Reports</span>
             </button>
             <button type="button" onclick="switchWorkspaceNav('notes')" id="side-nav-notes" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -901,10 +893,10 @@
                                     </button>
 
                                     <!-- Multi-select Dropdown Panel -->
-                                    <div id="home-cr-date-dropdown-panel" class="hidden absolute z-50 left-0 sm:right-0 sm:left-auto mt-1.5 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
+                                    <div id="home-cr-date-dropdown-panel" onclick="event.stopPropagation()" class="hidden absolute z-50 left-0 sm:right-0 sm:left-auto mt-1.5 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
                                         <div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-800">
                                             <button type="button" onclick="setHomeCRDateQuickMode('ALL')" class="px-2 py-1 rounded bg-[#00b4d8] text-white font-bold text-[10px] hover:bg-[#0096c7] transition">All Time</button>
-                                            <button type="button" onclick="setHomeCRDateQuickMode('LATEST_WEEK')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Latest Week</button>
+                                            <button type="button" onclick="setHomeCRDateQuickMode('LATEST_DAY')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Latest Day</button>
                                             <button type="button" onclick="setHomeCRDateQuickMode('NOV_2026')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Nov 2026</button>
                                             <button type="button" onclick="setHomeCRDateQuickMode('OCT_2026')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Oct 2026</button>
                                             <button type="button" onclick="clearHomeCRDateSelections()" class="px-2 py-1 rounded text-rose-600 dark:text-rose-400 font-semibold text-[10px] hover:bg-rose-50 dark:hover:bg-rose-950/40 ml-auto transition">Clear</button>
@@ -1476,117 +1468,307 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- TAB 2: QA PERFORMANCE REPORT                   -->
+        <!-- TAB 2: QA SPECIALIST REPORTS & VISUAL ANALYTICS -->
         <!-- ============================================== -->
         <div id="tab-qa-report" class="tab-panel hidden space-y-6">
-            <div class="bg-blue-50/60 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h3 class="text-sm font-bold text-blue-900">QA Specialist Performance Scorecard</h3>
-                    <p class="text-xs text-blue-700">Detailed breakdown of Initial and Final validations conducted by each QA team member across filtered dates.</p>
+            <!-- Header Banner with Filter Controls & Export Buttons -->
+            <div class="bg-gradient-to-r from-[#0e272c] via-[#163d45] to-[#1d4e58] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-[#255e69]/40">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#00b4d8]/20 text-cyan-200 border border-[#00b4d8]/30">
+                        <span class="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse"></span>
+                        <span>1Life Q.A Task Dashboard • QA Specialist Performance Hub</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-white">QA Specialist Performance Scorecard & Visual Analytics</h2>
+                    <p class="text-xs text-teal-100 max-w-2xl">
+                        Comprehensive monitoring of QA workload, task pacing, RTH compliance with quota targets, ticket breakdown, account merging, and IT schedule logs.
+                    </p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-xs transition">
-                        Export QA Report (.xlsx)
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Specialist Filter -->
+                    <select id="qa-report-filter-specialist" onchange="renderQASpecialistReportCharts()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-[#123036] border border-teal-500/40 text-white focus:outline-none focus:ring-2 focus:ring-[#00b4d8]">
+                        <option value="ALL">All QA Specialists</option>
+                        <option value="Arabella Morales">Arabella Morales</option>
+                        <option value="Janryl Jay Canaway">Janryl Jay Canaway</option>
+                        <option value="John Michael Francisco">John Michael Francisco</option>
+                        <option value="Julius Rod Dayag">Julius Rod Dayag</option>
+                        <option value="Yesha Nicholai Lao">Yesha Nicholai Lao</option>
+                    </select>
+
+                    <!-- Timeframe Filter -->
+                    <select id="qa-trend-range-select" onchange="renderQASpecialistReportCharts()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-[#123036] border border-teal-500/40 text-white focus:outline-none focus:ring-2 focus:ring-[#00b4d8]">
+                        <option value="all">Whole / All Time</option>
+                        <option value="today">This Day (Today)</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                    </select>
+
+                    <button type="button" onclick="exportComprehensiveQAReportExcel()" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+                        Export Full Report (.xlsx)
                     </button>
-                    <button onclick="exportQAReportPDF()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow-xs transition">
-                        Export QA Report (.pdf)
+                    <button type="button" onclick="exportModulePDF('qa_reports')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow transition">
+                        Export Full Report (.pdf)
                     </button>
                 </div>
             </div>
 
-            <!-- QA Throughput Trend Multi-Line Chart -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <!-- 1. CHART: TOTAL QA TASKS LOGGED (OVERALL CHART) -->
+            <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                            <h3 class="text-sm font-bold text-slate-800">QA Specialist Throughput Trends (Line Graph)</h3>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">Velocity Tracking</span>
+                            <span class="w-3 h-3 rounded-full bg-[#00b4d8]"></span>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: Total QA Tasks Logged (Overall Chart)</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-blue-700 border border-blue-200">Vertical Bar Graph</span>
                         </div>
-                        <p class="text-xs text-slate-500">Track and compare validation velocity over time for each individual QA specialist</p>
-                    </div>
-
-                    <!-- Interactive Controls: Metric, Granularity, Time Range -->
-                    <div class="flex flex-wrap items-center gap-2 text-xs">
-                        <!-- Metric Filter -->
-                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button type="button" onclick="setQATrendMetric('total')" id="btn-qa-metric-total" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition">Total Handled</button>
-                            <button type="button" onclick="setQATrendMetric('initial')" id="btn-qa-metric-initial" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Initial QA</button>
-                            <button type="button" onclick="setQATrendMetric('final')" id="btn-qa-metric-final" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Final QA</button>
-                        </div>
-
-                        <!-- Granularity: Day / Week / Month -->
-                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button type="button" onclick="setQATrendGrouping('day')" id="btn-qa-group-day" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition">Per Day</button>
-                            <button type="button" onclick="setQATrendGrouping('week')" id="btn-qa-group-week" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Week</button>
-                            <button type="button" onclick="setQATrendGrouping('month')" id="btn-qa-group-month" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Month</button>
-                        </div>
-
-                        <!-- Timeframe Range Selection -->
-                        <select id="qa-trend-range-select" onchange="setQATrendRange(this.value)" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs">
-                            <option value="all">Whole / All Time</option>
-                            <option value="today">This Day (Today)</option>
-                            <option value="yesterday">Yesterday</option>
-                            <option value="day_last_week">Same Day Last Week</option>
-                            <option value="this_week">This Week</option>
-                            <option value="last_week">Last Week</option>
-                            <option value="this_month">This Month</option>
-                        </select>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Overall comparison of QA name, number of tasks logged, number of tickets checked, total hours, and operational pacing.</p>
                     </div>
                 </div>
-
-                <!-- Line Chart Canvas -->
                 <div class="h-72">
-                    <canvas id="chart-qa-trend-line"></canvas>
+                    <canvas id="chart-total-qa-tasks-logged"></canvas>
                 </div>
-
-                <!-- Helper footnote & legend notice -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 pt-2 gap-1">
-                    <span>💡 Tip: Click any QA specialist's name in the legend above to isolate or hide their line.</span>
-                    <span id="qa-trend-summary-note" class="text-blue-700 font-medium">Tracking all QA specialists</span>
+                <!-- Table Beneath: Reading what's in the chart (Less Visual Mode) -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Total QA Tasks Logged — Data Summary Table
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-2.5">QA Specialist</th>
+                                    <th class="px-4 py-2.5 text-right">Tasks Logged</th>
+                                    <th class="px-4 py-2.5 text-right">Tickets / Items Checked</th>
+                                    <th class="px-4 py-2.5 text-right">Total Hours Logged</th>
+                                    <th class="px-4 py-2.5 text-right">Pacing (Items/Hour)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-total-qa-tasks-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- QA Comparison Chart -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
-                <h3 class="text-sm font-bold text-slate-800 mb-1">QA Specialists: Initial vs Final Validations Volume</h3>
-                <p class="text-xs text-slate-500 mb-4">Comparison of throughput handled by each QA officer</p>
+            <!-- 2. CHART: RTH COMPLIANCE (WAYBILL VALIDATION) -->
+            <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-teal-500"></span>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: RTH Compliance (Waybill Validation)</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-50 text-teal-700 border border-teal-200">20% Quota Target</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Waybills validated per QA specialist, hours logged doing this task, and mandatory 20% quota compliance.</p>
+                    </div>
+                </div>
                 <div class="h-64">
-                    <canvas id="chart-qa-comparison"></canvas>
+                    <canvas id="chart-rth-compliance-waybill"></canvas>
+                </div>
+                <!-- Table Beneath -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                        RTH Compliance (Waybill Validation) — Pacing & Quota Table
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-2.5">QA Specialist</th>
+                                    <th class="px-4 py-2.5 text-right">Waybills Validated</th>
+                                    <th class="px-4 py-2.5 text-right">Hours Logged</th>
+                                    <th class="px-4 py-2.5 text-center">Target Quota (20%)</th>
+                                    <th class="px-4 py-2.5 text-center">Quota Status</th>
+                                    <th class="px-4 py-2.5 text-right">Pacing (Waybills/Hour)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-rth-compliance-waybill-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- QA Data Table -->
-            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-slate-800">QA Specialists Output Matrix</h3>
-                    <span class="text-xs text-slate-400">Values update based on active date filters</span>
+            <!-- 3. CHART: QA ASSIGNED TICKETS -->
+            <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: QA Assigned Tickets</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-sky-50 text-sky-700 border border-sky-200">SMS / Call / Others</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tickets assigned to QA team members with breakdown of SMS, Call, and other tickets.</p>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
-                                <th class="px-4 py-3">QA Specialist</th>
-                                <th class="px-4 py-3 text-right">Initial Handled</th>
-                                <th class="px-4 py-3 text-right text-emerald-700">Initial Valid</th>
-                                <th class="px-4 py-3 text-right text-rose-700">Initial Invalid</th>
-                                <th class="px-4 py-3 text-right text-slate-400">Initial Pending</th>
-                                <th class="px-4 py-3 text-right text-blue-700">Initial Valid %</th>
-                                <th class="px-4 py-3 text-right bg-sky-50/50">Final Handled</th>
-                                <th class="px-4 py-3 text-right text-emerald-700 bg-sky-50/50">Final Valid</th>
-                                <th class="px-4 py-3 text-right text-rose-700 bg-sky-50/50">Final Invalid</th>
-                                <th class="px-4 py-3 text-right bg-sky-50/50">Final Valid %</th>
-                                <th class="px-4 py-3 text-right text-blue-900 font-bold">Total All Handled</th>
-                                <th class="px-4 py-3 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="qa-report-tbody">
-                            <!-- Populated by JS -->
-                        </tbody>
-                        <tfoot id="qa-report-tfoot">
-                            <!-- Populated by JS -->
-                        </tfoot>
-                    </table>
+                <div class="h-64">
+                    <canvas id="chart-qa-assigned-tickets"></canvas>
+                </div>
+                <!-- Table Beneath -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                        QA Assigned Tickets — Ticket Distribution & Hours Table
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-2.5">QA Specialist</th>
+                                    <th class="px-4 py-2.5 text-right text-sky-600">SMS Tickets</th>
+                                    <th class="px-4 py-2.5 text-right text-teal-600">Call Tickets</th>
+                                    <th class="px-4 py-2.5 text-right text-slate-500">Other Tickets</th>
+                                    <th class="px-4 py-2.5 text-right font-bold text-blue-600">Total Assigned</th>
+                                    <th class="px-4 py-2.5 text-right">Hours Checking Tickets</th>
+                                    <th class="px-4 py-2.5 text-right font-bold text-amber-600">Pacing (Tickets/Hr)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-qa-assigned-tickets-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-COLUMN ROW: CHART 4 (ACCOUNT MERGING) & CHART 5 (IT SCHEDULE MONITORING) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 4. CHART: ACCOUNT MERGING -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: Account Merging</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Accounts merged by QAs and run locations checked.</p>
+                    <div class="h-56">
+                        <canvas id="chart-account-merging-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Merged</th>
+                                        <th class="px-3 py-2 text-right">Locations</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                        <th class="px-3 py-2 text-right">Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-account-merging-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. CHART: IT SCHEDULE MONITORING -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: IT Schedule Monitoring</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Run locations linked and checked (two distinct metrics) per QA.</p>
+                    <div class="h-56">
+                        <canvas id="chart-it-schedule-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Checked</th>
+                                        <th class="px-3 py-2 text-right">Linked</th>
+                                        <th class="px-3 py-2 text-center">Link %</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-it-schedule-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-COLUMN ROW: CHART 6 (OTHER TASK) & CHART 7 (RTH COMPLIANCE DISPATCH) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 6. CHART: OTHER TASK -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-slate-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: Other Task</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Number of times logged and hours spent in other tasks.</p>
+                    <div class="h-56">
+                        <canvas id="chart-other-tasks-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Times</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                        <th class="px-3 py-2">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-other-tasks-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. CHART: RTH COMPLIANCE (DISPATCH) -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: RTH Compliance (Dispatch)</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Dispatch override tasks volume and hours.</p>
+                    <div class="h-56">
+                        <canvas id="chart-rth-compliance-dispatch-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Sessions</th>
+                                        <th class="px-3 py-2 text-right">Overrides</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                        <th class="px-3 py-2 text-right">Pacing</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-rth-compliance-dispatch-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. MASTER / RAW LOGS TABLE AT THE END -->
+            <div class="ws-card bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden space-y-4 p-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Master QA Task Logs</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Category, Monitoring ID, Q.A., Date Entry, Time Started, Time Ended, Hours, and Details</p>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto max-h-[460px]">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px] sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2.5">Category</th>
+                                    <th class="px-3 py-2.5">Monitoring ID</th>
+                                    <th class="px-3 py-2.5">Q.A.</th>
+                                    <th class="px-3 py-2.5">Date Entry</th>
+                                    <th class="px-3 py-2.5">Time Started</th>
+                                    <th class="px-3 py-2.5">Time Ended</th>
+                                    <th class="px-3 py-2.5 text-right">Hours</th>
+                                    <th class="px-3 py-2.5">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-master-qa-logs-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2048,16 +2230,16 @@
                         </button>
 
                         <!-- Multi-select Dropdown Panel -->
-                        <div id="rth-date-dropdown-panel" class="hidden absolute z-50 left-0 mt-1.5 w-80 sm:w-96 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
+                        <div id="rth-date-dropdown-panel" onclick="event.stopPropagation()" class="hidden absolute z-50 left-0 mt-1.5 w-80 sm:w-96 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
                             <div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100">
                                 <button type="button" onclick="setRTHDateQuickMode('ALL')" class="px-2 py-1 rounded bg-teal-600 text-white font-bold text-[11px] hover:bg-teal-700">All Time</button>
-                                <button type="button" onclick="setRTHDateQuickMode('LATEST_WEEK')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">Latest Week</button>
+                                <button type="button" onclick="setRTHDateQuickMode('LATEST_DAY')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">Latest Day</button>
                                 <button type="button" onclick="setRTHDateQuickMode('OCT_2026')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">October 2026</button>
                                 <button type="button" onclick="setRTHDateQuickMode('NOV_2026')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">November 2026</button>
                                 <button type="button" onclick="clearRTHDateSelections()" class="px-2 py-1 rounded text-rose-600 font-semibold text-[11px] hover:bg-rose-50 ml-auto">Clear</button>
                             </div>
                             <div class="relative">
-                                <input type="text" id="rth-date-search" oninput="filterRTHDateCheckboxes()" placeholder="Search date or weekly cycle..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+                                <input type="text" id="rth-date-search" oninput="filterRTHDateCheckboxes()" placeholder="Search date..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
                             </div>
                             <div id="rth-date-checkbox-list" class="max-h-56 overflow-y-auto space-y-2 pr-1 text-slate-700">
                                 <!-- Populated dynamically by JS with weekly cycles and individual dates -->
@@ -3252,12 +3434,1971 @@
     </div>
 
     <!-- Scripts -->
-    <!-- Scripts (Apps Script + Free jsDelivr GitHub CDN) -->
+        <!-- Google Apps Script Active User Injection -->
     <script>
         window.APPS_SCRIPT_USER = <?!= appsScriptUserJson ?>;
     </script>
     <script src="https://cdn.jsdelivr.net/gh/arabella04/waybill-qa-dashboard@main/data.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/arabella04/waybill-qa-dashboard@main/qa_tasks_data.js"></script>
+    <!-- Inlined dashboards/auth.js -->
+    <script>
+/**
+ * ============================================================================
+ * 1LIFE SECURITY & GOOGLE WORKSPACE AUTHENTICATION GATEWAY
+ * dashboards/auth.js
+ * 
+ * Enforces strict @1life.ph Google Account access.
+ * Stores authenticated user and prompts for Position / Role.
+ * ============================================================================
+ */
+
+// Known 1Life QA Team Directory with default roles
+window.ONE_LIFE_TEAM_DIRECTORY = {
+    'armorales@1life.ph': { name: 'Arabella Morales', role: 'QA Specialist', initials: 'AM' },
+    'jtcanaway@1life.ph': { name: 'Janryl Jay Canaway', role: 'QA Specialist', initials: 'JC' },
+    'jofrancisco@1life.ph': { name: 'John Michael Francisco', role: 'QA Specialist', initials: 'JF' },
+    'jrdayag@1life.ph': { name: 'Julius Rod Dayag', role: 'QA Specialist', initials: 'JD' },
+    'ynlao@1life.ph': { name: 'Yesha Nicholai Lao', role: 'QA Specialist', initials: 'YL' }
+};
+
+window.current1LifeUser = {
+    email: '',
+    name: '1Life QA User',
+    position: 'QA Specialist',
+    role: 'QA Specialist',
+    initials: '1L',
+    verified_hd: '',
+    auth_provider: ''
+};
+
+/**
+ * Validates whether an email belongs to the 1life.ph Google Workspace
+ */
+function is1LifeEmail(email) {
+    if (!email) return false;
+    const clean = String(email).trim().toLowerCase();
+    return clean.endsWith('@1life.ph');
+}
+
+/**
+ * Initialize 1Life Authentication on page load
+ */
+function init1LifeAuth() {
+    let authUser = null;
+
+    // 1. Check if running inside Google Apps Script Web App
+    if (window.APPS_SCRIPT_USER && is1LifeEmail(window.APPS_SCRIPT_USER.email)) {
+        authUser = window.APPS_SCRIPT_USER;
+        authUser.auth_provider = 'google_apps_script';
+        authUser.verified_hd = '1life.ph';
+    }
+
+    // 2. Check localStorage for persisted Google @1life.ph session
+    if (!authUser) {
+        try {
+            const raw = localStorage.getItem('1life_auth_user');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && is1LifeEmail(parsed.email)) {
+                    authUser = parsed;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to parse 1life_auth_user:', e);
+        }
+    }
+
+    if (authUser) {
+        window.current1LifeUser = {
+            email: authUser.email,
+            name: authUser.name || authUser.email.split('@')[0],
+            position: authUser.position || authUser.role || 'QA Specialist',
+            role: authUser.position || authUser.role || 'QA Specialist',
+            initials: authUser.initials || getInitials(authUser.name || authUser.email),
+            picture: authUser.picture || '',
+            verified_hd: '1life.ph',
+            auth_provider: authUser.auth_provider || 'google_workspace'
+        };
+
+        // If position is not explicitly set or empty, prompt for position
+        if (!authUser.position || authUser.position === 'Unassigned') {
+            promptForUserPosition(window.current1LifeUser);
+        }
+
+        apply1LifeUserProfileUI();
+        hide1LifeLoginModal();
+    } else {
+        // Block dashboard access and display login gate
+        show1LifeLoginModal();
+    }
+}
+
+/**
+ * Helper to compute user initials
+ */
+function getInitials(name) {
+    if (!name) return '1L';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+}
+
+/**
+ * Displays the 1Life Login Modal / Gate
+ */
+function show1LifeLoginModal() {
+    const modal = document.getElementById('one-life-auth-modal');
+    if (modal) modal.classList.remove('hidden');
+    const dock = document.getElementById('floating-user-dock');
+    if (dock) dock.classList.add('hidden');
+}
+
+/**
+ * Hides the 1Life Login Modal / Gate
+ */
+function hide1LifeLoginModal() {
+    const modal = document.getElementById('one-life-auth-modal');
+    if (modal) modal.classList.add('hidden');
+    const dock = document.getElementById('floating-user-dock');
+    if (dock) dock.classList.remove('hidden');
+}
+
+/**
+ * Applies the current user profile to header, user dock, and settings
+ */
+function apply1LifeUserProfileUI() {
+    const u = window.current1LifeUser;
+    if (!u || !u.email) return;
+
+    // Floating User Dock
+    const nameEls = document.querySelectorAll('#sidebar-user-name');
+    nameEls.forEach(el => el.textContent = u.name);
+
+    const roleEls = document.querySelectorAll('#sidebar-user-role');
+    roleEls.forEach(el => el.textContent = `${u.position || u.role} • 1Life`);
+
+    const initialsEls = document.querySelectorAll('#sidebar-user-initials');
+    initialsEls.forEach(el => el.textContent = u.initials);
+
+    // Settings Modal
+    const settingsEmail = document.getElementById('settings-profile-email');
+    if (settingsEmail) settingsEmail.textContent = u.email;
+
+    const settingsRole = document.getElementById('settings-profile-role');
+    if (settingsRole) settingsRole.textContent = u.position || u.role;
+
+    const settingsName = document.getElementById('settings-profile-name');
+    if (settingsName) settingsName.textContent = u.name;
+
+    const settingsInitials = document.getElementById('settings-profile-initials');
+    if (settingsInitials) settingsInitials.textContent = u.initials;
+}
+
+/**
+ * Completes sign-in with a verified 1Life account
+ */
+function complete1LifeLogin(email, name, picture = '') {
+    if (!is1LifeEmail(email)) {
+        showAuthError(`Access Denied: ${email} is not a valid @1life.ph Google account. Please use your official 1Life company account.`);
+        return false;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const known = window.ONE_LIFE_TEAM_DIRECTORY[cleanEmail];
+    const displayName = name || (known ? known.name : cleanEmail.split('@')[0]);
+    const savedPosition = known ? known.role : 'QA Specialist';
+
+    const userObj = {
+        email: cleanEmail,
+        name: displayName,
+        position: savedPosition,
+        role: savedPosition,
+        initials: getInitials(displayName),
+        picture: picture || '',
+        verified_hd: '1life.ph',
+        auth_provider: 'google_workspace',
+        logged_in_at: new Date().toISOString()
+    };
+
+    window.current1LifeUser = userObj;
+    localStorage.setItem('1life_auth_user', JSON.stringify(userObj));
+
+    hide1LifeLoginModal();
+    apply1LifeUserProfileUI();
+
+    // Ask for position if not customized
+    promptForUserPosition(userObj);
+
+    if (typeof showNotification === 'function') {
+        showNotification(`Welcome, ${displayName}! Logged in as ${cleanEmail}`, 'success');
+    }
+    return true;
+}
+
+/**
+ * Displays error message in auth modal
+ */
+function showAuthError(msg) {
+    const errEl = document.getElementById('auth-error-msg');
+    if (errEl) {
+        errEl.textContent = msg;
+        errEl.classList.remove('hidden');
+    }
+}
+
+/**
+ * Handles Position Setup Modal / Prompt
+ */
+function promptForUserPosition(userObj) {
+    let modal = document.getElementById('position-setup-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'position-setup-modal';
+        modal.className = 'fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="w-full max-w-md bg-white dark:bg-[#0e272c] border border-teal-300/60 dark:border-teal-500/30 rounded-2xl shadow-2xl overflow-hidden text-slate-900 dark:text-white">
+                <div class="p-5 bg-gradient-to-r from-[#0d2226] via-[#14353c] to-[#1c444d] text-white border-b border-teal-500/30">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b4d8] to-[#0d9488] flex items-center justify-center font-bold text-white shadow-md">
+                            1L
+                        </div>
+                        <div>
+                            <h3 class="text-base font-extrabold text-white">Select Your Position</h3>
+                            <p class="text-xs text-teal-200">1Life Data Analytics & Quality Assurance</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 space-y-4">
+                    <p class="text-xs text-slate-600 dark:text-slate-300">
+                        Welcome, <strong id="pos-user-name" class="text-slate-900 dark:text-white">${escapeHtml(userObj.name)}</strong> (<span class="font-mono text-[#00b4d8]">${escapeHtml(userObj.email)}</span>)! Please confirm your position or role for reports attribution:
+                    </p>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Position / Job Title</label>
+                        <select id="user-position-select" onchange="onPositionSelectChange(this.value)" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#123036] border border-slate-300 dark:border-teal-500/30 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00b4d8]">
+                            <option value="QA Specialist">QA Specialist</option>
+                            <option value="Senior QA Analyst">Senior QA Analyst</option>
+                            <option value="Data & Analytics QA">Data & Analytics QA</option>
+                            <option value="QA Lead / Supervisor">QA Lead / Supervisor</option>
+                            <option value="Operational QA Analyst">Operational QA Analyst</option>
+                            <option value="IT Systems QA Analyst">IT Systems QA Analyst</option>
+                            <option value="__custom__">Other (Custom Title)...</option>
+                        </select>
+                        <input type="text" id="user-position-custom" placeholder="Type your custom position..." class="hidden mt-2 w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#123036] border border-slate-300 dark:border-teal-500/30 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00b4d8]">
+                    </div>
+                    <div class="pt-2 flex items-center justify-end gap-2">
+                        <button type="button" onclick="saveUserPosition()" class="w-full py-2.5 px-4 rounded-xl bg-[#00b4d8] hover:bg-[#0096c7] text-white font-bold text-xs shadow-md transition">
+                            Save Position & Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } else {
+        const nameEl = document.getElementById('pos-user-name');
+        if (nameEl) nameEl.textContent = userObj.name;
+        modal.classList.remove('hidden');
+    }
+
+    const selectEl = document.getElementById('user-position-select');
+    if (selectEl && userObj.position) {
+        let found = false;
+        for (let opt of selectEl.options) {
+            if (opt.value === userObj.position) {
+                selectEl.value = userObj.position;
+                found = true;
+                break;
+            }
+        }
+        if (!found && userObj.position !== 'QA Specialist') {
+            selectEl.value = '__custom__';
+            const customInput = document.getElementById('user-position-custom');
+            if (customInput) {
+                customInput.value = userObj.position;
+                customInput.classList.remove('hidden');
+            }
+        }
+    }
+}
+
+/**
+ * Handle position dropdown change
+ */
+function onPositionSelectChange(val) {
+    const customInput = document.getElementById('user-position-custom');
+    if (customInput) {
+        if (val === '__custom__') {
+            customInput.classList.remove('hidden');
+            customInput.focus();
+        } else {
+            customInput.classList.add('hidden');
+        }
+    }
+}
+
+/**
+ * Save user position into localStorage and update profile
+ */
+function saveUserPosition() {
+    const selectEl = document.getElementById('user-position-select');
+    const customInput = document.getElementById('user-position-custom');
+    let pos = selectEl ? selectEl.value : 'QA Specialist';
+    if (pos === '__custom__' && customInput && customInput.value.trim()) {
+        pos = customInput.value.trim();
+    }
+
+    if (window.current1LifeUser) {
+        window.current1LifeUser.position = pos;
+        window.current1LifeUser.role = pos;
+        localStorage.setItem('1life_auth_user', JSON.stringify(window.current1LifeUser));
+        apply1LifeUserProfileUI();
+    }
+
+    const modal = document.getElementById('position-setup-modal');
+    if (modal) modal.classList.add('hidden');
+
+    if (typeof showNotification === 'function') {
+        showNotification(`Position saved: ${pos}`, 'success');
+    }
+}
+
+/**
+ * Sign out / switch account
+ */
+function handle1LifeLogout() {
+    localStorage.removeItem('1life_auth_user');
+    window.current1LifeUser = {
+        email: '',
+        name: '1Life QA User',
+        position: 'QA Specialist',
+        role: 'QA Specialist',
+        initials: '1L',
+        verified_hd: '',
+        auth_provider: ''
+    };
+    apply1LifeUserProfileUI();
+    show1LifeLoginModal();
+    if (typeof showNotification === 'function') {
+        showNotification('Signed out from 1Life QA Dashboard', 'info');
+    }
+}
+
+/**
+ * Trigger official Google OAuth 2.0 flow or team fast selector
+ */
+function trigger1LifeGoogleSignIn() {
+    const errEl = document.getElementById('auth-error-msg');
+    if (errEl) errEl.classList.add('hidden');
+
+    // 1. If Google Identity Services is available and client ID configured
+    const clientId = typeof getGoogleOAuthClientId === 'function' ? getGoogleOAuthClientId() : '';
+    if (clientId && window.google && google.accounts && google.accounts.oauth2) {
+        try {
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'openid email profile',
+                hd: '1life.ph',
+                prompt: 'select_account',
+                callback: async (tokenResponse) => {
+                    if (tokenResponse.error || !tokenResponse.access_token) {
+                        showAuthError(`Google Auth Error: ${tokenResponse.error_description || tokenResponse.error || 'Authentication cancelled'}`);
+                        return;
+                    }
+                    try {
+                        const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                            headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                        });
+                        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                        const userinfo = await resp.json();
+                        complete1LifeLogin(userinfo.email, userinfo.name, userinfo.picture);
+                    } catch (err) {
+                        showAuthError(`Failed to fetch Google profile: ${err.message}`);
+                    }
+                }
+            });
+            tokenClient.requestAccessToken();
+            return;
+        } catch (e) {
+            console.warn('Google Token Client init failed:', e);
+        }
+    }
+
+    // 2. Direct @1life.ph Team Selector / Input Fallback
+    const directBox = document.getElementById('direct-1life-login-box');
+    if (directBox) {
+        directBox.classList.remove('hidden');
+    }
+}
+
+function handleDirect1LifeSubmit() {
+    const input = document.getElementById('direct-1life-email');
+    const email = input ? input.value.trim().toLowerCase() : '';
+    if (!email) {
+        showAuthError('Please enter your @1life.ph email address.');
+        return;
+    }
+    if (!is1LifeEmail(email)) {
+        showAuthError('Access Denied: Only Google accounts ending with @1life.ph are permitted.');
+        return;
+    }
+    complete1LifeLogin(email);
+}
+
+// Expose globally on window
+window.is1LifeEmail = is1LifeEmail;
+window.init1LifeAuth = init1LifeAuth;
+window.show1LifeLoginModal = show1LifeLoginModal;
+window.hide1LifeLoginModal = hide1LifeLoginModal;
+window.apply1LifeUserProfileUI = apply1LifeUserProfileUI;
+window.complete1LifeLogin = complete1LifeLogin;
+window.promptForUserPosition = promptForUserPosition;
+window.saveUserPosition = saveUserPosition;
+window.onPositionSelectChange = onPositionSelectChange;
+window.handle1LifeLogout = handle1LifeLogout;
+window.trigger1LifeGoogleSignIn = trigger1LifeGoogleSignIn;
+window.handleDirect1LifeSubmit = handleDirect1LifeSubmit;
+
+    </script>
+
+    <!-- Inlined dashboards/waybill.js -->
+    <script>
+/**
+ * ============================================================================
+ * WAYBILL VALIDATION Q.A. DASHBOARD MODULE
+ * dashboards/waybill.js
+ * 
+ * Manages Waybill QA monitoring records, metrics, tables, 
+ * and full client-side Excel & PDF data export.
+ * ============================================================================
+ */
+
+function getPharmacyQAData() {
+    return (window.QA_MONITORING_DATA && window.QA_MONITORING_DATA.pharmacy) || [];
+}
+
+function getDailyWaybillLogData() {
+    return (window.QA_MONITORING_DATA && window.QA_MONITORING_DATA.daily_waybill_log) || [];
+}
+
+/**
+ * Export Waybill Validation Report to Excel (.xlsx)
+ */
+function exportWaybillExcel() {
+    const pharmacy = getPharmacyQAData();
+    const dailyLog = getDailyWaybillLogData();
+
+    if (pharmacy.length === 0 && dailyLog.length === 0) {
+        showNotification('No Waybill QA data available to export.', 'error');
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showNotification('SheetJS library is loading. Please wait...', 'error');
+        return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Pharmacy Waybill Sessions
+    if (pharmacy.length > 0) {
+        const rows1 = pharmacy.map(r => ({
+            'Monitoring ID': r.monitoring_id || '',
+            'QA Specialist': r.qa || '',
+            'Email': r.email || '',
+            'Date': r.date || '',
+            'Time Started': r.time_started || '',
+            'Time Ended': r.time_ended || '',
+            'Hours': Number(r.hours) || 0,
+            'Scope': r.scope || '',
+            'Validated Waybills': Number(r.validated_count) || 0,
+            'Status': r.status || '',
+            'Issues / Findings': r.issues || ''
+        }));
+        const ws1 = XLSX.utils.json_to_sheet(rows1);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Waybill QA Sessions');
+    }
+
+    // Sheet 2: Daily Waybill Quota Log
+    if (dailyLog.length > 0) {
+        const rows2 = dailyLog.map(r => ({
+            'Date': r.date || '',
+            'Total Waybills in Scope': Number(r.total_waybills) || 0,
+            'Quota Target %': r.quota_pct || '20%',
+            'Target per QA': Number(r.target_per_qa) || 0,
+            'Arabella': Number(r.arabella) || 0,
+            'Janryl': Number(r.janryl) || 0,
+            'John Michael': Number(r.john_michael) || 0,
+            'Julius': Number(r.julius) || 0,
+            'Yesha': Number(r.yesha) || 0,
+            'Total Validated': Number(r.total_validated) || 0,
+            'Remaining': Number(r.remaining) || 0,
+            'Status': r.status || ''
+        }));
+        const ws2 = XLSX.utils.json_to_sheet(rows2);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Daily Quota Log');
+    }
+
+    const filename = `1Life_Waybill_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showNotification(`Downloaded ${filename}`, 'success');
+}
+
+/**
+ * Export Waybill Validation Report to PDF (.pdf)
+ */
+function exportWaybillPDF() {
+    if (typeof exportModulePDF === 'function') {
+        exportModulePDF('pharmacy');
+    } else {
+        showNotification('Exporting PDF...', 'info');
+        window.print();
+    }
+}
+
+// Attach to window
+window.exportWaybillExcel = exportWaybillExcel;
+window.exportWaybillPDF = exportWaybillPDF;
+
+    </script>
+
+    <!-- Inlined dashboards/rth.js -->
+    <script>
+/**
+ * ============================================================================
+ * RTH NOTES & INVALID DOCUMENTS DASHBOARD MODULE
+ * dashboards/rth.js
+ * 
+ * Manages RTH Defect analysis, multi-checkbox date filtering (per day & weekly),
+ * KPI defect metrics, rider error rankings, and full client-side Excel & PDF data export.
+ * ============================================================================
+ */
+
+function exportRTHNotesExcel() {
+    if (typeof exportRTHReportExcelDirect === 'function') {
+        exportRTHReportExcelDirect();
+    } else if (typeof exportModuleExcel === 'function') {
+        exportModuleExcel('invalid_waybills');
+    }
+}
+
+function exportRTHNotesPDF() {
+    if (typeof exportRTHReportPDFDirect === 'function') {
+        exportRTHReportPDFDirect();
+    } else if (typeof exportModulePDF === 'function') {
+        exportModulePDF('invalid_waybills');
+    }
+}
+
+// Attach to window
+window.exportRTHNotesExcel = exportRTHNotesExcel;
+window.exportRTHNotesPDF = exportRTHNotesPDF;
+
+    </script>
+
+    <!-- Inlined dashboards/account_merging.js -->
+    <script>
+/**
+ * ============================================================================
+ * ACCOUNT MERGING Q.A. DASHBOARD MODULE
+ * dashboards/account_merging.js
+ * 
+ * Manages Account Merging QA monitoring records, metrics, tables, 
+ * and full client-side Excel & PDF data export.
+ * ============================================================================
+ */
+
+function getAccountMergingData() {
+    const raw = (window.QA_MONITORING_DATA && window.QA_MONITORING_DATA.account_merging) || [];
+    return raw;
+}
+
+function renderAccountMergingDashboard() {
+    const data = getAccountMergingData();
+    const searchVal = (document.getElementById('am-search-input')?.value || '').toLowerCase().trim();
+    const qaFilter = document.getElementById('am-qa-filter')?.value || 'ALL';
+
+    const filtered = data.filter(r => {
+        const qa = (r.qa || '').toLowerCase();
+        if (qaFilter !== 'ALL' && !qa.includes(qaFilter.toLowerCase())) return false;
+        if (!searchVal) return true;
+        return (
+            (r.monitoring_id || '').toLowerCase().includes(searchVal) ||
+            qa.includes(searchVal) ||
+            (r.locations_checked || '').toLowerCase().includes(searchVal) ||
+            (r.date || '').toLowerCase().includes(searchVal)
+        );
+    });
+
+    // Update KPI metrics
+    let totalSessions = filtered.length;
+    let totalLocations = 0;
+    let totalHours = 0;
+    let totalMerged = 0;
+    const specialistStats = {};
+
+    filtered.forEach(r => {
+        const locCount = Number(r.locations_count) || 0;
+        const hrs = Number(r.hours) || 0;
+        const merged = Number(r.merged_accounts) || 0;
+        totalLocations += locCount;
+        totalHours += hrs;
+        totalMerged += merged;
+
+        const spName = (r.qa || 'Unassigned').trim();
+        if (!specialistStats[spName]) {
+            specialistStats[spName] = { sessions: 0, locations: 0, merged: 0, hours: 0 };
+        }
+        specialistStats[spName].sessions += 1;
+        specialistStats[spName].locations += locCount;
+        specialistStats[spName].merged += merged;
+        specialistStats[spName].hours += hrs;
+    });
+
+    const kpiSessions = document.getElementById('am-kpi-sessions');
+    if (kpiSessions) kpiSessions.textContent = totalSessions.toLocaleString();
+
+    const kpiLocations = document.getElementById('am-kpi-locations');
+    if (kpiLocations) kpiLocations.textContent = totalLocations.toLocaleString();
+
+    const kpiHours = document.getElementById('am-kpi-hours');
+    if (kpiHours) {
+        const wholeH = Math.floor(totalHours);
+        const mins = Math.round((totalHours - wholeH) * 60);
+        kpiHours.textContent = `${wholeH}h ${mins}m`;
+    }
+
+    const kpiRate = document.getElementById('am-kpi-rate');
+    if (kpiRate) {
+        const rate = totalHours > 0 ? (totalLocations / totalHours).toFixed(1) : '0.0';
+        kpiRate.textContent = rate;
+    }
+
+    // Render Specialist Cards
+    const cardsContainer = document.getElementById('am-specialist-cards');
+    if (cardsContainer) {
+        cardsContainer.innerHTML = Object.entries(specialistStats).map(([name, s]) => {
+            const avgRate = s.hours > 0 ? (s.locations / s.hours).toFixed(1) : '0';
+            return `
+                <div class="ws-subcard p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#123036] text-xs">
+                    <div class="font-bold text-slate-800 dark:text-white truncate">${escapeHtml(name)}</div>
+                    <div class="mt-2 grid grid-cols-2 gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <div>Locations: <strong class="text-blue-600 dark:text-cyan-400 font-mono">${s.locations}</strong></div>
+                        <div>Hours: <strong class="text-slate-700 dark:text-slate-200 font-mono">${s.hours.toFixed(1)}h</strong></div>
+                        <div>Merged: <strong class="text-emerald-600 dark:text-emerald-400 font-mono">${s.merged}</strong></div>
+                        <div>Rate: <strong class="text-amber-600 dark:text-amber-400 font-mono">${avgRate}/h</strong></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Render Table rows
+    const tbody = document.getElementById('am-table-tbody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400 text-xs">No Account Merging records match your filters.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(r => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition text-xs border-b border-slate-100 dark:border-slate-800">
+                <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-indigo-600 dark:text-indigo-400">${escapeHtml(r.monitoring_id || '-')}</td>
+                <td class="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(r.qa || '-')}</td>
+                <td class="px-4 py-2.5 font-mono text-[10px] text-slate-400">${escapeHtml(r.email || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.date || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-500 font-mono text-[10px]">${escapeHtml(r.time_started || '-')} – ${escapeHtml(r.time_ended || '-')}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">${Number(r.hours || 0).toFixed(2)}h</td>
+                <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300 max-w-xs truncate" title="${escapeHtml(r.locations_checked || '')}">${escapeHtml(r.locations_checked || '-')}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${Number(r.locations_count || 0).toLocaleString()}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">${Number(r.merged_accounts || 0).toLocaleString()}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+/**
+ * Export Account Merging Data to Excel (.xlsx)
+ */
+function exportAccountMergingExcel() {
+    const data = getAccountMergingData();
+    if (!data || data.length === 0) {
+        showNotification('No Account Merging data available to export.', 'error');
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showNotification('SheetJS library is loading. Please wait...', 'error');
+        return;
+    }
+
+    const rows = data.map(r => ({
+        'Monitoring ID': r.monitoring_id || '',
+        'QA Specialist': r.qa || '',
+        'Email': r.email || '',
+        'Date': r.date || '',
+        'Time Started': r.time_started || '',
+        'Time Ended': r.time_ended || '',
+        'Hours': Number(r.hours) || 0,
+        'Locations Checked': r.locations_checked || '',
+        '# Locations Checked': Number(r.locations_count) || 0,
+        '# Merged Accounts': Number(r.merged_accounts) || 0,
+        'Modified By': r.modified_by || ''
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Account Merging QA');
+    const filename = `1Life_Account_Merging_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showNotification(`Downloaded ${filename}`, 'success');
+}
+
+/**
+ * Export Account Merging Data to PDF (.pdf)
+ */
+function exportAccountMergingPDF() {
+    if (typeof exportModulePDF === 'function') {
+        exportModulePDF('account_merging');
+    } else {
+        showNotification('Exporting PDF...', 'info');
+        window.print();
+    }
+}
+
+// Attach to window
+window.renderAccountMergingDashboard = renderAccountMergingDashboard;
+window.exportAccountMergingExcel = exportAccountMergingExcel;
+window.exportAccountMergingPDF = exportAccountMergingPDF;
+
+    </script>
+
+    <!-- Inlined dashboards/dispatch.js -->
+    <script>
+/**
+ * ============================================================================
+ * DISPATCH Q.A. DASHBOARD MODULE
+ * dashboards/dispatch.js
+ * 
+ * Manages Dispatch QA monitoring records, metrics, tables, 
+ * and full client-side Excel & PDF data export.
+ * ============================================================================
+ */
+
+function getDispatchQAData() {
+    return (window.QA_MONITORING_DATA && window.QA_MONITORING_DATA.dispatch_qa) || [];
+}
+
+function renderDispatchQASheetTable() {
+    const data = getDispatchQAData();
+    const searchVal = (document.getElementById('dispatch-sheet-search')?.value || '').toLowerCase().trim();
+    const qaFilter = document.getElementById('dispatch-sheet-qa-filter')?.value || 'ALL';
+
+    const filtered = data.filter(r => {
+        const qa = (r.qa || '').toLowerCase();
+        if (qaFilter !== 'ALL' && !qa.includes(qaFilter.toLowerCase())) return false;
+        if (!searchVal) return true;
+        return (
+            (r.monitoring_id || '').toLowerCase().includes(searchVal) ||
+            qa.includes(searchVal) ||
+            (r.scope || '').toLowerCase().includes(searchVal) ||
+            (r.issues || '').toLowerCase().includes(searchVal) ||
+            (r.date || '').toLowerCase().includes(searchVal)
+        );
+    });
+
+    // Update KPI metrics
+    let totalSessions = filtered.length;
+    let totalOverridden = 0;
+    let totalHours = 0;
+
+    filtered.forEach(r => {
+        totalOverridden += Number(r.overridden_count) || 0;
+        totalHours += Number(r.hours) || 0;
+    });
+
+    const kpiSessions = document.getElementById('disp-kpi-sessions');
+    if (kpiSessions) kpiSessions.textContent = totalSessions.toLocaleString();
+
+    const kpiOverridden = document.getElementById('disp-kpi-overridden');
+    if (kpiOverridden) kpiOverridden.textContent = totalOverridden.toLocaleString();
+
+    const kpiHours = document.getElementById('disp-kpi-hours');
+    if (kpiHours) {
+        const wholeH = Math.floor(totalHours);
+        const mins = Math.round((totalHours - wholeH) * 60);
+        kpiHours.textContent = `${wholeH}h ${mins}m`;
+    }
+
+    const kpiRate = document.getElementById('disp-kpi-rate');
+    if (kpiRate) {
+        const rate = totalHours > 0 ? (totalOverridden / totalHours).toFixed(1) : '0.0';
+        kpiRate.textContent = rate;
+    }
+
+    // Render Table rows
+    const tbody = document.getElementById('dispatch-sheet-tbody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 text-xs">No Dispatch QA records match your filters.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(r => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition text-xs border-b border-slate-100 dark:border-slate-800">
+                <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-teal-600 dark:text-cyan-400">${escapeHtml(r.monitoring_id || '-')}</td>
+                <td class="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(r.qa || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.date || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-500 font-mono text-[10px]">${escapeHtml(r.time_started || '-')} – ${escapeHtml(r.time_ended || '-')}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">${Number(r.hours || 0).toFixed(2)}h</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.scope || '-')}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-[#00b4d8]">${Number(r.overridden_count || 0).toLocaleString()}</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300 max-w-xs truncate" title="${escapeHtml(r.issues || '')}">${escapeHtml(r.issues || 'None')}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+/**
+ * Export Dispatch QA Data to Excel (.xlsx)
+ */
+function exportDispatchExcel() {
+    const data = getDispatchQAData();
+    if (!data || data.length === 0) {
+        showNotification('No Dispatch QA data available to export.', 'error');
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showNotification('SheetJS library is loading. Please wait...', 'error');
+        return;
+    }
+
+    const rows = data.map(r => ({
+        'Monitoring ID': r.monitoring_id || '',
+        'QA Specialist': r.qa || '',
+        'Email': r.email || '',
+        'Date': r.date || '',
+        'Time Started': r.time_started || '',
+        'Time Ended': r.time_ended || '',
+        'Hours': Number(r.hours) || 0,
+        'Scope': r.scope || '',
+        'Overridden Count': Number(r.overridden_count) || 0,
+        'Status': r.status || '',
+        'Issues': r.issues || ''
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Dispatch QA');
+    const filename = `1Life_Dispatch_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showNotification(`Downloaded ${filename}`, 'success');
+}
+
+/**
+ * Export Dispatch QA Data to PDF (.pdf)
+ */
+function exportDispatchPDF() {
+    if (typeof exportModulePDF === 'function') {
+        exportModulePDF('dispatch_qa');
+    } else {
+        showNotification('Exporting PDF...', 'info');
+        window.print();
+    }
+}
+
+// Attach to window
+window.renderDispatchQASheetTable = renderDispatchQASheetTable;
+window.exportDispatchExcel = exportDispatchExcel;
+window.exportDispatchPDF = exportDispatchPDF;
+
+    </script>
+
+    <!-- Inlined dashboards/output_qa.js -->
+    <script>
+/**
+ * ============================================================================
+ * OUTPUT Q.A. DASHBOARD MODULE
+ * dashboards/output_qa.js
+ * 
+ * Manages Output QA report audit records, accuracy metrics, tables, 
+ * and full client-side Excel & PDF data export.
+ * ============================================================================
+ */
+
+function getOutputQAData() {
+    return (window.QA_MONITORING_DATA && window.QA_MONITORING_DATA.output_qa) || [];
+}
+
+function renderOutputQADashboard() {
+    const data = getOutputQAData();
+    const searchVal = (document.getElementById('oqa-search-input')?.value || '').toLowerCase().trim();
+    const checkerFilter = document.getElementById('oqa-checker-filter')?.value || 'ALL';
+    const resultFilter = document.getElementById('oqa-result-filter')?.value || 'ALL';
+
+    const filtered = data.filter(r => {
+        const checker = (r.qa_checker || r.qa || '').toLowerCase();
+        if (checkerFilter !== 'ALL' && !checker.includes(checkerFilter.toLowerCase())) return false;
+
+        const res = (r.overall_result || '').toUpperCase();
+        if (resultFilter === 'Passed' && !res.includes('PASS')) return false;
+        if (resultFilter === 'Failed' && res.includes('PASS')) return false;
+
+        if (!searchVal) return true;
+        return (
+            (r.ticket_no || '').toLowerCase().includes(searchVal) ||
+            (r.report_name || '').toLowerCase().includes(searchVal) ||
+            (r.data_analyst || '').toLowerCase().includes(searchVal) ||
+            checker.includes(searchVal) ||
+            (r.remarks || '').toLowerCase().includes(searchVal)
+        );
+    });
+
+    // Update KPI metrics
+    let totalReports = filtered.length;
+    let totalPassed = 0;
+    let totalHours = 0;
+    let accuracyPassCount = 0;
+
+    filtered.forEach(r => {
+        const res = (r.overall_result || '').toUpperCase();
+        if (res.includes('PASS')) totalPassed++;
+        if ((r.accuracy || '').toUpperCase().includes('PASS')) accuracyPassCount++;
+        totalHours += Number(r.hours) || 0.5;
+    });
+
+    const kpiTotal = document.getElementById('oqa-kpi-total');
+    if (kpiTotal) kpiTotal.textContent = totalReports.toLocaleString();
+
+    const kpiPassed = document.getElementById('oqa-kpi-passed');
+    if (kpiPassed) kpiPassed.textContent = totalPassed.toLocaleString();
+
+    const kpiPassRate = document.getElementById('oqa-kpi-pass-rate');
+    if (kpiPassRate) {
+        const pct = totalReports > 0 ? ((totalPassed / totalReports) * 100).toFixed(1) : '100.0';
+        kpiPassRate.textContent = `${pct}% Overall Pass Rate`;
+    }
+
+    const kpiAccuracy = document.getElementById('oqa-kpi-accuracy');
+    if (kpiAccuracy) {
+        const accPct = totalReports > 0 ? ((accuracyPassCount / totalReports) * 100).toFixed(1) : '100.0';
+        kpiAccuracy.textContent = `${accPct}%`;
+    }
+
+    const kpiHours = document.getElementById('oqa-kpi-hours');
+    if (kpiHours) {
+        const wholeH = Math.floor(totalHours);
+        const mins = Math.round((totalHours - wholeH) * 60);
+        kpiHours.textContent = `${wholeH}h ${mins}m`;
+    }
+
+    // Render Table rows
+    const tbody = document.getElementById('oqa-table-tbody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" class="p-6 text-center text-slate-400 text-xs">No Output QA records match your filters.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(r => {
+            const isPass = (r.overall_result || '').toUpperCase().includes('PASS');
+            const badgeClass = isPass 
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' 
+                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition text-xs border-b border-slate-100 dark:border-slate-800">
+                    <td class="px-3 py-2.5 font-mono text-[11px] font-bold text-blue-600 dark:text-cyan-400">${escapeHtml(r.ticket_no || r.monitoring_id || '-')}</td>
+                    <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.date || '-')}</td>
+                    <td class="px-3 py-2.5 font-medium text-slate-800 dark:text-slate-100 max-w-xs truncate" title="${escapeHtml(r.report_name || '')}">${escapeHtml(r.report_name || '-')}</td>
+                    <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.data_analyst || '-')}</td>
+                    <td class="px-3 py-2.5 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(r.qa_checker || r.qa || '-')}</td>
+                    <td class="px-3 py-2.5 text-center font-bold ${r.accuracy === 'PASS' ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(r.accuracy || '-')}</td>
+                    <td class="px-3 py-2.5 text-center font-bold ${r.completeness === 'PASS' ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(r.completeness || '-')}</td>
+                    <td class="px-3 py-2.5 text-center font-bold ${r.logic === 'PASS' ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(r.logic || '-')}</td>
+                    <td class="px-3 py-2.5 text-center font-bold ${r.formatting === 'PASS' ? 'text-emerald-600' : 'text-rose-600'}">${escapeHtml(r.formatting || '-')}</td>
+                    <td class="px-3 py-2.5 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${badgeClass}">${escapeHtml(r.overall_result || (isPass ? 'PASSED' : 'FAILED'))}</span>
+                    </td>
+                    <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300 max-w-xs truncate" title="${escapeHtml(r.remarks || '')}">${escapeHtml(r.remarks || 'None')}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * Export Output QA Data to Excel (.xlsx)
+ */
+function exportOutputQAExcel() {
+    const data = getOutputQAData();
+    if (!data || data.length === 0) {
+        showNotification('No Output QA data available to export.', 'error');
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showNotification('SheetJS library is loading. Please wait...', 'error');
+        return;
+    }
+
+    const rows = data.map(r => ({
+        'Ticket #': r.ticket_no || r.monitoring_id || '',
+        'Date': r.date || '',
+        'Report / Dashboard': r.report_name || '',
+        'Cutoff Date': r.cutoff_date || '',
+        'Data Analyst': r.data_analyst || '',
+        'QA Checker': r.qa_checker || r.qa || '',
+        'QA Start': r.qa_start || '',
+        'QA End': r.qa_end || '',
+        'Hours': Number(r.hours) || 0.5,
+        'Accuracy': r.accuracy || '',
+        'Completeness': r.completeness || '',
+        'Logic': r.logic || '',
+        'Formatting': r.formatting || '',
+        'Overall Result': r.overall_result || '',
+        'Remarks': r.remarks || '',
+        'Resolution Status': r.resolution_status || ''
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Output QA Audits');
+    const filename = `1Life_Output_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showNotification(`Downloaded ${filename}`, 'success');
+}
+
+/**
+ * Export Output QA Data to PDF (.pdf)
+ */
+function exportOutputQAPDF() {
+    if (typeof exportModulePDF === 'function') {
+        exportModulePDF('output_qa');
+    } else {
+        showNotification('Exporting PDF...', 'info');
+        window.print();
+    }
+}
+
+// Attach to window
+window.renderOutputQADashboard = renderOutputQADashboard;
+window.exportOutputQAExcel = exportOutputQAExcel;
+window.exportOutputQAPDF = exportOutputQAPDF;
+
+    </script>
+
+    <!-- Inlined dashboards/it_schedule.js -->
+    <script>
+/**
+ * ============================================================================
+ * IT SCHEDULE MONITORING Q.A. DASHBOARD MODULE
+ * dashboards/it_schedule.js
+ * 
+ * Manages IT Schedule Monitoring QA records, metrics, tables, 
+ * and full client-side Excel & PDF data export.
+ * ============================================================================
+ */
+
+function getITScheduleData() {
+    return (window.QA_MONITORING_DATA && window.QA_MONITORING_DATA.it_schedule) || [];
+}
+
+function renderITScheduleDashboard() {
+    const data = getITScheduleData();
+    const searchVal = (document.getElementById('itsched-search-input')?.value || '').toLowerCase().trim();
+    const qaFilter = document.getElementById('itsched-qa-filter')?.value || 'ALL';
+
+    const filtered = data.filter(r => {
+        const qa = (r.qa || '').toLowerCase();
+        if (qaFilter !== 'ALL' && !qa.includes(qaFilter.toLowerCase())) return false;
+        if (!searchVal) return true;
+        return (
+            (r.monitoring_id || '').toLowerCase().includes(searchVal) ||
+            qa.includes(searchVal) ||
+            (r.scope || '').toLowerCase().includes(searchVal) ||
+            (r.issues || '').toLowerCase().includes(searchVal) ||
+            (r.date || '').toLowerCase().includes(searchVal)
+        );
+    });
+
+    // Update KPI metrics
+    let totalSessions = filtered.length;
+    let totalChecked = 0;
+    let totalLinked = 0;
+    let totalHours = 0;
+
+    filtered.forEach(r => {
+        totalChecked += Number(r.checked_count) || 0;
+        totalLinked += Number(r.linked_count) || 0;
+        totalHours += Number(r.hours) || 0.8;
+    });
+
+    const kpiSessions = document.getElementById('itsched-kpi-sessions');
+    if (kpiSessions) kpiSessions.textContent = totalSessions.toLocaleString();
+
+    const kpiChecked = document.getElementById('itsched-kpi-checked');
+    if (kpiChecked) kpiChecked.textContent = totalChecked.toLocaleString();
+
+    const kpiLinked = document.getElementById('itsched-kpi-linked');
+    if (kpiLinked) kpiLinked.textContent = totalLinked.toLocaleString();
+
+    const kpiHours = document.getElementById('itsched-kpi-hours');
+    if (kpiHours) {
+        const wholeH = Math.floor(totalHours);
+        const mins = Math.round((totalHours - wholeH) * 60);
+        kpiHours.textContent = `${wholeH}h ${mins}m`;
+    }
+
+    // Render Table rows
+    const tbody = document.getElementById('itsched-table-tbody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-slate-400 text-xs">No IT Schedule records match your filters.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = filtered.map(r => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition text-xs border-b border-slate-100 dark:border-slate-800">
+                <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-amber-600 dark:text-amber-400">${escapeHtml(r.monitoring_id || '-')}</td>
+                <td class="px-4 py-2.5 font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(r.qa || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.date || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-500 font-mono text-[10px]">${escapeHtml(r.time_started || '-')} – ${escapeHtml(r.time_ended || '-')}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">${Number(r.hours || 0).toFixed(2)}h</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${Number(r.checked_count || 0).toLocaleString()}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">${Number(r.linked_count || 0).toLocaleString()}</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300 max-w-xs truncate" title="${escapeHtml(r.scope || '')}">${escapeHtml(r.scope || '-')}</td>
+                <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300 max-w-xs truncate" title="${escapeHtml(r.issues || '')}">${escapeHtml(r.issues || 'None')}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+/**
+ * Export IT Schedule Data to Excel (.xlsx)
+ */
+function exportITScheduleExcel() {
+    const data = getITScheduleData();
+    if (!data || data.length === 0) {
+        showNotification('No IT Schedule data available to export.', 'error');
+        return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+        showNotification('SheetJS library is loading. Please wait...', 'error');
+        return;
+    }
+
+    const rows = data.map(r => ({
+        'Monitoring ID': r.monitoring_id || '',
+        'QA Specialist': r.qa || '',
+        'Email': r.email || '',
+        'Date': r.date || '',
+        'Time Started': r.time_started || '',
+        'Time Ended': r.time_ended || '',
+        'Hours': Number(r.hours) || 0.8,
+        'Checked Count': Number(r.checked_count) || 0,
+        'Linked Count': Number(r.linked_count) || 0,
+        'Scope': r.scope || '',
+        'Issues': r.issues || '',
+        'Status': r.status || ''
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'IT Schedule QA');
+    const filename = `1Life_IT_Schedule_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showNotification(`Downloaded ${filename}`, 'success');
+}
+
+/**
+ * Export IT Schedule Data to PDF (.pdf)
+ */
+function exportITSchedulePDF() {
+    if (typeof exportModulePDF === 'function') {
+        exportModulePDF('it_schedule');
+    } else {
+        showNotification('Exporting PDF...', 'info');
+        window.print();
+    }
+}
+
+// Attach to window
+window.renderITScheduleDashboard = renderITScheduleDashboard;
+window.exportITScheduleExcel = exportITScheduleExcel;
+window.exportITSchedulePDF = exportITSchedulePDF;
+
+    </script>
+
+    <!-- Inlined dashboards/qa_report.js -->
+    <script>
+/**
+ * ============================================================================
+ * QA REPORTS — QA SPECIALIST PERFORMANCE SCORECARD & DETAILED VISUALS
+ * dashboards/qa_report.js
+ * 
+ * Implements the 7 required vertical bar charts, tables beneath each, 
+ * the Master Logs table at the end, and full Excel & PDF exports.
+ * ============================================================================
+ */
+
+// Global Chart.js instances registry to allow clean destroying/re-rendering
+window.qaReportChartInstances = {};
+
+/**
+ * Normalizes QA names to standard directory names
+ */
+function normalizeQASpecialistName(raw) {
+    if (!raw) return 'Unassigned QA';
+    const s = String(raw).trim();
+    const l = s.toLowerCase();
+    if (l.includes('arabella')) return 'Arabella Morales';
+    if (l.includes('janryl')) return 'Janryl Jay Canaway';
+    if (l.includes('john michael') || l.includes('jofrancisco')) return 'John Michael Francisco';
+    if (l.includes('julius')) return 'Julius Rod Dayag';
+    if (l.includes('yesha')) return 'Yesha Nicholai Lao';
+    return s;
+}
+
+/**
+ * Safely destroys an existing chart instance before re-creating
+ */
+function destroyChartInstance(chartId) {
+    if (window.qaReportChartInstances[chartId]) {
+        try {
+            window.qaReportChartInstances[chartId].destroy();
+        } catch (e) {
+            console.warn(`Error destroying chart ${chartId}:`, e);
+        }
+        delete window.qaReportChartInstances[chartId];
+    }
+}
+
+/**
+ * Primary Entry Point: Renders all 7 requested vertical bar charts,
+ * their corresponding data tables, and the Master Log table.
+ */
+function renderQASpecialistReportCharts() {
+    if (typeof buildQATasksDataset === 'function' && (!window.qaTasksData || window.qaTasksData.length === 0)) {
+        buildQATasksDataset();
+    }
+
+    const allTasks = window.qaTasksData || [];
+    const sheetData = typeof getQASheetData === 'function' ? getQASheetData() : (window.QA_MONITORING_DATA || {});
+
+    // Filter controls in QA Specialist Tab
+    const selectedQA = document.getElementById('qa-report-filter-specialist')?.value || 'ALL';
+    const dateRange = document.getElementById('qa-trend-range-select')?.value || 'all';
+
+    // Apply QA and Date filters to dataset
+    const filteredTasks = allTasks.filter(t => {
+        if (selectedQA !== 'ALL' && t.specialist !== selectedQA) return false;
+        // Date filtering
+        if (dateRange !== 'all') {
+            const today = new Date().toISOString().slice(0, 10);
+            const taskDate = (t.date || '').slice(0, 10);
+            if (dateRange === 'today' && taskDate !== today) return false;
+        }
+        return true;
+    });
+
+    // 1. Chart 1: Total QA Tasked Logged (Overall Chart)
+    renderChartTotalQATasksLogged(filteredTasks);
+
+    // 2. Chart 2: RTH Compliance (Waybill Validation)
+    renderChartRTHComplianceWaybill(sheetData, selectedQA);
+
+    // 3. Chart 3: QA Assigned Tickets (SMS / Call / Others)
+    renderChartQAAssignedTickets(sheetData, selectedQA);
+
+    // 4. Chart 4: Account Merging (Merged vs Locations Checked)
+    renderChartAccountMerging(sheetData, selectedQA);
+
+    // 5. Chart 5: IT Schedule Monitoring (Linked vs Checked)
+    renderChartITScheduleMonitoring(sheetData, selectedQA);
+
+    // 6. Chart 6: Other Task (Times Logged vs Hours)
+    renderChartOtherTasks(filteredTasks, selectedQA);
+
+    // 7. Chart 7: RTH Compliance (Dispatch QA)
+    renderChartRTHComplianceDispatch(sheetData, selectedQA);
+
+    // 8. Master Logs Table at the End
+    renderMasterLogsTable(filteredTasks);
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 1: TOTAL QA TASKS LOGGED (OVERALL CHART)
+ * Vertical Bar Chart: Tasks Logged, Tickets Checked, Hours, and Pacing
+ * Table Beneath: Reading what's in the chart
+ * ----------------------------------------------------------------------------
+ */
+function renderChartTotalQATasksLogged(tasks) {
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, tasks: 0, tickets: 0, hours: 0 });
+
+    tasks.forEach(t => {
+        const name = normalizeQASpecialistName(t.specialist);
+        if (!stats[name]) stats[name] = { name, tasks: 0, tickets: 0, hours: 0 };
+        stats[name].tasks += 1;
+        stats[name].tickets += Number(t.items) || 0;
+        stats[name].hours += Number(t.hours) || 0;
+    });
+
+    const specialists = Object.values(stats).filter(s => s.tasks > 0 || qaList.includes(s.name));
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const tasksData = specialists.map(s => s.tasks);
+    const ticketsData = specialists.map(s => s.tickets);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+    const pacingData = specialists.map(s => s.hours > 0 ? +(s.tickets / s.hours).toFixed(1) : 0);
+
+    // Vertical Bar Chart
+    const canvas = document.getElementById('chart-total-qa-tasks-logged');
+    if (canvas) {
+        destroyChartInstance('chart-total-qa-tasks-logged');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-total-qa-tasks-logged'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Tasks Logged', data: tasksData, backgroundColor: '#0284c7', borderRadius: 6 },
+                    { label: 'Tickets/Items Checked', data: ticketsData, backgroundColor: '#00b4d8', borderRadius: 6 },
+                    { label: 'Total Hours Logged', data: hoursData, backgroundColor: '#0d9488', borderRadius: 6 },
+                    { label: 'Pacing (Items/Hr)', data: pacingData, backgroundColor: '#f59e0b', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+                }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-total-qa-tasks-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const pacing = s.hours > 0 ? (s.tickets / s.hours).toFixed(1) : '0.0';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${s.tasks.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-300">${s.tickets.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-extrabold text-amber-600 dark:text-amber-400">${pacing} / hr</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 2: RTH COMPLIANCE (WAYBILL VALIDATION)
+ * Vertical Bar Chart: Waybills Validated, Hours Logged, Target Quota (20%)
+ * Table Beneath: Validated, Hours, Target Quota %, Quota Status, Pacing
+ * ----------------------------------------------------------------------------
+ */
+function renderChartRTHComplianceWaybill(sheetData, selectedQA) {
+    const pharmacy = sheetData.pharmacy || [];
+    const dailyLog = sheetData.daily_waybill_log || [];
+
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, validated: 0, hours: 0, targetQuota: 166 });
+
+    pharmacy.forEach(r => {
+        const name = normalizeQASpecialistName(r.qa);
+        if (selectedQA !== 'ALL' && name !== selectedQA) return;
+        if (!stats[name]) stats[name] = { name, validated: 0, hours: 0, targetQuota: 166 };
+        stats[name].validated += Number(r.validated_count) || 0;
+        stats[name].hours += Number(r.hours) || 1.0;
+    });
+
+    const specialists = Object.values(stats).filter(s => s.validated > 0 || (selectedQA === 'ALL' && qaList.includes(s.name)));
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const validatedData = specialists.map(s => s.validated);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+    const quotaData = specialists.map(s => s.targetQuota);
+
+    // Vertical Bar Chart
+    const canvas = document.getElementById('chart-rth-compliance-waybill');
+    if (canvas) {
+        destroyChartInstance('chart-rth-compliance-waybill');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-rth-compliance-waybill'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Waybills Validated', data: validatedData, backgroundColor: '#00b4d8', borderRadius: 6 },
+                    { label: 'Target Quota (20% Req)', data: quotaData, backgroundColor: '#e2e8f0', borderColor: '#0284c7', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Hours Doing Task', data: hoursData, backgroundColor: '#0d9488', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-rth-compliance-waybill-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const pacing = s.hours > 0 ? (s.validated / s.hours).toFixed(1) : '0.0';
+            const quotaMet = s.validated >= s.targetQuota;
+            const pctAchieved = s.targetQuota > 0 ? ((s.validated / s.targetQuota) * 100).toFixed(0) : '100';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-teal-600 dark:text-cyan-400">${s.validated.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-center font-mono text-slate-500">20% (${s.targetQuota})</td>
+                    <td class="px-4 py-2.5 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${quotaMet ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${pctAchieved}% (${quotaMet ? 'Quota Met' : 'In Progress'})
+                        </span>
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-300">${pacing} waybills/hr</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 3: QA ASSIGNED TICKETS (SMS / CALL / OTHERS)
+ * Vertical Bar Chart: SMS, Call, Others, and Hours
+ * Table Beneath: Breakdown + Hours spent checking tickets
+ * ----------------------------------------------------------------------------
+ */
+function renderChartQAAssignedTickets(sheetData, selectedQA) {
+    const outputQA = sheetData.output_qa || [];
+
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, sms: 0, call: 0, others: 0, total: 0, hours: 0 });
+
+    outputQA.forEach(r => {
+        const name = normalizeQASpecialistName(r.qa_checker || r.qa);
+        if (selectedQA !== 'ALL' && name !== selectedQA) return;
+        if (!stats[name]) stats[name] = { name, sms: 0, call: 0, others: 0, total: 0, hours: 0 };
+
+        const text = `${r.report_name || ''} ${r.ticket_no || ''} ${r.remarks || ''}`.toLowerCase();
+        if (text.includes('sms') || text.includes('text') || text.includes('otp')) {
+            stats[name].sms += 1;
+        } else if (text.includes('call') || text.includes('phone') || text.includes('voice')) {
+            stats[name].call += 1;
+        } else {
+            stats[name].others += 1;
+        }
+        stats[name].total += 1;
+        stats[name].hours += Number(r.hours) || 0.5;
+    });
+
+    const specialists = Object.values(stats).filter(s => s.total > 0 || (selectedQA === 'ALL' && qaList.includes(s.name)));
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const smsData = specialists.map(s => s.sms);
+    const callData = specialists.map(s => s.call);
+    const othersData = specialists.map(s => s.others);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+
+    // Vertical Stacked Bar Chart
+    const canvas = document.getElementById('chart-qa-assigned-tickets');
+    if (canvas) {
+        destroyChartInstance('chart-qa-assigned-tickets');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-qa-assigned-tickets'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'SMS Tickets', data: smsData, backgroundColor: '#0284c7', borderRadius: 4 },
+                    { label: 'Call Tickets', data: callData, backgroundColor: '#0d9488', borderRadius: 4 },
+                    { label: 'Other Tickets', data: othersData, backgroundColor: '#64748b', borderRadius: 4 },
+                    { label: 'Hours Spent', data: hoursData, backgroundColor: '#f59e0b', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } } },
+                scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-qa-assigned-tickets-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const pacing = s.hours > 0 ? (s.total / s.hours).toFixed(1) : '0.0';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-sky-600 dark:text-sky-400">${s.sms}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-400">${s.call}</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-500">${s.others}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${s.total}</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">${pacing} / hr</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 4: ACCOUNT MERGING
+ * Vertical Bar Chart: Accounts Merged vs Run Locations Checked
+ * Table Beneath: Hours spent, locations checked, merged accounts, pacing
+ * ----------------------------------------------------------------------------
+ */
+function renderChartAccountMerging(sheetData, selectedQA) {
+    const merging = sheetData.account_merging || [];
+
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, merged: 0, locations: 0, hours: 0 });
+
+    merging.forEach(r => {
+        const name = normalizeQASpecialistName(r.qa);
+        if (selectedQA !== 'ALL' && name !== selectedQA) return;
+        if (!stats[name]) stats[name] = { name, merged: 0, locations: 0, hours: 0 };
+        stats[name].merged += Number(r.merged_accounts) || 0;
+        stats[name].locations += Number(r.locations_count) || 0;
+        stats[name].hours += Number(r.hours) || 1.0;
+    });
+
+    const specialists = Object.values(stats).filter(s => s.locations > 0 || (selectedQA === 'ALL' && qaList.includes(s.name)));
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const mergedData = specialists.map(s => s.merged);
+    const locationsData = specialists.map(s => s.locations);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+
+    // Vertical Bar Chart
+    const canvas = document.getElementById('chart-account-merging-vertical');
+    if (canvas) {
+        destroyChartInstance('chart-account-merging-vertical');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-account-merging-vertical'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Accounts Merged', data: mergedData, backgroundColor: '#0d9488', borderRadius: 6 },
+                    { label: 'Run Locations Checked', data: locationsData, backgroundColor: '#0284c7', borderRadius: 6 },
+                    { label: 'Hours Spent', data: hoursData, backgroundColor: '#f59e0b', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } } },
+                scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-account-merging-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const locRate = s.hours > 0 ? (s.locations / s.hours).toFixed(1) : '0.0';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-400">${s.merged.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${s.locations.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">${locRate} loc/hr</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 5: IT SCHEDULE MONITORING
+ * Vertical Bar Chart: Run Locations Checked vs Runs Linked
+ * Table Beneath: Locations Checked, Runs Linked, Linking %, Hours
+ * ----------------------------------------------------------------------------
+ */
+function renderChartITScheduleMonitoring(sheetData, selectedQA) {
+    const itsched = sheetData.it_schedule || [];
+
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, checked: 0, linked: 0, hours: 0 });
+
+    itsched.forEach(r => {
+        const name = normalizeQASpecialistName(r.qa);
+        if (selectedQA !== 'ALL' && name !== selectedQA) return;
+        if (!stats[name]) stats[name] = { name, checked: 0, linked: 0, hours: 0 };
+        stats[name].checked += Number(r.checked_count) || 0;
+        stats[name].linked += Number(r.linked_count) || 0;
+        stats[name].hours += Number(r.hours) || 0.8;
+    });
+
+    const specialists = Object.values(stats).filter(s => s.checked > 0 || (selectedQA === 'ALL' && qaList.includes(s.name)));
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const checkedData = specialists.map(s => s.checked);
+    const linkedData = specialists.map(s => s.linked);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+
+    // Vertical Bar Chart
+    const canvas = document.getElementById('chart-it-schedule-vertical');
+    if (canvas) {
+        destroyChartInstance('chart-it-schedule-vertical');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-it-schedule-vertical'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Run Locations Checked', data: checkedData, backgroundColor: '#0284c7', borderRadius: 6 },
+                    { label: 'Runs Linked', data: linkedData, backgroundColor: '#0d9488', borderRadius: 6 },
+                    { label: 'Hours Spent', data: hoursData, backgroundColor: '#f59e0b', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } } },
+                scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-it-schedule-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const linkPct = s.checked > 0 ? ((s.linked / s.checked) * 100).toFixed(1) : '0.0';
+            const rate = s.hours > 0 ? (s.checked / s.hours).toFixed(1) : '0.0';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${s.checked.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-400">${s.linked.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-center font-mono font-semibold text-emerald-600 dark:text-emerald-400">${linkPct}%</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">${rate} loc/hr</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 6: OTHER TASK
+ * Vertical Bar Chart: Times QA logged in Other Tasks vs Hours
+ * Table Beneath: Times Logged, Hours Spent, Description / Notes
+ * ----------------------------------------------------------------------------
+ */
+function renderChartOtherTasks(tasks, selectedQA) {
+    const knownCategories = ['Waybill / Pharmacy QA', 'Account Merging', 'IT Schedule Monitoring', 'Dispatch QA', 'Output QA'];
+    const otherTasks = tasks.filter(t => !knownCategories.includes(t.category) || t.is_other);
+
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, times: 0, hours: 0, notes: [] });
+
+    otherTasks.forEach(t => {
+        const name = normalizeQASpecialistName(t.specialist);
+        if (selectedQA !== 'ALL' && name !== selectedQA) return;
+        if (!stats[name]) stats[name] = { name, times: 0, hours: 0, notes: [] };
+        stats[name].times += 1;
+        stats[name].hours += Number(t.hours) || 0.5;
+        if (t.description && !stats[name].notes.includes(t.description)) {
+            stats[name].notes.push(t.description);
+        }
+    });
+
+    const specialists = Object.values(stats);
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const timesData = specialists.map(s => s.times);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+
+    // Vertical Bar Chart
+    const canvas = document.getElementById('chart-other-tasks-vertical');
+    if (canvas) {
+        destroyChartInstance('chart-other-tasks-vertical');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-other-tasks-vertical'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Times Logged in Other Tasks', data: timesData, backgroundColor: '#0284c7', borderRadius: 6 },
+                    { label: 'Hours Spent', data: hoursData, backgroundColor: '#f59e0b', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } } },
+                scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-other-tasks-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const notePreview = s.notes.slice(0, 2).join('; ') || 'Standard QA Support / Ad-hoc Sync';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${s.times}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300 max-w-sm truncate" title="${escapeHtml(s.notes.join('\n'))}">${escapeHtml(notePreview)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * CHART 7: RTH COMPLIANCE (DISPATCH QA)
+ * Vertical Bar Chart: Overrides Count vs Hours Spent
+ * Table Beneath: Sessions, Overridden Count, Hours, Pacing
+ * ----------------------------------------------------------------------------
+ */
+function renderChartRTHComplianceDispatch(sheetData, selectedQA) {
+    const dispatch = sheetData.dispatch_qa || [];
+
+    const stats = {};
+    const qaList = ['Arabella Morales', 'Janryl Jay Canaway', 'John Michael Francisco', 'Julius Rod Dayag', 'Yesha Nicholai Lao'];
+    qaList.forEach(q => stats[q] = { name: q, sessions: 0, overridden: 0, hours: 0 });
+
+    dispatch.forEach(r => {
+        const name = normalizeQASpecialistName(r.qa);
+        if (selectedQA !== 'ALL' && name !== selectedQA) return;
+        if (!stats[name]) stats[name] = { name, sessions: 0, overridden: 0, hours: 0 };
+        stats[name].sessions += 1;
+        stats[name].overridden += Number(r.overridden_count) || 0;
+        stats[name].hours += Number(r.hours) || 1.0;
+    });
+
+    const specialists = Object.values(stats).filter(s => s.sessions > 0 || (selectedQA === 'ALL' && qaList.includes(s.name)));
+    const labels = specialists.map(s => s.name.split(' ')[0]);
+    const overriddenData = specialists.map(s => s.overridden);
+    const hoursData = specialists.map(s => +s.hours.toFixed(1));
+
+    // Vertical Bar Chart
+    const canvas = document.getElementById('chart-rth-compliance-dispatch-vertical');
+    if (canvas) {
+        destroyChartInstance('chart-rth-compliance-dispatch-vertical');
+        const ctx = canvas.getContext('2d');
+        window.qaReportChartInstances['chart-rth-compliance-dispatch-vertical'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Dispatch Overrides Count', data: overriddenData, backgroundColor: '#00b4d8', borderRadius: 6 },
+                    { label: 'Hours Spent', data: hoursData, backgroundColor: '#f59e0b', borderRadius: 6 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Plus Jakarta Sans' } } } },
+                scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Table Beneath
+    const tbody = document.getElementById('table-rth-compliance-dispatch-tbody');
+    if (tbody) {
+        tbody.innerHTML = specialists.map(s => {
+            const pacing = s.hours > 0 ? (s.overridden / s.hours).toFixed(1) : '0.0';
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${escapeHtml(s.name)}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-400">${s.sessions}</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-blue-600 dark:text-cyan-400">${s.overridden.toLocaleString()}</td>
+                    <td class="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">${s.hours.toFixed(1)}h</td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">${pacing} overrides/hr</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * ----------------------------------------------------------------------------
+ * 8. MASTER / RAW LOGS TABLE AT THE END
+ * Columns: Category | Monitoring ID | Q.A. | Date Entry | Time Started | Time Ended | Hours | Details
+ * ----------------------------------------------------------------------------
+ */
+function renderMasterLogsTable(tasks) {
+    const tbody = document.getElementById('table-master-qa-logs-tbody');
+    if (!tbody) return;
+
+    if (!tasks || tasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 text-xs">No task entries match your active filters.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = tasks.slice(0, 150).map(t => {
+        // Extract Monitoring ID if present in description or generate identifier
+        let monId = '-';
+        if (t.description && t.description.includes(':')) {
+            monId = t.description.split(':')[0].trim();
+        } else if (t.category) {
+            monId = t.category.slice(0, 4).toUpperCase();
+        }
+
+        const catColors = {
+            'Waybill / Pharmacy QA': 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-cyan-300',
+            'Account Merging': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300',
+            'IT Schedule Monitoring': 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+            'Dispatch QA': 'bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300',
+            'Output QA': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300'
+        };
+        const catBadge = catColors[t.category] || 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
+
+        return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 text-xs">
+                <td class="px-3 py-2.5">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${catBadge}">${escapeHtml(t.category)}</span>
+                </td>
+                <td class="px-3 py-2.5 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">${escapeHtml(monId)}</td>
+                <td class="px-3 py-2.5 font-semibold text-slate-900 dark:text-white">${escapeHtml(t.specialist)}</td>
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(t.date || '-')}</td>
+                <td class="px-3 py-2.5 font-mono text-[11px] text-slate-500">${escapeHtml(t.time_started || '-')}</td>
+                <td class="px-3 py-2.5 font-mono text-[11px] text-slate-500">${escapeHtml(t.time_ended || '-')}</td>
+                <td class="px-3 py-2.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">${Number(t.hours || 0).toFixed(2)}h</td>
+                <td class="px-3 py-2.5 text-slate-600 dark:text-slate-300 max-w-md truncate" title="${escapeHtml(t.description || '')}">
+                    ${escapeHtml(t.description || '-')}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/**
+ * Exports the Complete Comprehensive QA Specialist Report to Excel (.xlsx)
+ */
+function exportComprehensiveQAReportExcel() {
+    if (typeof XLSX === 'undefined') {
+        showNotification('SheetJS is loading. Please wait...', 'error');
+        return;
+    }
+
+    const tasks = window.qaTasksData || [];
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Master Log Entries
+    const rows = tasks.map(t => ({
+        'Category': t.category || '',
+        'Monitoring ID': (t.description || '').split(':')[0] || '',
+        'QA Specialist': t.specialist || '',
+        'Date': t.date || '',
+        'Time Started': t.time_started || '',
+        'Time Ended': t.time_ended || '',
+        'Hours': Number(t.hours) || 0,
+        'Items / Checked': Number(t.items) || 0,
+        'Pacing': Number(t.iph) || 0,
+        'Details': t.description || '',
+        'Status': t.status || ''
+    }));
+    const ws1 = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Master QA Task Logs');
+
+    const filename = `1Life_Comprehensive_QA_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    showNotification(`Downloaded ${filename}`, 'success');
+}
+
+/**
+ * Exports the Comprehensive QA Specialist Report to PDF (.pdf)
+ */
+function exportComprehensiveQAReportPDF() {
+    if (typeof exportModulePDF === 'function') {
+        exportModulePDF('qa_reports');
+    } else {
+        window.print();
+    }
+}
+
+// Expose functions globally on window
+window.renderQASpecialistReportCharts = renderQASpecialistReportCharts;
+window.exportComprehensiveQAReportExcel = exportComprehensiveQAReportExcel;
+window.exportComprehensiveQAReportPDF = exportComprehensiveQAReportPDF;
+
+    </script>
     <script src="https://cdn.jsdelivr.net/gh/arabella04/waybill-qa-dashboard@main/app.js"></script>
+
+    <!-- ================================================================= -->
+    <!-- FLOATING USER ACCOUNT PILL & PROFILE POPOVER (Bottom-Right)       -->
+    <!-- ================================================================= -->
+    <div id="floating-user-dock" class="fixed bottom-5 right-5 z-50 flex flex-col items-end select-none">
+        <!-- Floating Profile Popover (opens upward) -->
+        <div id="sidebar-profile-popover" class="hidden mb-3 w-72 rounded-2xl bg-[#0e272c] border border-teal-500/30 text-white shadow-2xl p-4 space-y-3 backdrop-blur-md">
+            <div class="flex items-center gap-3 pb-3 border-b border-teal-800/60">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-xs">
+                    1L
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div id="sidebar-user-name" class="font-bold text-sm text-white truncate">1Life QA User</div>
+                    <div id="sidebar-user-role" class="text-xs text-teal-300 truncate">QA Specialist • @1life.ph</div>
+                </div>
+            </div>
+            <div class="space-y-1 text-xs">
+                <button type="button" onclick="switchWorkspaceNav('my-shift')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-white/10 transition font-medium">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Shift & Task Log
+                </button>
+                <button type="button" onclick="switchWorkspaceNav('documentation')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-white/10 transition font-medium">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Help & Documentation
+                </button>
+                <button type="button" onclick="handle1LifeLogout()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-300 hover:bg-rose-500/20 transition font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Sign Out / Switch Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Floating Avatar Pill Button -->
+        <button type="button" id="sidebar-profile-btn" onclick="toggleProfilePopover(event)" class="group flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-full bg-[#0d2226]/90 hover:bg-[#153840] text-white border border-[#00b4d8]/40 shadow-2xl backdrop-blur-md transition-all duration-200 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,180,216,0.3)]">
+            <div id="sidebar-user-initials" class="w-8 h-8 rounded-full bg-gradient-to-br from-[#00b4d8] to-[#0d9488] text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                1L
+            </div>
+            <div class="text-left pr-1 hidden sm:block">
+                <div id="sidebar-user-name" class="text-xs font-bold text-white leading-tight truncate max-w-[130px]">1Life QA User</div>
+                <div id="sidebar-user-role" class="text-[10px] text-teal-300 font-medium truncate max-w-[130px]">QA Specialist</div>
+            </div>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0d2226] mr-1 animate-pulse" title="Online & Connected"></span>
+        </button>
+    </div>
+
 </body>
 </html>

@@ -156,10 +156,6 @@
             background: linear-gradient(to right, #0a1b1e, #112a2f, #16363d) !important;
             border-bottom: 1px solid #1c464e !important;
         }
-        body.workspace-dark #workspace-sidebar {
-            background-color: #0b1a1d !important;
-            border-color: #183e45 !important;
-        }
         body.workspace-dark .ws-card,
         body.workspace-dark section.bg-white,
         body.workspace-dark .bg-white:not(.keep-light) {
@@ -245,23 +241,6 @@
         .nav-tab {
             white-space: nowrap !important;
         }
-        /* Collapsed Sidebar State */
-        #workspace-sidebar.sidebar-collapsed {
-            width: 4.5rem !important;
-        }
-        #workspace-sidebar.sidebar-collapsed .sidebar-label,
-        #workspace-sidebar.sidebar-collapsed .sidebar-badge,
-        #workspace-sidebar.sidebar-collapsed .sidebar-section-title,
-        #workspace-sidebar.sidebar-collapsed .sidebar-sublinks,
-        #workspace-sidebar.sidebar-collapsed #dq-module-chevron {
-            display: none !important;
-        }
-        #workspace-sidebar.sidebar-collapsed .sidebar-item {
-            justify-content: center !important;
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-        }
-    
         /* Concept 2: Modular Bento-Grid Enhancements */
         .bento-box {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -272,27 +251,6 @@
         }
         body.workspace-dark .bento-box:hover {
             box-shadow: 0 10px 25px -5px rgba(0, 180, 216, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-        }
-        /* Hover-expanding compact rail sidebar */
-        #workspace-sidebar.sidebar-collapsed {
-            width: 4.5rem !important;
-            transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-        #workspace-sidebar.sidebar-collapsed:hover {
-            width: 16rem !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
-        }
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-label,
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-badge,
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-section-title,
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-sublinks,
-        #workspace-sidebar.sidebar-collapsed:hover #dq-module-chevron {
-            display: inline-flex !important;
-        }
-        #workspace-sidebar.sidebar-collapsed:hover .sidebar-item {
-            justify-content: flex-start !important;
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
         }
     
         /* Page Zoom & Resizable Icons Scaling Engine */
@@ -375,6 +333,36 @@
                     </span>
                     <span>Sign in with Google (@1life.ph)</span>
                 </button>
+
+                <!-- Direct 1Life Team Account & Position Selection -->
+                <div id="direct-1life-login-box" class="pt-3 border-t border-slate-100">
+                    <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">Or Verify with Your 1Life Account:</div>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" onclick="complete1LifeLogin('armorales@1life.ph', 'Arabella Morales')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👩‍💼 Arabella Morales
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('jtcanaway@1life.ph', 'Janryl Jay Canaway')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👨‍💼 Janryl Jay Canaway
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('jofrancisco@1life.ph', 'John Michael Francisco')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👨‍💼 John Michael Francisco
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('jrdayag@1life.ph', 'Julius Rod Dayag')" class="px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👨‍💼 Julius Rod Dayag
+                            </button>
+                            <button type="button" onclick="complete1LifeLogin('ynlao@1life.ph', 'Yesha Nicholai Lao')" class="col-span-2 px-2.5 py-1.5 rounded-lg border border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 text-left text-xs font-semibold text-slate-800 transition truncate">
+                                👩‍💼 Yesha Nicholai Lao
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5 pt-1.5">
+                            <input type="email" id="direct-1life-email" placeholder="yourname@1life.ph" class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono focus:ring-2 focus:ring-[#00b4d8] focus:outline-none">
+                            <button type="button" onclick="handleDirect1LifeSubmit()" class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <p class="text-[11px] text-center text-slate-400">
                     Protected by Google Workspace Organization Auth (<span class="font-mono text-[#00b4d8] font-semibold">@1life.ph</span> only)
@@ -474,6 +462,10 @@
             <button type="button" onclick="scrollToCustomReport()" id="top-nav-custom-report" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Custom Reports</span>
+            </button>
+            <button type="button" onclick="switchTaskDashboard('qa-report')" id="side-nav-qa-report" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>QA Reports</span>
             </button>
             <button type="button" onclick="switchWorkspaceNav('notes')" id="side-nav-notes" class="top-nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -901,10 +893,10 @@
                                     </button>
 
                                     <!-- Multi-select Dropdown Panel -->
-                                    <div id="home-cr-date-dropdown-panel" class="hidden absolute z-50 left-0 sm:right-0 sm:left-auto mt-1.5 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
+                                    <div id="home-cr-date-dropdown-panel" onclick="event.stopPropagation()" class="hidden absolute z-50 left-0 sm:right-0 sm:left-auto mt-1.5 w-72 sm:w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
                                         <div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-800">
                                             <button type="button" onclick="setHomeCRDateQuickMode('ALL')" class="px-2 py-1 rounded bg-[#00b4d8] text-white font-bold text-[10px] hover:bg-[#0096c7] transition">All Time</button>
-                                            <button type="button" onclick="setHomeCRDateQuickMode('LATEST_WEEK')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Latest Week</button>
+                                            <button type="button" onclick="setHomeCRDateQuickMode('LATEST_DAY')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Latest Day</button>
                                             <button type="button" onclick="setHomeCRDateQuickMode('NOV_2026')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Nov 2026</button>
                                             <button type="button" onclick="setHomeCRDateQuickMode('OCT_2026')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-[10px] hover:bg-cyan-50 hover:text-cyan-800 transition">Oct 2026</button>
                                             <button type="button" onclick="clearHomeCRDateSelections()" class="px-2 py-1 rounded text-rose-600 dark:text-rose-400 font-semibold text-[10px] hover:bg-rose-50 dark:hover:bg-rose-950/40 ml-auto transition">Clear</button>
@@ -1476,117 +1468,307 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- TAB 2: QA PERFORMANCE REPORT                   -->
+        <!-- TAB 2: QA SPECIALIST REPORTS & VISUAL ANALYTICS -->
         <!-- ============================================== -->
         <div id="tab-qa-report" class="tab-panel hidden space-y-6">
-            <div class="bg-blue-50/60 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h3 class="text-sm font-bold text-blue-900">QA Specialist Performance Scorecard</h3>
-                    <p class="text-xs text-blue-700">Detailed breakdown of Initial and Final validations conducted by each QA team member across filtered dates.</p>
+            <!-- Header Banner with Filter Controls & Export Buttons -->
+            <div class="bg-gradient-to-r from-[#0e272c] via-[#163d45] to-[#1d4e58] rounded-2xl p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-[#255e69]/40">
+                <div class="space-y-1">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#00b4d8]/20 text-cyan-200 border border-[#00b4d8]/30">
+                        <span class="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse"></span>
+                        <span>1Life Q.A Task Dashboard • QA Specialist Performance Hub</span>
+                    </div>
+                    <h2 class="text-xl font-extrabold text-white">QA Specialist Performance Scorecard & Visual Analytics</h2>
+                    <p class="text-xs text-teal-100 max-w-2xl">
+                        Comprehensive monitoring of QA workload, task pacing, RTH compliance with quota targets, ticket breakdown, account merging, and IT schedule logs.
+                    </p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                    <button onclick="exportProgressReportExcel()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-xs transition">
-                        Export QA Report (.xlsx)
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Specialist Filter -->
+                    <select id="qa-report-filter-specialist" onchange="renderQASpecialistReportCharts()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-[#123036] border border-teal-500/40 text-white focus:outline-none focus:ring-2 focus:ring-[#00b4d8]">
+                        <option value="ALL">All QA Specialists</option>
+                        <option value="Arabella Morales">Arabella Morales</option>
+                        <option value="Janryl Jay Canaway">Janryl Jay Canaway</option>
+                        <option value="John Michael Francisco">John Michael Francisco</option>
+                        <option value="Julius Rod Dayag">Julius Rod Dayag</option>
+                        <option value="Yesha Nicholai Lao">Yesha Nicholai Lao</option>
+                    </select>
+
+                    <!-- Timeframe Filter -->
+                    <select id="qa-trend-range-select" onchange="renderQASpecialistReportCharts()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-[#123036] border border-teal-500/40 text-white focus:outline-none focus:ring-2 focus:ring-[#00b4d8]">
+                        <option value="all">Whole / All Time</option>
+                        <option value="today">This Day (Today)</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                    </select>
+
+                    <button type="button" onclick="exportComprehensiveQAReportExcel()" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow transition">
+                        Export Full Report (.xlsx)
                     </button>
-                    <button onclick="exportQAReportPDF()" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow-xs transition">
-                        Export QA Report (.pdf)
+                    <button type="button" onclick="exportModulePDF('qa_reports')" class="inline-flex items-center px-4 py-2 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white shadow transition">
+                        Export Full Report (.pdf)
                     </button>
                 </div>
             </div>
 
-            <!-- QA Throughput Trend Multi-Line Chart -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <!-- 1. CHART: TOTAL QA TASKS LOGGED (OVERALL CHART) -->
+            <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                            <h3 class="text-sm font-bold text-slate-800">QA Specialist Throughput Trends (Line Graph)</h3>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">Velocity Tracking</span>
+                            <span class="w-3 h-3 rounded-full bg-[#00b4d8]"></span>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: Total QA Tasks Logged (Overall Chart)</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-blue-700 border border-blue-200">Vertical Bar Graph</span>
                         </div>
-                        <p class="text-xs text-slate-500">Track and compare validation velocity over time for each individual QA specialist</p>
-                    </div>
-
-                    <!-- Interactive Controls: Metric, Granularity, Time Range -->
-                    <div class="flex flex-wrap items-center gap-2 text-xs">
-                        <!-- Metric Filter -->
-                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button type="button" onclick="setQATrendMetric('total')" id="btn-qa-metric-total" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition">Total Handled</button>
-                            <button type="button" onclick="setQATrendMetric('initial')" id="btn-qa-metric-initial" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Initial QA</button>
-                            <button type="button" onclick="setQATrendMetric('final')" id="btn-qa-metric-final" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Final QA</button>
-                        </div>
-
-                        <!-- Granularity: Day / Week / Month -->
-                        <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button type="button" onclick="setQATrendGrouping('day')" id="btn-qa-group-day" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white text-blue-700 shadow-xs transition">Per Day</button>
-                            <button type="button" onclick="setQATrendGrouping('week')" id="btn-qa-group-week" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Week</button>
-                            <button type="button" onclick="setQATrendGrouping('month')" id="btn-qa-group-month" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition">Per Month</button>
-                        </div>
-
-                        <!-- Timeframe Range Selection -->
-                        <select id="qa-trend-range-select" onchange="setQATrendRange(this.value)" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs">
-                            <option value="all">Whole / All Time</option>
-                            <option value="today">This Day (Today)</option>
-                            <option value="yesterday">Yesterday</option>
-                            <option value="day_last_week">Same Day Last Week</option>
-                            <option value="this_week">This Week</option>
-                            <option value="last_week">Last Week</option>
-                            <option value="this_month">This Month</option>
-                        </select>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Overall comparison of QA name, number of tasks logged, number of tickets checked, total hours, and operational pacing.</p>
                     </div>
                 </div>
-
-                <!-- Line Chart Canvas -->
                 <div class="h-72">
-                    <canvas id="chart-qa-trend-line"></canvas>
+                    <canvas id="chart-total-qa-tasks-logged"></canvas>
                 </div>
-
-                <!-- Helper footnote & legend notice -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 pt-2 gap-1">
-                    <span>💡 Tip: Click any QA specialist's name in the legend above to isolate or hide their line.</span>
-                    <span id="qa-trend-summary-note" class="text-blue-700 font-medium">Tracking all QA specialists</span>
+                <!-- Table Beneath: Reading what's in the chart (Less Visual Mode) -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Total QA Tasks Logged — Data Summary Table
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-2.5">QA Specialist</th>
+                                    <th class="px-4 py-2.5 text-right">Tasks Logged</th>
+                                    <th class="px-4 py-2.5 text-right">Tickets / Items Checked</th>
+                                    <th class="px-4 py-2.5 text-right">Total Hours Logged</th>
+                                    <th class="px-4 py-2.5 text-right">Pacing (Items/Hour)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-total-qa-tasks-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- QA Comparison Chart -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
-                <h3 class="text-sm font-bold text-slate-800 mb-1">QA Specialists: Initial vs Final Validations Volume</h3>
-                <p class="text-xs text-slate-500 mb-4">Comparison of throughput handled by each QA officer</p>
+            <!-- 2. CHART: RTH COMPLIANCE (WAYBILL VALIDATION) -->
+            <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-teal-500"></span>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: RTH Compliance (Waybill Validation)</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-50 text-teal-700 border border-teal-200">20% Quota Target</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Waybills validated per QA specialist, hours logged doing this task, and mandatory 20% quota compliance.</p>
+                    </div>
+                </div>
                 <div class="h-64">
-                    <canvas id="chart-qa-comparison"></canvas>
+                    <canvas id="chart-rth-compliance-waybill"></canvas>
+                </div>
+                <!-- Table Beneath -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                        RTH Compliance (Waybill Validation) — Pacing & Quota Table
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-2.5">QA Specialist</th>
+                                    <th class="px-4 py-2.5 text-right">Waybills Validated</th>
+                                    <th class="px-4 py-2.5 text-right">Hours Logged</th>
+                                    <th class="px-4 py-2.5 text-center">Target Quota (20%)</th>
+                                    <th class="px-4 py-2.5 text-center">Quota Status</th>
+                                    <th class="px-4 py-2.5 text-right">Pacing (Waybills/Hour)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-rth-compliance-waybill-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- QA Data Table -->
-            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-slate-800">QA Specialists Output Matrix</h3>
-                    <span class="text-xs text-slate-400">Values update based on active date filters</span>
+            <!-- 3. CHART: QA ASSIGNED TICKETS -->
+            <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: QA Assigned Tickets</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-sky-50 text-sky-700 border border-sky-200">SMS / Call / Others</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tickets assigned to QA team members with breakdown of SMS, Call, and other tickets.</p>
+                    </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
-                                <th class="px-4 py-3">QA Specialist</th>
-                                <th class="px-4 py-3 text-right">Initial Handled</th>
-                                <th class="px-4 py-3 text-right text-emerald-700">Initial Valid</th>
-                                <th class="px-4 py-3 text-right text-rose-700">Initial Invalid</th>
-                                <th class="px-4 py-3 text-right text-slate-400">Initial Pending</th>
-                                <th class="px-4 py-3 text-right text-blue-700">Initial Valid %</th>
-                                <th class="px-4 py-3 text-right bg-sky-50/50">Final Handled</th>
-                                <th class="px-4 py-3 text-right text-emerald-700 bg-sky-50/50">Final Valid</th>
-                                <th class="px-4 py-3 text-right text-rose-700 bg-sky-50/50">Final Invalid</th>
-                                <th class="px-4 py-3 text-right bg-sky-50/50">Final Valid %</th>
-                                <th class="px-4 py-3 text-right text-blue-900 font-bold">Total All Handled</th>
-                                <th class="px-4 py-3 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="qa-report-tbody">
-                            <!-- Populated by JS -->
-                        </tbody>
-                        <tfoot id="qa-report-tfoot">
-                            <!-- Populated by JS -->
-                        </tfoot>
-                    </table>
+                <div class="h-64">
+                    <canvas id="chart-qa-assigned-tickets"></canvas>
+                </div>
+                <!-- Table Beneath -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 dark:bg-slate-800/80 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                        QA Assigned Tickets — Ticket Distribution & Hours Table
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-2.5">QA Specialist</th>
+                                    <th class="px-4 py-2.5 text-right text-sky-600">SMS Tickets</th>
+                                    <th class="px-4 py-2.5 text-right text-teal-600">Call Tickets</th>
+                                    <th class="px-4 py-2.5 text-right text-slate-500">Other Tickets</th>
+                                    <th class="px-4 py-2.5 text-right font-bold text-blue-600">Total Assigned</th>
+                                    <th class="px-4 py-2.5 text-right">Hours Checking Tickets</th>
+                                    <th class="px-4 py-2.5 text-right font-bold text-amber-600">Pacing (Tickets/Hr)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-qa-assigned-tickets-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-COLUMN ROW: CHART 4 (ACCOUNT MERGING) & CHART 5 (IT SCHEDULE MONITORING) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 4. CHART: ACCOUNT MERGING -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: Account Merging</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Accounts merged by QAs and run locations checked.</p>
+                    <div class="h-56">
+                        <canvas id="chart-account-merging-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Merged</th>
+                                        <th class="px-3 py-2 text-right">Locations</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                        <th class="px-3 py-2 text-right">Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-account-merging-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. CHART: IT SCHEDULE MONITORING -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: IT Schedule Monitoring</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Run locations linked and checked (two distinct metrics) per QA.</p>
+                    <div class="h-56">
+                        <canvas id="chart-it-schedule-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Checked</th>
+                                        <th class="px-3 py-2 text-right">Linked</th>
+                                        <th class="px-3 py-2 text-center">Link %</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-it-schedule-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-COLUMN ROW: CHART 6 (OTHER TASK) & CHART 7 (RTH COMPLIANCE DISPATCH) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 6. CHART: OTHER TASK -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-slate-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: Other Task</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Number of times logged and hours spent in other tasks.</p>
+                    <div class="h-56">
+                        <canvas id="chart-other-tasks-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Times</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                        <th class="px-3 py-2">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-other-tasks-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. CHART: RTH COMPLIANCE (DISPATCH) -->
+                <div class="ws-card bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                    <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Chart: RTH Compliance (Dispatch)</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Dispatch override tasks volume and hours.</p>
+                    <div class="h-56">
+                        <canvas id="chart-rth-compliance-dispatch-vertical"></canvas>
+                    </div>
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px]">
+                                    <tr>
+                                        <th class="px-3 py-2">QA</th>
+                                        <th class="px-3 py-2 text-right">Sessions</th>
+                                        <th class="px-3 py-2 text-right">Overrides</th>
+                                        <th class="px-3 py-2 text-right">Hours</th>
+                                        <th class="px-3 py-2 text-right">Pacing</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-rth-compliance-dispatch-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. MASTER / RAW LOGS TABLE AT THE END -->
+            <div class="ws-card bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden space-y-4 p-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Master QA Task Logs</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Category, Monitoring ID, Q.A., Date Entry, Time Started, Time Ended, Hours, and Details</p>
+                    </div>
+                </div>
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto max-h-[460px]">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[11px] sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2.5">Category</th>
+                                    <th class="px-3 py-2.5">Monitoring ID</th>
+                                    <th class="px-3 py-2.5">Q.A.</th>
+                                    <th class="px-3 py-2.5">Date Entry</th>
+                                    <th class="px-3 py-2.5">Time Started</th>
+                                    <th class="px-3 py-2.5">Time Ended</th>
+                                    <th class="px-3 py-2.5 text-right">Hours</th>
+                                    <th class="px-3 py-2.5">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-master-qa-logs-tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2048,16 +2230,16 @@
                         </button>
 
                         <!-- Multi-select Dropdown Panel -->
-                        <div id="rth-date-dropdown-panel" class="hidden absolute z-50 left-0 mt-1.5 w-80 sm:w-96 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
+                        <div id="rth-date-dropdown-panel" onclick="event.stopPropagation()" class="hidden absolute z-50 left-0 mt-1.5 w-80 sm:w-96 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 space-y-2 text-xs">
                             <div class="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100">
                                 <button type="button" onclick="setRTHDateQuickMode('ALL')" class="px-2 py-1 rounded bg-teal-600 text-white font-bold text-[11px] hover:bg-teal-700">All Time</button>
-                                <button type="button" onclick="setRTHDateQuickMode('LATEST_WEEK')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">Latest Week</button>
+                                <button type="button" onclick="setRTHDateQuickMode('LATEST_DAY')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">Latest Day</button>
                                 <button type="button" onclick="setRTHDateQuickMode('OCT_2026')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">October 2026</button>
                                 <button type="button" onclick="setRTHDateQuickMode('NOV_2026')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 font-semibold text-[11px] hover:bg-teal-50 hover:text-teal-700">November 2026</button>
                                 <button type="button" onclick="clearRTHDateSelections()" class="px-2 py-1 rounded text-rose-600 font-semibold text-[11px] hover:bg-rose-50 ml-auto">Clear</button>
                             </div>
                             <div class="relative">
-                                <input type="text" id="rth-date-search" oninput="filterRTHDateCheckboxes()" placeholder="Search date or weekly cycle..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
+                                <input type="text" id="rth-date-search" oninput="filterRTHDateCheckboxes()" placeholder="Search date..." class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none">
                             </div>
                             <div id="rth-date-checkbox-list" class="max-h-56 overflow-y-auto space-y-2 pr-1 text-slate-700">
                                 <!-- Populated dynamically by JS with weekly cycles and individual dates -->
@@ -3252,9 +3434,17 @@
     </div>
 
     <!-- Scripts -->
-    <script src="data.js?v=20261118-6"></script>
-    <script src="qa_tasks_data.js?v=20261118-6"></script>
-    <script src="app.js?v=20261118-6"></script>
+    <script src="data.js?v=20261123-1"></script>
+    <script src="qa_tasks_data.js?v=20261123-1"></script>
+    <script src="dashboards/auth.js?v=20261123-1"></script>
+    <script src="dashboards/waybill.js?v=20261123-1"></script>
+    <script src="dashboards/rth.js?v=20261123-1"></script>
+    <script src="dashboards/account_merging.js?v=20261123-1"></script>
+    <script src="dashboards/dispatch.js?v=20261123-1"></script>
+    <script src="dashboards/output_qa.js?v=20261123-1"></script>
+    <script src="dashboards/it_schedule.js?v=20261123-1"></script>
+    <script src="dashboards/qa_report.js?v=20261123-1"></script>
+    <script src="app.js?v=20261123-1"></script>
 
     <!-- ================================================================= -->
     <!-- FLOATING USER ACCOUNT PILL & PROFILE POPOVER (Bottom-Right)       -->
